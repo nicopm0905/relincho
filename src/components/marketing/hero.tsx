@@ -43,7 +43,7 @@ export function Hero() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
             <Button size="lg" asChild className="rounded-full h-14 px-8 text-base shadow-[0_4px_14px_0_rgba(163,184,70,0.39)] hover:shadow-[0_6px_20px_rgba(163,184,70,0.23)] hover:bg-[#8b9e3a] transition-all duration-300">
-              <Link href="/registro">
+              <Link href="/login">
                 Pruébalo gratis <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>

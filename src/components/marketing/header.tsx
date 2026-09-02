@@ -69,7 +69,7 @@ export function Header({ session }: HeaderProps) {
                   <Link href="/login">Iniciar sesión</Link>
                 </Button>
                 <Button asChild className="rounded-full" size="sm">
-                  <Link href="/registro">Empezar gratis</Link>
+                  <Link href="/login">Empezar gratis</Link>
                 </Button>
               </>
             )}

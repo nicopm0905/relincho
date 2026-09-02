@@ -89,7 +89,7 @@ export function Pricing() {
                 variant={plan.highlighted ? "default" : "outline"} 
                 className={`w-full rounded-full h-12 text-base ${plan.highlighted ? 'hover:bg-[#8b9e3a]' : 'hover:bg-muted/50'}`}
               >
-                <Link href="/registro">
+                <Link href="/login">
                   {plan.highlighted ? "Empezar prueba gratis" : "Seleccionar Starter"}
                 </Link>
               </Button>
