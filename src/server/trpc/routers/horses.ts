@@ -15,7 +15,7 @@ const horseInput = z.object({
   microchip: z.string().optional(),
   hierro: z.string().optional(),
   boxLocation: z.string().optional(),
-  photoUrl: z.string().url().optional(),
+  photoUrl: z.string().optional(),
   sireId: z.string().uuid().optional(),
   damId: z.string().uuid().optional(),
   currentOwnerId: z.string().uuid().optional(),

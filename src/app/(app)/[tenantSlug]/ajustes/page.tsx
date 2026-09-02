@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { BillingButton } from "@/components/settings/billing-button";
 import { Buildings, CreditCard } from "@phosphor-icons/react/dist/ssr";
 
+import { TenantSettingsForm } from "@/components/settings/tenant-settings-form";
+
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
 }
@@ -33,38 +35,13 @@ export default async function AjustesPage({ params }: PageProps) {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Buildings weight="fill" className="h-4 w-4" />
-            Información de la finca
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-0 text-sm">
-          <div className="flex justify-between items-center py-3 border-b border-border/50">
-            <span className="text-muted-foreground">Nombre</span>
-            <span className="font-medium">{tenant.name}</span>
-          </div>
-          {tenant.nif && (
-            <div className="flex justify-between items-center py-3 border-b border-border/50">
-              <span className="text-muted-foreground">NIF / CIF</span>
-              <span className="font-medium">{tenant.nif}</span>
-            </div>
-          )}
-          {tenant.province && (
-            <div className="flex justify-between items-center py-3 border-b border-border/50">
-              <span className="text-muted-foreground">Provincia</span>
-              <span className="font-medium">{tenant.province}</span>
-            </div>
-          )}
-          {tenant.regaCode && (
-            <div className="flex justify-between items-center py-3">
-              <span className="text-muted-foreground">Código REGA</span>
-              <span className="font-mono text-xs font-medium">{tenant.regaCode}</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <TenantSettingsForm tenant={{
+        id: tenant.id,
+        name: tenant.name,
+        nif: tenant.nif,
+        province: tenant.province,
+        regaCode: tenant.regaCode,
+      }} />
 
       <Card>
         <CardHeader>

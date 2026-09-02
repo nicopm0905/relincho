@@ -12,10 +12,11 @@ export function Footer() {
           <span className="text-muted-foreground text-sm ml-2">© {new Date().getFullYear()}</span>
         </div>
 
-        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-          <Link href="#" className="hover:text-foreground transition-colors">Términos</Link>
-          <Link href="#" className="hover:text-foreground transition-colors">Privacidad</Link>
-          <Link href="#" className="hover:text-foreground transition-colors">Contacto</Link>
+        <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+          <Link href="/terminos" className="hover:text-foreground transition-colors">Términos</Link>
+          <Link href="/privacidad" className="hover:text-foreground transition-colors">Privacidad</Link>
+          <Link href="/cookies" className="hover:text-foreground transition-colors">Cookies</Link>
+          <Link href="/contacto" className="hover:text-foreground transition-colors">Contacto</Link>
         </div>
         
       </div>

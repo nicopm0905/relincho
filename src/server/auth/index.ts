@@ -16,7 +16,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig.providers,
     Resend({
       apiKey: process.env.RESEND_API_KEY || "missing",
-      from: process.env.EMAIL_FROM ?? "Relincho <hola@Relincho.es>",
+      from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
       async sendVerificationRequest(params) {
         if (process.env.NODE_ENV === "development") {
           console.log(`\n\n[DEV LOGIN LINK] Haz click en el siguiente enlace para iniciar sesión como ${params.identifier}:\n${params.url}\n\n`);

@@ -33,6 +33,14 @@ import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+const SELECT_TRANSLATIONS: Record<string, string> = {
+  MALE: "Macho", FEMALE: "Hembra", UNKNOWN: "Desconocido", GELDING: "Macho (Castrado)",
+  ACTIVE: "Activo", INACTIVE: "Inactivo", SOLD: "Vendido", DECEASED: "Fallecido",
+  POSITIVE: "Positiva", NEGATIVE: "Negativa", TWINS: "Gemelos", REABSORBED: "Reabsorbida", ABORTION: "Aborto",
+  NATURAL: "Monta Natural", AI_FRESH: "IA Fresco", AI_CHILLED: "IA Refrigerado", AI_FROZEN: "IA Congelado",
+  DEWORMING: "Desparasitación", VACCINATION: "Vacunación", DENTISTRY: "Odontología", FARRIER: "Herrador", VET_CHECK: "Revisión Veterinaria", TREATMENT: "Tratamiento Médico", OTHER: "Otro"
+};
+
 const results = [
   { value: "POSITIVE", label: "Positiva" },
   { value: "NEGATIVE", label: "Negativa" },
@@ -133,7 +141,9 @@ export function PregnancyCheckDialog({ coveringId }: PregnancyCheckDialogProps) 
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona el resultado" />
+                        <SelectValue placeholder="Selecciona el resultado">
+                          {(val: string) => SELECT_TRANSLATIONS[val] || val}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

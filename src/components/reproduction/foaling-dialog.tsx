@@ -35,6 +35,14 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 
+const SELECT_TRANSLATIONS: Record<string, string> = {
+  MALE: "Macho", FEMALE: "Hembra", UNKNOWN: "Desconocido", GELDING: "Macho (Castrado)",
+  ACTIVE: "Activo", INACTIVE: "Inactivo", SOLD: "Vendido", DECEASED: "Fallecido",
+  POSITIVE: "Positiva", NEGATIVE: "Negativa", TWINS: "Gemelos", REABSORBED: "Reabsorbida", ABORTION: "Aborto",
+  NATURAL: "Monta Natural", AI_FRESH: "IA Fresco", AI_CHILLED: "IA Refrigerado", AI_FROZEN: "IA Congelado",
+  DEWORMING: "Desparasitación", VACCINATION: "Vacunación", DENTISTRY: "Odontología", FARRIER: "Herrador", VET_CHECK: "Revisión Veterinaria", TREATMENT: "Tratamiento Médico", OTHER: "Otro"
+};
+
 const formSchema = z.object({
   date: z.string().min(1, "Debes seleccionar una fecha"),
   sex: z.enum(["MALE", "FEMALE", "UNKNOWN"]).optional(),
@@ -113,7 +121,9 @@ export function FoalingDialog({ coveringId }: FoalingDialogProps) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el sexo" />
+                          <SelectValue placeholder="Selecciona el sexo">
+                          {(val: string) => SELECT_TRANSLATIONS[val] || val}
+                        </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

@@ -35,6 +35,14 @@ import { toast } from "sonner";
 import { Plus } from "@phosphor-icons/react";
 import { format } from "date-fns";
 
+const SELECT_TRANSLATIONS: Record<string, string> = {
+  MALE: "Macho", FEMALE: "Hembra", UNKNOWN: "Desconocido", GELDING: "Macho (Castrado)",
+  ACTIVE: "Activo", INACTIVE: "Inactivo", SOLD: "Vendido", DECEASED: "Fallecido",
+  POSITIVE: "Positiva", NEGATIVE: "Negativa", TWINS: "Gemelos", REABSORBED: "Reabsorbida", ABORTION: "Aborto",
+  NATURAL: "Monta Natural", AI_FRESH: "IA Fresco", AI_CHILLED: "IA Refrigerado", AI_FROZEN: "IA Congelado",
+  DEWORMING: "Desparasitación", VACCINATION: "Vacunación", DENTISTRY: "Odontología", FARRIER: "Herrador", VET_CHECK: "Revisión Veterinaria", TREATMENT: "Tratamiento Médico", OTHER: "Otro"
+};
+
 const methods = [
   { value: "NATURAL", label: "Monta Natural" },
   { value: "AI_FRESH", label: "IA Fresca" },
@@ -129,7 +137,9 @@ export function CreateCoveringDialog({ cycleId }: CreateCoveringDialogProps) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el método" />
+                          <SelectValue placeholder="Selecciona el método">
+                          {(val: string) => SELECT_TRANSLATIONS[val] || val}
+                        </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

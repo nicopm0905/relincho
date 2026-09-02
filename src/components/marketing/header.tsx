@@ -52,8 +52,14 @@ export function Header({ session }: HeaderProps) {
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Características
             </Link>
+            <Link href="#nosotros" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Nosotros
+            </Link>
             <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Precios
+            </Link>
+            <Link href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              FAQ
             </Link>
           </nav>
 

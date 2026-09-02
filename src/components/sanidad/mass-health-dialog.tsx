@@ -24,6 +24,14 @@ import { Heartbeat, Plus, CheckCircle, WarningCircle } from "@phosphor-icons/rea
 import { toast } from "sonner"
 // import { trpc } from "@/lib/trpc/react" // Assuming tRPC client exists for actual mutation
 
+const SELECT_TRANSLATIONS: Record<string, string> = {
+  MALE: "Macho", FEMALE: "Hembra", UNKNOWN: "Desconocido", GELDING: "Macho (Castrado)",
+  ACTIVE: "Activo", INACTIVE: "Inactivo", SOLD: "Vendido", DECEASED: "Fallecido",
+  POSITIVE: "Positiva", NEGATIVE: "Negativa", TWINS: "Gemelos", REABSORBED: "Reabsorbida", ABORTION: "Aborto",
+  NATURAL: "Monta Natural", AI_FRESH: "IA Fresco", AI_CHILLED: "IA Refrigerado", AI_FROZEN: "IA Congelado",
+  DEWORMING: "Desparasitación", VACCINATION: "Vacunación", DENTISTRY: "Odontología", FARRIER: "Herrador", VET_CHECK: "Revisión Veterinaria", TREATMENT: "Tratamiento Médico", OTHER: "Otro"
+};
+
 export function MassHealthDialog({ horses, tenantSlug }: { horses: any[], tenantSlug: string }) {
   const [open, setOpen] = useState(false)
   const [selectedHorses, setSelectedHorses] = useState<string[]>([])
@@ -78,7 +86,9 @@ export function MassHealthDialog({ horses, tenantSlug }: { horses: any[], tenant
                 <Label htmlFor="type">Tipo de Evento</Label>
                 <Select defaultValue="DEWORMING">
                   <SelectTrigger id="type" className="rounded-xl border-border/50 bg-muted/20">
-                    <SelectValue placeholder="Selecciona el tipo" />
+                    <SelectValue placeholder="Selecciona el tipo">
+                          {(val: string) => SELECT_TRANSLATIONS[val] || val}
+                        </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="VACCINE">Vacuna</SelectItem>

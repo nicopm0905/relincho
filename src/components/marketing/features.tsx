@@ -1,4 +1,7 @@
+"use client";
+
 import { Activity, Baby, Receipt, Layers, HeartPulse } from "lucide-react";
+import { motion } from "framer-motion";
 
 const features = [
   {
@@ -32,20 +35,30 @@ export function Features() {
     <section id="features" className="py-24 md:py-32 bg-white relative">
       <div className="container max-w-5xl mx-auto px-4 sm:px-6">
         
-        <div className="max-w-2xl mb-16 md:mb-24">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="max-w-2xl mb-16 md:mb-24"
+        >
           <h2 className="font-heading text-4xl md:text-6xl text-foreground mb-6">
             Todo lo que necesitas. <br/> Y nada más.
           </h2>
           <p className="text-lg text-muted-foreground">
             Hemos eliminado el ruido para que puedas centrarte en lo que de verdad importa: tus caballos. Relincho simplifica tu día a día.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feature, i) => (
-            <div
+            <motion.div
               key={i}
-              className={`p-8 md:p-10 rounded-[2rem] flex flex-col justify-between overflow-hidden shadow-sm transition-transform duration-300 hover:scale-[1.02] ${feature.className}`}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: i * 0.1 }}
+              className={`p-8 md:p-10 rounded-[2rem] flex flex-col justify-between overflow-hidden shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${feature.className}`}
             >
               <div className="mb-8 md:mb-16">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-6 ${
@@ -66,7 +79,7 @@ export function Features() {
                   {feature.description}
                 </p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
         

@@ -23,6 +23,8 @@ export const metadata: Metadata = {
     "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje y facturación Veri*Factu.",
 };
 
+import { CookieBanner } from "@/components/cookie-banner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,6 +36,7 @@ export default function RootLayout({
         className={`${inter.variable} ${newsreader.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <CookieBanner />
       </body>
     </html>
   );

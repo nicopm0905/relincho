@@ -1,6 +1,8 @@
 import "server-only";
 import { Resend } from "resend";
 
+import { getBaseUrl } from "@/lib/utils";
+
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
 const FROM = process.env.EMAIL_FROM ?? "Relincho <hola@Relincho.es>";
 
@@ -35,7 +37,7 @@ export async function sendHealthReminder(opts: {
           Fecha prevista: <strong>${formattedDate}</strong>
         </div>
         <p>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/${tenantSlug}/sanidad"
+          <a href="${getBaseUrl()}/${tenantSlug}/sanidad"
              style="background:#171717;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
             Ver en Relincho
           </a>

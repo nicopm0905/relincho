@@ -3,6 +3,7 @@
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
 import { stripe, PLANS } from "@/lib/stripe";
+import { getBaseUrl } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 export async function createCheckoutSession(tenantId: string, planKey: string) {
@@ -24,8 +25,8 @@ export async function createCheckoutSession(tenantId: string, planKey: string) {
     customer: tenant.stripeCustomerId ?? undefined,
     customer_email: !tenant.stripeCustomerId ? session.user.email! : undefined,
     metadata: { tenantId },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/${tenant.slug}/ajustes?success=1`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/${tenant.slug}/ajustes`,
+    success_url: `${getBaseUrl()}/${tenant.slug}/ajustes?success=1`,
+    cancel_url: `${getBaseUrl()}/${tenant.slug}/ajustes`,
     locale: "es",
   });
 
@@ -41,7 +42,7 @@ export async function createPortalSession(tenantId: string) {
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: tenant.stripeCustomerId,
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/${tenant.slug}/ajustes`,
+    return_url: `${getBaseUrl()}/${tenant.slug}/ajustes`,
   });
 
   redirect(portalSession.url);

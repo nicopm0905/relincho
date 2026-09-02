@@ -19,6 +19,14 @@ import { CircleNotch, UploadSimple, Horse } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import Image from "next/image";
 
+const SELECT_TRANSLATIONS: Record<string, string> = {
+  MALE: "Macho", FEMALE: "Hembra", UNKNOWN: "Desconocido", GELDING: "Macho (Castrado)",
+  ACTIVE: "Activo", INACTIVE: "Inactivo", SOLD: "Vendido", DECEASED: "Fallecido",
+  POSITIVE: "Positiva", NEGATIVE: "Negativa", TWINS: "Gemelos", REABSORBED: "Reabsorbida", ABORTION: "Aborto",
+  NATURAL: "Monta Natural", AI_FRESH: "IA Fresco", AI_CHILLED: "IA Refrigerado", AI_FROZEN: "IA Congelado",
+  DEWORMING: "Desparasitación", VACCINATION: "Vacunación", DENTISTRY: "Odontología", FARRIER: "Herrador", VET_CHECK: "Revisión Veterinaria", TREATMENT: "Tratamiento Médico", OTHER: "Otro"
+};
+
 interface FormState {
   name: string;
   sex: "MALE" | "FEMALE" | "GELDING";
@@ -142,8 +150,8 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
                   <Image src={photoUrl} alt="Foto" fill className="object-cover" />
                 </div>
               ) : (
-                <div className="h-20 w-20 rounded-2xl border bg-muted flex items-center justify-center text-2xl">
-                  🐴
+                <div className="h-20 w-20 rounded-2xl border bg-muted flex items-center justify-center">
+                  <Horse className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
               <Button
