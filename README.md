@@ -1,36 +1,167 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Relincho
 
-## Getting Started
+SaaS B2B de gestión equina para yeguadas PRE y picaderos en Andalucía.
 
-First, run the development server:
+## Stack
+
+- **Next.js 15** (App Router) + TypeScript + React Server Components
+- **TailwindCSS** + shadcn/ui + Lucide icons
+- **tRPC v11** para la API interna
+- **Prisma 5** + PostgreSQL 16 (Supabase EU)
+- **Auth.js v5** (magic link Resend + Google)
+- **Stripe** para suscripciones SaaS
+- **Cloudflare R2** para almacenamiento de archivos
+- **Resend** para email transaccional
+- **Veri\*Factu** para facturación legal española
+
+## Arranque local
+
+### 1. Requisitos previos
+
+- Node.js 20+
+- PostgreSQL 16 (o cuenta Supabase)
+
+### 2. Instalación
+
+```bash
+npm install
+cp .env.example .env
+# Edita .env con tus credenciales
+```
+
+### 3. Base de datos
+
+```bash
+# Crear la base de datos y aplicar migraciones
+npm run db:migrate
+
+# Cargar datos demo
+npm run db:seed
+```
+
+### 4. Desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+El seed crea el tenant `yeguada-demo-andalucia` con 5 caballos PRE.
+Accede a: `http://localhost:3000/yeguada-demo-andalucia/caballos`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Configuración de servicios externos
 
-To learn more about Next.js, take a look at the following resources:
+### Supabase
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Crea un proyecto en [supabase.com](https://supabase.com) (región EU Frankfurt)
+2. Copia `DATABASE_URL` (pooling) y `DIRECT_URL` de **Project Settings > Database**
+3. Activa Row Level Security en la consola de Supabase tras la primera migración:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```sql
+-- Ejecutar en el SQL Editor de Supabase tras prisma migrate
+ALTER TABLE "Horse" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_horse ON "Horse"
+  USING ("tenantId"::text = current_setting('app.current_tenant', true));
+-- Repetir para todas las tablas con tenantId
+```
 
-## Deploy on Vercel
+### Auth.js (Google OAuth)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Crea credenciales OAuth en [console.cloud.google.com](https://console.cloud.google.com)
+2. URI autorizado de redirección: `http://localhost:3000/api/auth/callback/google`
+3. Añade `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` al `.env`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Resend (email)
+
+1. Crea cuenta en [resend.com](https://resend.com)
+2. Verifica tu dominio
+3. Añade `RESEND_API_KEY` al `.env`
+
+### Cloudflare R2
+
+1. Crea un bucket R2 en [dash.cloudflare.com](https://dash.cloudflare.com)
+2. Crea credenciales R2 (API Token)
+3. Habilita acceso público o usa dominio personalizado
+4. Añade las variables `R2_*` al `.env`
+
+### Stripe
+
+1. Crea cuenta en [stripe.com](https://stripe.com)
+2. Crea 3 precios (Starter, Pro, Enterprise)
+3. Configura el webhook: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
+4. Añade las variables `STRIPE_*` al `.env`
+
+---
+
+## Despliegue en Vercel
+
+```bash
+# Instala Vercel CLI
+npm i -g vercel
+
+# Despliega
+vercel
+
+# Configura variables de entorno en vercel.com/[proyecto]/settings/environment-variables
+# El cron de recordatorios (vercel.json) se activa automáticamente en producción
+```
+
+---
+
+## Comandos útiles
+
+```bash
+npm run db:generate    # Genera el cliente Prisma
+npm run db:migrate     # Crea y aplica migraciones
+npm run db:push        # Push directo a la BD (dev)
+npm run db:studio      # Abre Prisma Studio
+npm run db:seed        # Carga datos demo
+```
+
+---
+
+## Estructura del proyecto
+
+```
+src/
+├─ app/
+│  ├─ (auth)/           # Login, magic link
+│  ├─ (app)/
+│  │  ├─ [tenantSlug]/  # App multi-tenant
+│  │  └─ onboarding/    # Registro de nueva finca
+│  └─ api/
+│     ├─ trpc/          # Handler tRPC
+│     ├─ webhooks/      # Stripe webhook
+│     └─ cron/          # Recordatorios email
+├─ server/
+│  ├─ db/               # Prisma + helper RLS
+│  ├─ auth/             # Auth.js config
+│  ├─ trpc/             # Routers tRPC
+│  ├─ actions/          # Server Actions
+│  └─ services/         # R2, email, billing
+├─ components/          # shadcn/ui + componentes
+└─ lib/                 # Utils, formatters, stripe
+prisma/
+├─ schema.prisma        # Modelo de datos completo
+└─ seed.ts              # Datos demo
+```
+
+---
+
+## Roadmap MVP
+
+- [x] Auth (magic link + Google)
+- [x] Multi-tenant (Tenant + Membership + RLS)
+- [x] CRUD Caballos (foto a R2)
+- [x] Sanidad (HealthEvent + cron recordatorios)
+- [x] Tareas
+- [x] Stripe (suscripción SaaS + portal)
+- [ ] Módulo billing-verifactu (Veri*Factu AEAT)
+- [ ] Reproducción (ciclos, cubriciones, gestación)
+- [ ] Portal propietario externo (OWNER_EXTERNAL)
+- [ ] Importador CSV caballos
+- [ ] Dashboard de costes por caballo
+- [ ] i18n inglés (PRE internacional)

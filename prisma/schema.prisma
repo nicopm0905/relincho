@@ -1,0 +1,461 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  GROOM
+  VET_EXTERNAL
+  OWNER_EXTERNAL
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  GELDING
+}
+
+enum HorseStatus {
+  ACTIVE
+  SOLD
+  DEAD
+  RETIRED
+  IN_TRAINING
+}
+
+enum HealthEventType {
+  VACCINE
+  DEWORMING
+  DENTAL
+  FARRIER
+  VET_CHECKUP
+  TREATMENT
+  INJURY
+  OTHER
+}
+
+enum CoveringMethod {
+  NATURAL
+  AI_FRESH
+  AI_REFRIGERATED
+  AI_FROZEN
+  ET
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum VerifactuMode {
+  VERIFACTU
+  NO_VERIFACTU
+}
+
+model Tenant {
+  id                String             @id @default(uuid())
+  slug              String             @unique
+  name              String
+  fiscalName        String?
+  nif               String?
+  address           String?
+  city              String?
+  province          String?
+  postalCode        String?
+  country           String             @default("ES")
+  regaCode          String?
+  plan              String             @default("starter")
+  stripeCustomerId  String?
+  stripePriceId     String?
+  verifactuMode     VerifactuMode      @default(NO_VERIFACTU)
+  createdAt         DateTime           @default(now())
+  memberships       Membership[]
+  horses            Horse[]
+  contacts          Contact[]
+  products          Product[]
+  invoices          Invoice[]
+  boardingContracts BoardingContract[]
+  events            Event[]
+  tasks             Task[]
+}
+
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime     @default(now())
+  memberships Membership[]
+  accounts    Account[]
+  sessions    Session[]
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Membership {
+  id          String        @id @default(uuid())
+  userId      String
+  tenantId    String
+  role        Role
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  horseAccess HorseAccess[]
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+model Horse {
+  id               String              @id @default(uuid())
+  tenantId         String
+  name             String
+  uelnCode         String?
+  microchip        String?
+  sex              Sex
+  coat             String?
+  breed            String?
+  birthDate        DateTime?
+  hierro           String?
+  status           HorseStatus         @default(ACTIVE)
+  boxLocation      String?
+  photoUrl         String?
+  sireId           String?
+  damId            String?
+  currentOwnerId   String?
+  tenant           Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sire             Horse?              @relation("Sire", fields: [sireId], references: [id])
+  dam              Horse?              @relation("Dam", fields: [damId], references: [id])
+  sireOf           Horse[]             @relation("Sire")
+  damOf            Horse[]             @relation("Dam")
+  owner            Contact?            @relation(fields: [currentOwnerId], references: [id])
+  healthEvents     HealthEvent[]
+  trainings        TrainingSession[]
+  documents        Document[]
+  movements        Movement[]
+  feedingPlan      FeedingPlan?
+  reproCycles      ReproductionCycle[]
+  coverings        Covering[]          @relation("CoveringMare")
+  sirings          Covering[]          @relation("CoveringStallion")
+  horseAccess      HorseAccess[]
+  boardingContract BoardingContract?
+  invoiceLines     InvoiceLine[]
+  feedingLogs      FeedingLog[]
+  createdAt        DateTime            @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+model HorseAccess {
+  id           String     @id @default(uuid())
+  horseId      String
+  membershipId String
+  horse        Horse      @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([horseId, membershipId])
+}
+
+model Contact {
+  id                String             @id @default(uuid())
+  tenantId          String
+  kind              String
+  name              String
+  nif               String?
+  email             String?
+  phone             String?
+  address           String?
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  horses            Horse[]
+  boardingContracts BoardingContract[]
+  invoices          Invoice[]
+
+  @@index([tenantId])
+}
+
+model HealthEvent {
+  id            String          @id @default(uuid())
+  tenantId      String
+  horseId       String
+  type          HealthEventType
+  name          String
+  date          DateTime
+  nextDueDate   DateTime?
+  dose          String?
+  vetContactId  String?
+  cost          Decimal?        @db.Decimal(10, 2)
+  notes         String?
+  attachmentUrl String?
+  horse         Horse           @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  createdAt     DateTime        @default(now())
+
+  @@index([tenantId, horseId])
+  @@index([tenantId, nextDueDate])
+}
+
+model TrainingSession {
+  id        String   @id @default(uuid())
+  tenantId  String
+  horseId   String
+  date      DateTime
+  riderName String?
+  minutes   Int
+  type      String?
+  notes     String?
+  horse     Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, horseId])
+}
+
+model FeedingPlan {
+  id        String   @id @default(uuid())
+  tenantId  String
+  horseId   String   @unique
+  items     Json
+  startDate DateTime @default(now())
+  horse     Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+}
+
+model FeedingLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  horseId   String
+  date      DateTime @default(now())
+  mealType  String   // MAÑANA, MEDIODIA, TARDE
+  status    String   // DONE, SKIPPED
+  horse     Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  
+  @@unique([horseId, date, mealType]) // Para no duplicar logs del mismo día y comida
+  @@index([tenantId, date])
+}
+
+model Product {
+  id       String   @id @default(uuid())
+  tenantId String
+  sku      String?
+  name     String
+  kind     String
+  unit     String   @default("kg")
+  stock    Decimal? @db.Decimal(10, 2)
+  cost     Decimal? @db.Decimal(10, 2)
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  tenantId  String
+  horseId   String?
+  kind      String
+  name      String
+  fileUrl   String
+  createdAt DateTime @default(now())
+  horse     Horse?   @relation(fields: [horseId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, horseId])
+}
+
+model Movement {
+  id              String   @id @default(uuid())
+  tenantId        String
+  horseId         String
+  direction       String
+  date            DateTime
+  originRega      String?
+  destinationRega String?
+  reason          String?
+  horse           Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, horseId])
+}
+
+model ReproductionCycle {
+  id        String     @id @default(uuid())
+  tenantId  String
+  mareId    String
+  season    Int
+  notes     String?
+  mare      Horse      @relation(fields: [mareId], references: [id], onDelete: Cascade)
+  coverings Covering[]
+
+  @@index([tenantId, mareId])
+}
+
+model Covering {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  cycleId               String
+  mareId                String
+  stallionId            String?
+  method                CoveringMethod
+  date                  DateTime
+  result                String?
+  ancceServiceRequestId String?
+  cycle                 ReproductionCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  mare                  Horse             @relation("CoveringMare", fields: [mareId], references: [id])
+  stallion              Horse?            @relation("CoveringStallion", fields: [stallionId], references: [id])
+  pregnancyChecks       PregnancyCheck[]
+  foaling               Foaling?
+
+  @@index([tenantId])
+}
+
+model PregnancyCheck {
+  id             String   @id @default(uuid())
+  coveringId     String
+  date           DateTime
+  result         String
+  dayOfPregnancy Int?
+  covering       Covering @relation(fields: [coveringId], references: [id], onDelete: Cascade)
+}
+
+model Foaling {
+  id         String   @id @default(uuid())
+  coveringId String   @unique
+  foalId     String?
+  date       DateTime
+  sex        Sex?
+  alive      Boolean  @default(true)
+  notes      String?
+  covering   Covering @relation(fields: [coveringId], references: [id], onDelete: Cascade)
+}
+
+model BoardingContract {
+  id         String    @id @default(uuid())
+  tenantId   String
+  clientId   String
+  horseId    String    @unique
+  startDate  DateTime
+  endDate    DateTime?
+  monthlyFee Decimal   @db.Decimal(10, 2)
+  vatRate    Decimal   @default(21) @db.Decimal(5, 2)
+  includes   String[]
+  active     Boolean   @default(true)
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client     Contact   @relation(fields: [clientId], references: [id])
+  horse      Horse     @relation(fields: [horseId], references: [id])
+  invoices   Invoice[]
+
+  @@index([tenantId])
+}
+
+model Invoice {
+  id                 String        @id @default(uuid())
+  tenantId           String
+  series             String
+  number             Int
+  issueDate          DateTime
+  clientId           String
+  boardingContractId String?
+  subtotal           Decimal       @db.Decimal(12, 2)
+  vatTotal           Decimal       @db.Decimal(12, 2)
+  total              Decimal       @db.Decimal(12, 2)
+  status             InvoiceStatus @default(DRAFT)
+  verifactuMode      VerifactuMode @default(NO_VERIFACTU)
+  verifactuHash      String?
+  verifactuPrevHash  String?
+  verifactuQrUrl     String?
+  verifactuSentAt    DateTime?
+  pdfUrl             String?
+  client             Contact       @relation(fields: [clientId], references: [id])
+  boardingContract   BoardingContract? @relation(fields: [boardingContractId], references: [id])
+  lines              InvoiceLine[]
+  payments           Payment[]
+  tenant             Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, series, number])
+  @@index([tenantId, issueDate])
+}
+
+model InvoiceLine {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  horseId     String?
+  description String
+  quantity    Decimal  @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  vatRate     Decimal  @db.Decimal(5, 2)
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  horse       Horse?   @relation(fields: [horseId], references: [id])
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  invoiceId String
+  amount    Decimal  @db.Decimal(12, 2)
+  date      DateTime @default(now())
+  method    String
+  reference String?
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id                   String    @id @default(uuid())
+  tenantId             String
+  horseId              String?
+  assigneeMembershipId String?
+  title                String
+  dueDate              DateTime
+  doneAt               DateTime?
+  notes                String?
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, dueDate])
+}
+
+model Event {
+  id       String    @id @default(uuid())
+  tenantId String
+  kind     String
+  title    String
+  startsAt DateTime
+  endsAt   DateTime?
+  location String?
+  notes    String?
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, startsAt])
+}

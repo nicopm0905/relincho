@@ -2,7 +2,25 @@
   "permissions": {
     "allow": [
       "Read(//c/Users/nicop/.claude/projects/c--PROYECTOS-equigest/memory/**)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install *)",
+      "Bash(npx shadcn@latest init --defaults)",
+      "Bash(npx shadcn@latest add card input label select textarea badge table dialog form toast toaster sonner separator skeleton avatar dropdown-menu)",
+      "Bash(npx shadcn@latest add card input label select textarea badge table dialog form sonner separator skeleton avatar dropdown-menu --overwrite)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npx shadcn@latest add form --overwrite)",
+      "Bash(node -e \"const icons = require\\('lucide-react'\\); console.log\\(Object.keys\\(icons\\).filter\\(k => k.includes\\('Horse'\\) || k.includes\\('Chrome'\\) || k.includes\\('Baby'\\) || k.includes\\('Home'\\)\\).join\\(', '\\)\\)\")",
+      "Bash(node -e \"const b = require\\('@base-ui/react/button'\\); console.log\\(Object.keys\\(b\\)\\)\")",
+      "Bash(node -e \"const s = require\\('stripe'\\); const stripe = new s\\('sk_test_foo'\\); console.log\\(stripe._api?.version || 'unknown'\\)\")",
+      "Bash(node -e \"const z = require\\('zod'\\); console.log\\(z.version || z.ZodType?.version || 'unknown'\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/zod/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@hookform/resolvers/package.json'\\).version\\)\")"
+    ],
+    "additionalDirectories": [
+      "c:\\PROYECTOS\\equigest\\src\\app\\(app)\\[tenantSlug]\\caballos",
+      "c:\\PROYECTOS\\equigest\\src\\app\\api\\auth\\[...nextauth]",
+      "c:\\Users\\nicop\\.claude\\projects\\c--PROYECTOS-equigest\\memory"
     ]
   }
 }
