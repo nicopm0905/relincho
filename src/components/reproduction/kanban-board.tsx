@@ -226,7 +226,7 @@ export function KanbanBoard({
 
   // --- Pregnancy Form Setup ---
   const pregForm = useForm<z.infer<typeof pregnancyFormSchema>>({
-    resolver: zodResolver(pregnancyFormSchema),
+    resolver: zodResolver(pregnancyFormSchema) as any,
     defaultValues: {
       date: format(new Date(), "yyyy-MM-dd"),
       result: "POSITIVE",
@@ -255,7 +255,7 @@ export function KanbanBoard({
 
   // --- Foaling Form Setup ---
   const foalForm = useForm<z.infer<typeof foalingFormSchema>>({
-    resolver: zodResolver(foalingFormSchema),
+    resolver: zodResolver(foalingFormSchema) as any,
     defaultValues: {
       date: format(new Date(), "yyyy-MM-dd"),
       alive: true,

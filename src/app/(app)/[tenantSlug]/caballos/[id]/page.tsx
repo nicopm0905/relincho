@@ -9,6 +9,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { PedigreeTree } from "@/components/horses/pedigree-tree";
 import { HorseTimeline } from "@/components/horses/timeline";
+import { DailyJournalForm } from "@/components/horses/daily-journal-form";
+import { JournalFeed } from "@/components/horses/journal-feed";
+import { HorseChat } from "@/components/horses/horse-chat";
+import { FeedingPlanCard } from "@/components/horses/feeding-plan-card";
 import {
   Horse,
   GenderMale,
@@ -24,7 +28,9 @@ import {
   Barcode,
   Files,
   Baby,
-  WarningCircle
+  WarningCircle,
+  Clock,
+  Sparkle
 } from "@phosphor-icons/react/dist/ssr";
 
 interface PageProps {
@@ -151,23 +157,52 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
       {/* TABS SECTION */}
       <Tabs defaultValue="resumen" className="w-full">
-        <TabsList className="bg-transparent border-b border-border/60 w-full justify-start rounded-none p-0 h-auto space-x-6 overflow-x-auto">
-          <TabsTrigger value="resumen" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 font-semibold text-[15px] text-muted-foreground data-[state=active]:text-foreground">
-            Resumen
-          </TabsTrigger>
-          <TabsTrigger value="genealogia" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 font-semibold text-[15px] text-muted-foreground data-[state=active]:text-foreground">
-            Genealogía
-          </TabsTrigger>
-          <TabsTrigger value="timeline" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 font-semibold text-[15px] text-muted-foreground data-[state=active]:text-foreground">
-            Línea de Tiempo
-          </TabsTrigger>
-          <TabsTrigger value="reproduccion" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 font-semibold text-[15px] text-muted-foreground data-[state=active]:text-foreground">
-            Reproducción
-          </TabsTrigger>
-          <TabsTrigger value="documentos" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 font-semibold text-[15px] text-muted-foreground data-[state=active]:text-foreground">
-            Documentación
-          </TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <TabsList className="bg-muted/60 p-1.5 rounded-2xl border border-border/40 inline-flex min-w-max gap-1">
+            <TabsTrigger
+              value="resumen"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+            >
+              <IdentificationCard className="h-4 w-4" weight="bold" />
+              Resumen
+            </TabsTrigger>
+            <TabsTrigger
+              value="genealogia"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+            >
+              <TreeStructure className="h-4 w-4" weight="bold" />
+              Genealogía
+            </TabsTrigger>
+            <TabsTrigger
+              value="timeline"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+            >
+              <Clock className="h-4 w-4" weight="bold" />
+              Línea de Tiempo
+            </TabsTrigger>
+            <TabsTrigger
+              value="reproduccion"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+            >
+              <Baby className="h-4 w-4" weight="bold" />
+              Reproducción
+            </TabsTrigger>
+            <TabsTrigger
+              value="diario"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+            >
+              <Sparkle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" weight="fill" />
+              Diario e IA
+            </TabsTrigger>
+            <TabsTrigger
+              value="documentos"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+            >
+              <Files className="h-4 w-4" weight="bold" />
+              Documentación
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* RESUMEN TAB */}
         <TabsContent value="resumen" className="pt-6 outline-none">
@@ -217,6 +252,10 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                 </div>
               </div>
             </Card>
+          </div>
+
+          <div className="mt-5">
+            <FeedingPlanCard horseId={horse.id} horseName={horse.name} />
           </div>
         </TabsContent>
 
@@ -436,6 +475,25 @@ export default async function CaballoDetailPage({ params }: PageProps) {
               Guarda pasaportes, cartas de titularidad y análisis. Módulo en desarrollo.
             </p>
           </Card>
+        </TabsContent>
+
+        {/* DIARIO TAB */}
+        <TabsContent value="diario" className="pt-6 outline-none">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Izquierda: Diario */}
+            <div className="space-y-6">
+              <DailyJournalForm horseId={horse.id} horseName={horse.name} />
+              <div className="mt-8">
+                <h3 className="font-bold text-lg text-foreground font-heading mb-4">Historial del Diario</h3>
+                <JournalFeed horseId={horse.id} />
+              </div>
+            </div>
+            
+            {/* Derecha: Chat interactivo */}
+            <div className="h-full">
+              <HorseChat horseId={horse.id} horseName={horse.name} />
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

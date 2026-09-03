@@ -10,6 +10,7 @@ import { trainingRouter } from "./routers/training";
 import { contactsRouter } from "./routers/contacts";
 import { feedingRouter } from "./routers/feeding";
 import { tenantRouter } from "./routers/tenant";
+import { journalRouter } from "./routers/journal";
 
 export const appRouter = createTRPCRouter({
   horses: horsesRouter,
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
   contacts: contactsRouter,
   feeding: feedingRouter,
   tenant: tenantRouter,
+  journal: journalRouter,
 });
 
 export type AppRouter = typeof appRouter;

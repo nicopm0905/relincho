@@ -55,6 +55,7 @@ export const horsesRouter = createTRPCRouter({
           where: { id: input.id, tenantId: ctx.tenantId },
           include: {
             owner: true,
+            feedingPlan: true,
             sire: { select: { id: true, name: true, sire: { select: { id: true, name: true } }, dam: { select: { id: true, name: true } } } },
             dam: { select: { id: true, name: true, sire: { select: { id: true, name: true } }, dam: { select: { id: true, name: true } } } },
             healthEvents: { orderBy: { date: "desc" }, take: 10 },

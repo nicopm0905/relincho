@@ -90,5 +90,40 @@ export const feedingRouter = createTRPCRouter({
           }
         });
       });
-    })
+    }),
+
+  // Obtiene el plan de alimentación de un caballo
+  getByHorseId: tenantProcedure
+    .input(z.object({ horseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, (tx) =>
+        tx.feedingPlan.findUnique({
+          where: { horseId: input.horseId }
+        })
+      );
+    }),
+
+  // Crea o actualiza la dieta / plan de alimentación
+  upsertPlan: tenantProcedure
+    .input(
+      z.object({
+        horseId: z.string(),
+        items: z.array(
+          z.object({
+            meal: z.string(),
+            food: z.string(),
+            quantity: z.string(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, (tx) =>
+        tx.feedingPlan.upsert({
+          where: { horseId: input.horseId },
+          update: { items: input.items },
+          create: { tenantId: ctx.tenantId, horseId: input.horseId, items: input.items },
+        })
+      );
+    }),
 });

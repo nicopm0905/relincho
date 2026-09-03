@@ -182,6 +182,8 @@ model Horse {
   boardingContract BoardingContract?
   invoiceLines     InvoiceLine[]
   feedingLogs      FeedingLog[]
+  dailyJournals    DailyJournal[]
+  competitionTargets CompetitionTarget[]
   createdAt        DateTime            @default(now())
 
   @@index([tenantId])
@@ -458,4 +460,29 @@ model Event {
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, startsAt])
+}
+
+model DailyJournal {
+  id         String   @id @default(uuid())
+  tenantId   String
+  horseId    String
+  date       DateTime @default(now())
+  content    String   // Texto libre del usuario
+  aiAnalysis String?  // Análisis generado por IA
+  horse      Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, horseId, date])
+}
+
+model CompetitionTarget {
+  id         String   @id @default(uuid())
+  tenantId   String
+  horseId    String
+  name       String
+  targetDate DateTime
+  priority   String?  // Ej. "ALTA", "MEDIA", "BAJA"
+  notes      String?
+  horse      Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, horseId, targetDate])
 }

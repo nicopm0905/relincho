@@ -18,6 +18,9 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.62",
+    "@ai-sdk/openai": "^4.0.56",
+    "@ai-sdk/react": "^4.0.93",
     "@auth/prisma-adapter": "^2.11.2",
     "@aws-sdk/client-s3": "^3.1045.0",
     "@aws-sdk/s3-request-presigner": "^3.1045.0",
@@ -35,6 +38,7 @@
     "@trpc/client": "^11.13.0",
     "@trpc/react-query": "^11.13.0",
     "@trpc/server": "^11.13.0",
+    "ai": "^7.0.90",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
