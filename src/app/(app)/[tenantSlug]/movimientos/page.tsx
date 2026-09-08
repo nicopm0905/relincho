@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatters";
 import { NewMovementDialog } from "@/components/movimientos/new-movement-dialog";
+import { PageHeader } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -26,32 +28,25 @@ export default async function MovimientosPage({ params }: PageProps) {
 
   return (
     <div className="space-y-8 animate-in fade-in-0 duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">
-            Libro de Explotación
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Registro oficial de movimientos REGA (Altas y Bajas)
-          </p>
-        </div>
-        <NewMovementDialog tenantSlug={tenantSlug} horses={horses} />
-      </div>
+      <PageHeader
+        title="Libro de explotación"
+        description="Registro oficial de movimientos REGA: altas y bajas"
+        actions={<NewMovementDialog tenantSlug={tenantSlug} horses={horses} />}
+      />
 
-      <Card className="bg-white shadow-bento border-border/40 overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="p-0">
           {movements.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center py-24 text-muted-foreground">
-              <Path weight="duotone" className="h-16 w-16 text-muted/40 mb-4" />
-              <p className="text-base font-medium">No hay movimientos registrados</p>
-              <p className="text-sm mt-1 max-w-sm">
-                Comienza a registrar las altas y bajas de tus caballos para mantener el libro de explotación al día.
-              </p>
-            </div>
+            <EmptyState
+              variant="plain"
+              icon={<Path weight="duotone" />}
+              title="Sin movimientos registrados"
+              description="Registra las altas y bajas de tus caballos para mantener el libro de explotación al día."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="text-xs text-muted-foreground uppercase bg-muted/30 border-b border-border/40">
+                <thead className="border-b border-border bg-muted/50 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                   <tr>
                     <th className="px-6 py-4 font-semibold tracking-wider">Fecha</th>
                     <th className="px-6 py-4 font-semibold tracking-wider">Caballo</th>

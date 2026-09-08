@@ -64,6 +64,10 @@ const healthTypeLabels: Record<string, string> = {
   OTHER: "Otro",
 };
 
+/* One shared look for every tab so the strip stays even as tabs are added. */
+const tabTriggerClass =
+  "flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-semibold text-muted-foreground transition-all hover:text-foreground data-[state=active]:border data-[state=active]:border-border/40 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-4 sm:text-sm";
+
 function calculateAge(birthDate: Date) {
   const diff = Date.now() - birthDate.getTime();
   const ageDate = new Date(diff); 
@@ -93,7 +97,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
             Atrás
           </Link>
         </Button>
-        <Button asChild variant="outline" size="sm" className="rounded-full shadow-sm bg-white">
+        <Button asChild variant="outline" size="sm" className="shadow-sm">
           <Link href={`/${tenantSlug}/caballos/${id}/editar`}>
             <PencilSimple weight="bold" className="mr-2 h-4 w-4" />
             Editar
@@ -102,12 +106,13 @@ export default async function CaballoDetailPage({ params }: PageProps) {
       </div>
 
       {/* HERO SECTION */}
-      <div className="relative rounded-3xl overflow-hidden shadow-bento bg-white h-[320px] md:h-[400px] flex flex-col justify-end border border-border/40">
+      <div className="relative flex h-[260px] flex-col justify-end overflow-hidden rounded-xl border border-border bg-card sm:h-[320px] md:h-[400px]">
         {horse.photoUrl ? (
           <Image
             src={horse.photoUrl}
             alt={horse.name}
             fill
+            sizes="(min-width: 1024px) 64rem, 100vw"
             className="object-cover"
             priority
           />
@@ -131,11 +136,11 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                 </Badge>
               )}
             </div>
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white drop-shadow-md font-heading leading-tight">
+            <h1 className="text-[28px] leading-tight font-semibold tracking-tight text-white drop-shadow-md sm:text-4xl">
               {horse.name}
             </h1>
           </div>
-          <div className="flex items-center justify-around sm:justify-start gap-4 text-white/90 bg-black/30 backdrop-blur-md px-4 py-3 sm:px-5 rounded-2xl border border-white/10 w-full sm:w-auto">
+          <div className="flex items-center justify-around sm:justify-start gap-4 text-white/90 bg-black/30 backdrop-blur-md px-4 py-3 sm:px-5 rounded-lg border border-white/15 w-full sm:w-auto">
             <div className="flex flex-col items-center flex-1 sm:flex-none">
               <span className="text-[10px] sm:text-xs uppercase tracking-wider font-semibold opacity-80">Sexo</span>
               <span className="font-bold flex items-center gap-1 mt-0.5 text-sm sm:text-base">
@@ -157,46 +162,46 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
       {/* TABS SECTION */}
       <Tabs defaultValue="resumen" className="w-full">
-        <div className="w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <TabsList className="bg-muted/60 p-1.5 rounded-2xl border border-border/40 inline-flex min-w-max gap-1">
+        <div className="no-scrollbar -mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 pb-1 sm:mx-0 sm:w-full sm:px-0">
+          <TabsList className="inline-flex min-w-max gap-1 rounded-lg border border-border bg-muted/70 p-1">
             <TabsTrigger
               value="resumen"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+              className={tabTriggerClass}
             >
               <IdentificationCard className="h-4 w-4" weight="bold" />
               Resumen
             </TabsTrigger>
             <TabsTrigger
               value="genealogia"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+              className={tabTriggerClass}
             >
               <TreeStructure className="h-4 w-4" weight="bold" />
               Genealogía
             </TabsTrigger>
             <TabsTrigger
               value="timeline"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+              className={tabTriggerClass}
             >
               <Clock className="h-4 w-4" weight="bold" />
               Línea de Tiempo
             </TabsTrigger>
             <TabsTrigger
               value="reproduccion"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+              className={tabTriggerClass}
             >
               <Baby className="h-4 w-4" weight="bold" />
               Reproducción
             </TabsTrigger>
             <TabsTrigger
               value="diario"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+              className={tabTriggerClass}
             >
               <Sparkle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" weight="fill" />
               Diario e IA
             </TabsTrigger>
             <TabsTrigger
               value="documentos"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/40 text-muted-foreground hover:text-foreground"
+              className={tabTriggerClass}
             >
               <Files className="h-4 w-4" weight="bold" />
               Documentación
@@ -207,12 +212,12 @@ export default async function CaballoDetailPage({ params }: PageProps) {
         {/* RESUMEN TAB */}
         <TabsContent value="resumen" className="pt-6 outline-none">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Card className="p-6 bg-white shadow-bento border-border/40">
+            <Card className="p-6 border-border bg-card">
               <div className="flex items-center gap-3 mb-5">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
                   <IdentificationCard weight="duotone" className="h-5 w-5" />
                 </div>
-                <h3 className="font-bold text-lg text-foreground font-heading">Identificación</h3>
+                <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Identificación</h3>
               </div>
               <div className="space-y-4">
                 <div className="flex flex-col">
@@ -230,12 +235,12 @@ export default async function CaballoDetailPage({ params }: PageProps) {
               </div>
             </Card>
 
-            <Card className="p-6 bg-white shadow-bento border-border/40">
+            <Card className="p-6 border-border bg-card">
               <div className="flex items-center gap-3 mb-5">
-                <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
                   <MapPin weight="duotone" className="h-5 w-5" />
                 </div>
-                <h3 className="font-bold text-lg text-foreground font-heading">Ubicación y Físico</h3>
+                <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Ubicación y Físico</h3>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between py-2 border-b border-border/50">
@@ -261,12 +266,12 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
         {/* GENEALOGIA TAB */}
         <TabsContent value="genealogia" className="pt-6 outline-none">
-          <Card className="p-8 bg-white shadow-bento border-border/40">
+          <Card className="p-8 border-border bg-card">
             <div className="flex flex-col items-center justify-center mb-8">
-              <div className="h-12 w-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100 mb-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
                 <TreeStructure weight="duotone" className="h-6 w-6" />
               </div>
-              <h3 className="font-bold text-xl text-foreground font-heading">Árbol Genealógico</h3>
+              <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Árbol Genealógico</h3>
               <p className="text-sm text-muted-foreground mt-1">Ascendencia directa de {horse.name}</p>
             </div>
             
@@ -278,19 +283,19 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
         {/* TIMELINE TAB */}
         <TabsContent value="timeline" className="pt-6 outline-none">
-          <Card className="p-0 bg-white shadow-bento border-border/40 overflow-hidden">
+          <Card className="p-0 border-border bg-card overflow-hidden">
             <div className="p-5 sm:p-6 border-b border-border/40 flex items-center justify-between bg-muted/10">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
                   <Heartbeat weight="duotone" className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-foreground font-heading">Línea de Tiempo</h3>
+                  <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Línea de Tiempo</h3>
                   <p className="text-xs text-muted-foreground hidden sm:block">Todos los eventos de {horse.name}</p>
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button asChild size="sm" variant="outline" className="rounded-full shadow-sm bg-white text-muted-foreground hidden md:flex">
+                <Button asChild size="sm" variant="outline" className="hidden shadow-sm md:flex">
                   <a href={`/api/horses/${id}/pdf-clinico`} target="_blank" rel="noreferrer">Exportar PDF</a>
                 </Button>
                 <Button asChild size="sm" className="rounded-full shadow-sm">
@@ -311,24 +316,24 @@ export default async function CaballoDetailPage({ params }: PageProps) {
         {/* REPRODUCCION TAB */}
         <TabsContent value="reproduccion" className="pt-6 outline-none">
           {horse.sex !== "FEMALE" ? (
-            <Card className="p-12 bg-white shadow-bento border-border/40 flex flex-col items-center text-center">
+            <Card className="p-12 border-border bg-card flex flex-col items-center text-center">
               <div className="h-16 w-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 border border-amber-100">
                 <WarningCircle weight="duotone" className="h-8 w-8" />
               </div>
-              <h3 className="font-bold text-xl text-foreground font-heading">No aplicable</h3>
+              <h3 className="text-[15px] font-semibold tracking-tight text-foreground">No aplicable</h3>
               <p className="text-sm text-muted-foreground max-w-sm mt-2 mb-6">
                 El módulo de parideras está diseñado para la gestión de yeguas.
               </p>
             </Card>
           ) : (
-            <Card className="p-0 bg-white shadow-bento border-border/40 overflow-hidden">
-              <div className="p-6 border-b border-border/40 flex items-center justify-between bg-pink-50/30">
+            <Card className="p-0 border-border bg-card overflow-hidden">
+              <div className="p-6 border-b border-border/40 flex items-center justify-between bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center border border-pink-100">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
                     <Baby weight="duotone" className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg text-foreground font-heading">Cuaderno de Parideras</h3>
+                    <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Cuaderno de Parideras</h3>
                     <p className="text-xs text-muted-foreground">Ciclos reproductivos y ecografías</p>
                   </div>
                 </div>
@@ -422,7 +427,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
                           {/* GESTATION PROGRESS WIDGET */}
                           {isPregnant && expectedFoalingDate && (
-                            <div className="mt-2 bg-emerald-50/50 rounded-2xl p-4 border border-emerald-100">
+                            <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/60 p-4">
                               <div className="flex justify-between items-end mb-2">
                                 <div>
                                   <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800/70">Progreso de Gestación</span>
@@ -466,11 +471,11 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
         {/* DOCUMENTOS TAB */}
         <TabsContent value="documentos" className="pt-6 outline-none">
-          <Card className="p-12 bg-white shadow-bento border-border/40 flex flex-col items-center text-center">
+          <Card className="p-12 border-border bg-card flex flex-col items-center text-center">
             <div className="h-16 w-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 border border-blue-100">
               <Files weight="duotone" className="h-8 w-8" />
             </div>
-            <h3 className="font-bold text-xl text-foreground font-heading">Documentación</h3>
+            <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Documentación</h3>
             <p className="text-sm text-muted-foreground max-w-sm mt-2 mb-6">
               Guarda pasaportes, cartas de titularidad y análisis. Módulo en desarrollo.
             </p>
@@ -484,7 +489,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
             <div className="space-y-6">
               <DailyJournalForm horseId={horse.id} horseName={horse.name} />
               <div className="mt-8">
-                <h3 className="font-bold text-lg text-foreground font-heading mb-4">Historial del Diario</h3>
+                <h3 className="text-[15px] font-semibold tracking-tight text-foreground mb-4">Historial del Diario</h3>
                 <JournalFeed horseId={horse.id} />
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -16,250 +17,321 @@ import {
   X,
   Route,
   Store,
+  Gauge,
+  LogOut,
+  type LucideIcon,
 } from "lucide-react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
-const navItems = [
-  { label: "Inicio", href: "inicio", icon: Home },
-  { label: "Caballos", href: "caballos", icon: Layers },
-  { label: "Sanidad", href: "sanidad", icon: Activity },
-  { label: "Reproducción", href: "reproduccion", icon: Baby },
-  { label: "Movimientos", href: "movimientos", icon: Route },
-  { label: "Pupilaje", href: "pupilaje", icon: Store },
-  { label: "Facturación", href: "facturacion", icon: Receipt },
-  { label: "Tareas", href: "tareas", icon: CheckSquare },
-  { label: "Documentos", href: "documentos", icon: Files },
-  { label: "Contactos", href: "contactos", icon: Users },
+type NavItem = { label: string; href: string; icon: LucideIcon };
+
+/** Grouped so the rail reads as a hierarchy instead of a wall of ten links. */
+const navGroups: { label?: string; items: NavItem[] }[] = [
+  {
+    items: [{ label: "Inicio", href: "inicio", icon: Home }],
+  },
+  {
+    label: "Cuadra",
+    items: [
+      { label: "Caballos", href: "caballos", icon: Layers },
+      { label: "Rendimiento", href: "rendimiento", icon: Gauge },
+      { label: "Sanidad", href: "sanidad", icon: Activity },
+      { label: "Reproducción", href: "reproduccion", icon: Baby },
+      { label: "Movimientos", href: "movimientos", icon: Route },
+      { label: "Tareas", href: "tareas", icon: CheckSquare },
+    ],
+  },
+  {
+    label: "Negocio",
+    items: [
+      { label: "Pupilaje", href: "pupilaje", icon: Store },
+      { label: "Facturación", href: "facturacion", icon: Receipt },
+      { label: "Contactos", href: "contactos", icon: Users },
+      { label: "Documentos", href: "documentos", icon: Files },
+    ],
+  },
 ];
 
-const bottomItems = [
-  { label: "Ajustes", href: "ajustes", icon: Settings },
-];
+const allNavItems = navGroups.flatMap((group) => group.items);
+const settingsItem: NavItem = {
+  label: "Ajustes",
+  href: "ajustes",
+  icon: Settings,
+};
 
-// Primary tabs for mobile bottom nav (most-used features)
-const mobileTabItems = navItems.slice(0, 4);
-// Overflow items shown in mobile "More" sheet
-const mobileOverflowItems = [...navItems.slice(4), ...bottomItems];
+/** Chosen by daily use in a yeguada, not by order in the rail. */
+const mobileTabHrefs = ["inicio", "caballos", "sanidad", "reproduccion"];
+const mobileTabItems = mobileTabHrefs
+  .map((href) => allNavItems.find((item) => item.href === href))
+  .filter((item): item is NavItem => Boolean(item));
+const mobileOverflowItems = allNavItems
+  .filter((item) => !mobileTabItems.includes(item))
+  .concat(settingsItem);
 
 interface SidebarProps {
   tenantSlug: string;
   tenantName: string;
+  userName?: string | null;
+  userEmail?: string | null;
 }
 
-export function Sidebar({ tenantSlug, tenantName }: SidebarProps) {
+function initialsOf(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]!.toUpperCase())
+    .join("");
+}
+
+export function Sidebar({
+  tenantSlug,
+  tenantName,
+  userName,
+  userEmail,
+}: SidebarProps) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // Close the More sheet when navigating
   useEffect(() => {
     setMoreOpen(false);
   }, [pathname]);
 
-  // Prevent body scroll when More sheet is open
   useEffect(() => {
-    if (moreOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = moreOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [moreOpen]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const isActive = (href: string) =>
+    pathname.startsWith(`/${tenantSlug}/${href}`);
+
+  const displayName = userName || userEmail || "Cuenta";
+
+  const navLink = (
+    { label, href, icon: Icon }: NavItem,
+    { large = false }: { large?: boolean } = {},
+  ) => {
+    const active = isActive(href);
+    return (
+      <Link
+        key={href}
+        href={`/${tenantSlug}/${href}`}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "group flex items-center gap-3 rounded-lg transition-colors duration-150",
+          large ? "px-3 py-3 text-[15px]" : "px-3 py-2 text-[13.5px]",
+          active
+            ? "bg-card font-semibold text-foreground shadow-xs"
+            : "font-medium text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground",
+        )}
+      >
+        <Icon
+          strokeWidth={2}
+          className={cn(
+            "h-[18px] w-[18px] shrink-0 transition-colors",
+            active
+              ? "text-primary-ink"
+              : "text-muted-foreground/80 group-hover:text-foreground",
+          )}
+        />
+        <span className="truncate">{label}</span>
+      </Link>
+    );
+  };
+
   return (
     <>
-      {/* ═══════ DESKTOP SIDEBAR ═══════ */}
-      <aside className="hidden md:flex w-[260px] shrink-0 bg-[#f9f9f6] border-r border-border/40 flex-col h-screen sticky top-0">
-        {/* Brand Header */}
-        <div className="px-6 py-8">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] bg-white border border-border/40 shadow-sm relative overflow-hidden">
-              <Image src="/logo.png" alt="Relincho" fill className="object-contain p-1" priority />
-            </div>
-            <div className="flex flex-col truncate">
-              <p className="text-[13px] text-muted-foreground font-medium">Relincho</p>
-              <p className="font-bold text-[15px] truncate text-foreground tracking-tight font-heading">
-                {tenantName}
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* ── Desktop rail ─────────────────────────────────────── */}
+      <aside className="sticky top-0 hidden h-screen w-[244px] shrink-0 flex-col border-r border-border bg-sidebar md:flex">
+        <Link
+          href={`/${tenantSlug}/inicio`}
+          className="flex items-center gap-2.5 px-4 py-4 transition-colors hover:bg-foreground/[0.03]"
+        >
+          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+            <Image
+              src="/logo.png"
+              alt=""
+              fill
+              className="object-contain p-1"
+              priority
+            />
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate text-[14px] leading-tight font-semibold text-foreground">
+              {tenantName}
+            </span>
+            <span className="text-[11px] leading-tight text-muted-foreground">
+              Relincho
+            </span>
+          </span>
+        </Link>
 
-        {/* Main Nav */}
-        <nav className="flex-1 overflow-y-auto px-4 space-y-1.5 pb-6">
-          {navItems.map(({ label, href, icon: Icon }) => {
-            const fullHref = `/${tenantSlug}/${href}`;
-            const active = pathname.startsWith(fullHref);
-            return (
-              <Link
-                key={href}
-                href={fullHref}
-                className={cn(
-                  "group flex items-center gap-3.5 rounded-full px-4 py-3 text-[14px] font-semibold transition-all duration-200",
-                  active
-                    ? "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] text-foreground"
-                    : "text-muted-foreground hover:bg-black/5 hover:text-foreground",
-                )}
-              >
-                <Icon
-                  strokeWidth={active ? 2.5 : 2}
-                  className={cn(
-                    "h-[20px] w-[20px] shrink-0 transition-all duration-300",
-                    active ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground",
-                  )}
-                />
-                {label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pt-2 pb-6">
+          {navGroups.map((group, index) => (
+            <div key={group.label ?? index} className="space-y-0.5">
+              {group.label && (
+                <p className="px-3 pb-1.5 text-[10.5px] font-semibold tracking-[0.08em] text-muted-foreground/70 uppercase">
+                  {group.label}
+                </p>
+              )}
+              {group.items.map((item) => navLink(item))}
+            </div>
+          ))}
         </nav>
 
-        {/* Bottom Items */}
-        <div className="px-4 pb-6 pt-4 border-t border-border/40">
-          {bottomItems.map(({ label, href, icon: Icon }) => {
-            const fullHref = `/${tenantSlug}/${href}`;
-            const active = pathname.startsWith(fullHref);
-            return (
-              <Link
-                key={href}
-                href={fullHref}
-                className={cn(
-                  "group flex items-center gap-3.5 rounded-full px-4 py-3 text-[14px] font-semibold transition-all duration-200",
-                  active
-                    ? "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] text-foreground"
-                    : "text-muted-foreground hover:bg-black/5 hover:text-foreground",
-                )}
-              >
-                <Icon 
-                  strokeWidth={active ? 2.5 : 2}
-                  className={cn(
-                    "h-[20px] w-[20px] shrink-0 transition-all duration-300",
-                    active ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground",
-                  )} 
-                />
-                {label}
-              </Link>
-            );
-          })}
+        <div className="space-y-0.5 border-t border-border px-3 py-3">
+          {navLink(settingsItem)}
+          <div className="flex items-center gap-2.5 rounded-lg px-3 py-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background">
+              {initialsOf(displayName)}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-muted-foreground">
+              {displayName}
+            </span>
+            <Link
+              href="/api/auth/signout"
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+            >
+              <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
+            </Link>
+          </div>
         </div>
       </aside>
 
-      {/* ═══════ MOBILE BOTTOM NAV ═══════ */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#f9f9f6]/95 backdrop-blur-lg border-t border-border/40 safe-area-bottom">
-        <div className="flex items-center justify-around px-2 h-16">
+      {/* ── Mobile top bar: says which yeguada you are in ─────── */}
+      <header className="safe-area-top fixed top-0 right-0 left-0 z-30 flex h-14 items-center justify-between border-b border-border bg-sidebar/95 px-4 backdrop-blur-lg md:hidden">
+        <Link
+          href={`/${tenantSlug}/inicio`}
+          className="flex min-w-0 items-center gap-2.5"
+        >
+          <span className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+            <Image src="/logo.png" alt="" fill className="object-contain p-1" />
+          </span>
+          <span className="truncate text-[15px] font-semibold text-foreground">
+            {tenantName}
+          </span>
+        </Link>
+        <Link
+          href={`/${tenantSlug}/ajustes`}
+          aria-label="Ajustes"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+        >
+          <Settings className="h-[18px] w-[18px]" strokeWidth={2} />
+        </Link>
+      </header>
+
+      {/* ── Mobile bottom tabs ───────────────────────────────── */}
+      <nav className="safe-area-bottom fixed right-0 bottom-0 left-0 z-40 border-t border-border bg-sidebar/95 backdrop-blur-lg md:hidden">
+        <div className="flex h-16 items-stretch">
           {mobileTabItems.map(({ label, href, icon: Icon }) => {
-            const fullHref = `/${tenantSlug}/${href}`;
-            const active = pathname.startsWith(fullHref);
+            const active = isActive(href);
             return (
               <Link
                 key={href}
-                href={fullHref}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 min-w-0 flex-1 py-1 transition-colors duration-150",
-                  active ? "text-foreground" : "text-muted-foreground",
-                )}
+                href={`/${tenantSlug}/${href}`}
+                aria-current={active ? "page" : undefined}
+                className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 pt-1"
               >
-                <div className={cn(
-                  "p-1.5 rounded-full transition-all duration-300",
-                  active ? "bg-white shadow-sm" : "bg-transparent"
-                )}>
-                  <Icon
-                    strokeWidth={active ? 2.5 : 2}
-                    className={cn(
-                      "h-[20px] w-[20px] shrink-0 transition-transform duration-300",
-                      active && "text-primary scale-110"
-                    )}
-                  />
-                </div>
-                <span className="text-[10px] font-medium truncate max-w-full">
+                <Icon
+                  strokeWidth={2}
+                  className={cn(
+                    "h-[20px] w-[20px] shrink-0 transition-colors",
+                    active ? "text-primary-ink" : "text-muted-foreground",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "max-w-full truncate text-[10.5px]",
+                    active
+                      ? "font-semibold text-foreground"
+                      : "font-medium text-muted-foreground",
+                  )}
+                >
                   {label}
                 </span>
               </Link>
             );
           })}
-          {/* More button */}
           <button
+            type="button"
             onClick={() => setMoreOpen(true)}
-            className={cn(
-              "flex flex-col items-center justify-center gap-1 min-w-0 flex-1 py-1 transition-colors duration-150",
-              moreOpen ? "text-foreground" : "text-muted-foreground",
-            )}
+            aria-expanded={moreOpen}
+            className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 pt-1"
           >
-            <div className={cn(
-              "p-1.5 rounded-full transition-all duration-300",
-              moreOpen ? "bg-white shadow-sm" : "bg-transparent"
-            )}>
-              <Menu strokeWidth={moreOpen ? 2.5 : 2} className={cn("h-[20px] w-[20px] shrink-0", moreOpen && "text-primary scale-110")} />
-            </div>
-            <span className="text-[10px] font-medium">Más</span>
+            <Menu
+              strokeWidth={2}
+              className={cn(
+                "h-[20px] w-[20px] shrink-0",
+                moreOpen ? "text-primary-ink" : "text-muted-foreground",
+              )}
+            />
+            <span
+              className={cn(
+                "text-[10.5px]",
+                moreOpen
+                  ? "font-semibold text-foreground"
+                  : "font-medium text-muted-foreground",
+              )}
+            >
+              Más
+            </span>
           </button>
         </div>
       </nav>
 
-      {/* ═══════ MOBILE "MORE" SHEET ═══════ */}
+      {/* ── Mobile overflow sheet ────────────────────────────── */}
       {moreOpen && (
         <>
-          {/* Backdrop */}
           <div
-            className="md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-300"
+            className="animate-in fade-in-0 fixed inset-0 z-50 bg-foreground/25 backdrop-blur-[2px] duration-200 md:hidden"
             onClick={() => setMoreOpen(false)}
           />
-          {/* Sheet */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#f9f9f6] rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[80vh] overflow-y-auto safe-area-bottom">
-            {/* Handle bar */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="h-1.5 w-12 rounded-full bg-border" />
+          <div
+            role="dialog"
+            aria-label="Más secciones"
+            className="safe-area-bottom animate-in slide-in-from-bottom fixed right-0 bottom-0 left-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-border bg-background duration-200 md:hidden"
+          >
+            <div className="flex justify-center pt-3 pb-1">
+              <span className="h-1 w-10 rounded-full bg-border" />
             </div>
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 pb-4 pt-2">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-border/40 shadow-sm relative overflow-hidden">
-                  <Image src="/logo.png" alt="Relincho" fill className="object-contain p-1" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Relincho</p>
-                  <p className="font-bold text-sm truncate text-foreground tracking-tight font-heading">
-                    {tenantName}
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between px-4 py-3">
+              <p className="text-[13px] font-semibold text-foreground">
+                Más secciones
+              </p>
               <button
+                type="button"
                 onClick={() => setMoreOpen(false)}
-                className="h-8 w-8 rounded-full bg-white shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Cerrar"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <X strokeWidth={2.5} className="h-4 w-4" />
+                <X className="h-4 w-4" strokeWidth={2.5} />
               </button>
             </div>
-            {/* Nav items */}
-            <div className="px-4 pb-6 space-y-1">
-              {mobileOverflowItems.map(({ label, href, icon: Icon }) => {
-                const fullHref = `/${tenantSlug}/${href}`;
-                const active = pathname.startsWith(fullHref);
-                return (
-                  <Link
-                    key={href}
-                    href={fullHref}
-                    className={cn(
-                      "group flex items-center gap-3.5 rounded-full px-4 py-3.5 text-[15px] font-semibold transition-all duration-200",
-                      active
-                        ? "bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] text-foreground"
-                        : "text-muted-foreground hover:bg-black/5 hover:text-foreground",
-                    )}
-                  >
-                    <Icon
-                      strokeWidth={active ? 2.5 : 2}
-                      className={cn(
-                        "h-[20px] w-[20px] shrink-0 transition-all duration-300",
-                        active ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground",
-                      )}
-                    />
-                    {label}
-                  </Link>
-                );
-              })}
+            <div className="space-y-0.5 px-3 pb-5">
+              {mobileOverflowItems.map((item) => navLink(item, { large: true }))}
+              <Link
+                href="/api/auth/signout"
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+              >
+                <LogOut
+                  className="h-[18px] w-[18px] shrink-0"
+                  strokeWidth={2}
+                />
+                Cerrar sesión
+              </Link>
             </div>
           </div>
         </>

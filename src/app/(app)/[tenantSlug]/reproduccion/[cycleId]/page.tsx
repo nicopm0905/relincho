@@ -187,7 +187,7 @@ export default async function CycleDetailPage({ params }: PageProps) {
                       <div className="border-t border-border/50 pt-4">
                         <div className="bg-primary/5 rounded-xl p-4">
                           <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                            <Baby weight="fill" className="h-4 w-4 text-primary-foreground" />
+                            <Baby weight="fill" className="h-4 w-4 text-primary-ink" />
                             Parto Registrado
                           </h4>
                           <div className="grid grid-cols-3 gap-3 text-sm">

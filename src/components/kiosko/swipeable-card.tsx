@@ -5,16 +5,27 @@ import { useState } from "react";
 import { Check, X, Horse } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
+/** Ajuste del dia calculado a partir de la carga de entrenamiento. */
+export interface DynamicRation {
+  forageKg: number;
+  concentrateKg: number;
+  extraGrams: number;
+  electrolytesGrams: number;
+  totalMeals: number;
+  instructions: string;
+}
+
 interface SwipeableCardProps {
   horseName: string;
   boxLocation?: string | null;
   photoUrl?: string | null;
   diet: string[];
   status: "PENDING" | "DONE" | "SKIPPED";
+  dynamic?: DynamicRation | null;
   onSwipe: (status: "DONE" | "SKIPPED") => void;
 }
 
-export function SwipeableCard({ horseName, boxLocation, photoUrl, diet, status, onSwipe }: SwipeableCardProps) {
+export function SwipeableCard({ horseName, boxLocation, photoUrl, diet, status, dynamic, onSwipe }: SwipeableCardProps) {
   const [swiping, setSwiping] = useState(false);
   const x = useMotionValue(0);
   
@@ -132,6 +143,33 @@ export function SwipeableCard({ horseName, boxLocation, photoUrl, diet, status, 
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {dynamic && (
+          <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50/80 p-4">
+            <div className="text-xs font-bold uppercase tracking-wider text-orange-700/70">
+              Ajuste de hoy
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="rounded-xl bg-white px-3 py-1.5 text-sm font-bold text-orange-800 border border-orange-100">
+                {dynamic.forageKg} kg heno
+              </span>
+              <span className="rounded-xl bg-white px-3 py-1.5 text-sm font-bold text-orange-800 border border-orange-100">
+                {dynamic.concentrateKg} kg pienso
+              </span>
+              <span className="rounded-xl bg-white px-3 py-1.5 text-sm font-bold text-orange-800 border border-orange-100">
+                {dynamic.totalMeals} tomas
+              </span>
+              {dynamic.electrolytesGrams > 0 && (
+                <span className="rounded-xl bg-amber-100 px-3 py-1.5 text-sm font-black text-amber-900 border border-amber-200">
+                  + {dynamic.electrolytesGrams} g electrolitos
+                </span>
+              )}
+            </div>
+            <p className="mt-3 text-sm font-semibold leading-snug text-orange-900">
+              {dynamic.instructions}
+            </p>
           </div>
         )}
 

@@ -26,22 +26,20 @@ export default async function DocumentosPage({ params }: PageProps) {
         </div>
       </div>
       
-      <h1 className="text-3xl font-black font-heading tracking-tight text-foreground mb-4">
+      <h1 className="text-[26px] sm:text-3xl font-black font-heading tracking-tight text-foreground mb-4">
         Gestor Documental en Construcción
       </h1>
       <p className="text-lg text-muted-foreground max-w-md mx-auto mb-8 font-medium">
         Próximamente podrás subir contratos, analíticas, radiografías y pasaportes directamente a la nube de tu yeguada, todo organizado por carpetas y caballos.
       </p>
       
-      <div className="flex gap-4">
-        <Button asChild className="rounded-full shadow-sm bg-blue-600 hover:bg-blue-700 text-white border-none">
-          <Link href={`/${tenantSlug}/caballos`}>
-            Ir a mis Caballos
-          </Link>
+      <div className="flex w-full max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4">
+        <Button asChild size="lg" className="shadow-sm">
+          <Link href={`/${tenantSlug}/caballos`}>Ir a mis caballos</Link>
         </Button>
-        <Button asChild variant="outline" className="rounded-full bg-white">
+        <Button asChild size="lg" variant="outline" className="shadow-sm">
           <Link href={`/${tenantSlug}/facturacion`}>
-            Ir a Facturación <ArrowRight weight="bold" className="ml-2 h-4 w-4" />
+            Ir a facturación <ArrowRight weight="bold" className="h-4 w-4" />
           </Link>
         </Button>
       </div>

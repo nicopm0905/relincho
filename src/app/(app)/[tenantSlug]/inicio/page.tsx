@@ -1,10 +1,21 @@
-import { createServerCaller } from "@/lib/trpc/server";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Horse, Heartbeat, Baby, CalendarCheck, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { formatDate } from "@/lib/formatters";
-import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+import { createServerCaller } from "@/lib/trpc/server";
+import {
+  Horse,
+  Heartbeat,
+  CheckSquare,
+  Plus,
+  CaretRight,
+  Sun,
+} from "@phosphor-icons/react/dist/ssr";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { PageHeader, SectionHeading } from "@/components/layout/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -15,7 +26,7 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: `Inicio — ${tenantSlug}` };
 }
 
-const typeLabels: Record<string, string> = {
+const healthTypeLabels: Record<string, string> = {
   VACCINE: "Vacuna",
   DEWORMING: "Desparasitación",
   DENTAL: "Dental",
@@ -26,124 +37,252 @@ const typeLabels: Record<string, string> = {
   OTHER: "Otro",
 };
 
+/** A cycle counts as an active pregnancy when the last check came back
+ *  positive and the foal has not been born yet. */
+function isPregnant(cycle: {
+  coverings?: { pregnancyChecks?: { result: string }[]; foaling?: unknown }[];
+}) {
+  const latestCovering = cycle.coverings?.[0];
+  if (!latestCovering || latestCovering.foaling) return false;
+  return latestCovering.pregnancyChecks?.[0]?.result === "POSITIVE";
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** "Vencía hace 3 días" / "Hoy" / "En 12 días" — relative beats a raw date
+ *  when the whole point of the row is urgency. */
+function dueLabel(due: Date, today: number) {
+  const days = Math.round(
+    (new Date(due).setHours(0, 0, 0, 0) - today) / DAY_MS,
+  );
+  if (days < -1) return { text: `Hace ${Math.abs(days)} días`, overdue: true };
+  if (days === -1) return { text: "Ayer", overdue: true };
+  if (days === 0) return { text: "Hoy", overdue: true };
+  if (days === 1) return { text: "Mañana", overdue: false };
+  return { text: `En ${days} días`, overdue: false };
+}
+
 export default async function InicioPage({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
-  
-  const [horses, upcomingHealth] = await Promise.all([
+
+  const [horses, upcomingHealth, cycles, openTasks] = await Promise.all([
     caller.horses.list(),
     caller.health.upcoming({ days: 30 }),
+    caller.reproduction.listActiveCycles({}),
+    caller.tasks.list({ done: false }),
   ]);
 
-  const activeHorses = horses.filter(h => h.status === 'ACTIVE').length;
+  const now = new Date();
+  const today = new Date().setHours(0, 0, 0, 0);
+
+  const activeHorses = horses.filter((h) => h.status === "ACTIVE").length;
+  const pregnantMares = cycles.filter(isPregnant).length;
+
+  // One prioritised worklist instead of two parallel lists the user has to
+  // cross-reference. Everything that has a date lands here, soonest first.
+  const attention = [
+    ...upcomingHealth
+      .filter((event) => event.nextDueDate)
+      .map((event) => ({
+        id: `health-${event.id}`,
+        due: new Date(event.nextDueDate!),
+        title: event.name,
+        subtitle: `${event.horse.name} · ${healthTypeLabels[event.type] ?? event.type}`,
+        href: `/${tenantSlug}/sanidad`,
+        icon: <Heartbeat weight="duotone" />,
+      })),
+    ...openTasks
+      .filter((task) => task.dueDate)
+      .map((task) => ({
+        id: `task-${task.id}`,
+        due: new Date(task.dueDate),
+        title: task.title,
+        subtitle: "Tarea pendiente",
+        href: `/${tenantSlug}/tareas`,
+        icon: <CheckSquare weight="duotone" />,
+      })),
+  ].sort((a, b) => a.due.getTime() - b.due.getTime());
+
+  const overdueCount = attention.filter(
+    (item) => new Date(item.due).setHours(0, 0, 0, 0) <= today,
+  ).length;
+
+  const recentHorses = horses.filter((h) => h.status === "ACTIVE").slice(0, 6);
 
   return (
-    <div className="space-y-8 animate-in fade-in-0 duration-500">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-heading">
-          Resumen Diario
-        </h1>
-        <p className="mt-1 text-[15px] font-medium text-muted-foreground">
-          Un vistazo rápido al estado de tu yeguada
-        </p>
+    <div className="animate-in fade-in-0 space-y-8 duration-300">
+      <PageHeader
+        title="Inicio"
+        description={format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+        actions={
+          <>
+            <Button asChild variant="outline">
+              <Link href={`/${tenantSlug}/sanidad/nuevo`}>
+                <Heartbeat weight="bold" />
+                Registrar sanidad
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/${tenantSlug}/caballos/nuevo`}>
+                <Plus weight="bold" />
+                Añadir caballo
+              </Link>
+            </Button>
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard
+          label="Caballos activos"
+          value={activeHorses}
+          hint={`${horses.length} en total`}
+          href={`/${tenantSlug}/caballos`}
+        />
+        <StatCard
+          label="Requiere atención"
+          value={overdueCount}
+          hint={
+            overdueCount === 0 ? "Nada vencido" : "Vencido o para hoy"
+          }
+          emphasis={overdueCount > 0}
+          href={`/${tenantSlug}/sanidad`}
+        />
+        <StatCard
+          label="Yeguas preñadas"
+          value={pregnantMares}
+          hint={`${cycles.length} ciclos esta temporada`}
+          href={`/${tenantSlug}/reproduccion`}
+        />
+        <StatCard
+          label="Tareas abiertas"
+          value={openTasks.length}
+          hint="Sin completar"
+          href={`/${tenantSlug}/tareas`}
+        />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-bento border-border/40 bg-white hover:border-border/60 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-bold text-muted-foreground">Caballos Activos</CardTitle>
-            <div className="h-10 w-10 bg-primary/5 rounded-xl flex items-center justify-center">
-              <Horse weight="duotone" className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-extrabold font-heading text-foreground">{activeHorses}</div>
-            <p className="text-xs text-muted-foreground font-medium mt-1">
-              De {horses.length} registrados
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-bento border-border/40 bg-white hover:border-border/60 transition-colors">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-bold text-muted-foreground">Alertas Sanitarias</CardTitle>
-            <div className="h-10 w-10 bg-amber-50 rounded-xl flex items-center justify-center">
-              <Heartbeat weight="duotone" className="h-5 w-5 text-amber-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-extrabold font-heading text-foreground">{upcomingHealth.length}</div>
-            <p className="text-xs text-muted-foreground font-medium mt-1">
-              Próximos 30 días
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-bento border-border/40 bg-white hover:border-border/60 transition-colors opacity-70">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-bold text-muted-foreground">Parideras Activas</CardTitle>
-            <div className="h-10 w-10 bg-pink-50 rounded-xl flex items-center justify-center">
-              <Baby weight="duotone" className="h-5 w-5 text-pink-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-extrabold font-heading text-foreground">0</div>
-            <p className="text-xs text-muted-foreground font-medium mt-1">
-              Próximamente
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-bento border-border/40">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-heading">
-              <WarningCircle weight="duotone" className="h-5 w-5 text-amber-500" />
-              Sanidad Pendiente
-            </CardTitle>
-            <CardDescription>
-              Tratamientos, vacunas o herrajes programados
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {upcomingHealth.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-sm text-muted-foreground font-medium">Todo al día. No hay alertas sanitarias.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {upcomingHealth.map((ev) => (
-                  <div key={ev.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100">
-                        <CalendarCheck weight="duotone" className="h-4 w-4 text-amber-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm text-foreground">{ev.horse.name}</p>
-                        <p className="text-xs text-muted-foreground font-medium">{ev.name}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className="mb-1 text-[10px] font-bold">
-                        {typeLabels[ev.type] ?? ev.type}
-                      </Badge>
-                      <p className="text-xs font-semibold text-amber-600">
-                        {ev.nextDueDate ? formatDate(ev.nextDueDate) : 'Pendiente'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="mt-6">
-              <Button asChild variant="outline" className="w-full rounded-xl">
-                <Link href={`/${tenantSlug}/sanidad`}>Ver todo el historial</Link>
+      <section className="space-y-3">
+        <SectionHeading
+          title="Requiere tu atención"
+          description="Vencimientos sanitarios y tareas, lo más urgente primero"
+          action={
+            attention.length > 0 && (
+              <Button asChild variant="ghost" size="sm">
+                <Link href={`/${tenantSlug}/sanidad`}>
+                  Ver sanidad
+                  <CaretRight weight="bold" />
+                </Link>
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            )
+          }
+        />
+        {attention.length === 0 ? (
+          <EmptyState
+            icon={<Sun weight="duotone" />}
+            title="Todo al día"
+            description="No hay vencimientos sanitarios ni tareas con fecha pendientes."
+          />
+        ) : (
+          <ListRows>
+            {attention.slice(0, 8).map((item) => {
+              const due = dueLabel(item.due, today);
+              return (
+                <ListRow
+                  key={item.id}
+                  href={item.href}
+                  leading={
+                    <RowIcon tone={due.overdue ? "alert" : "neutral"}>
+                      {item.icon}
+                    </RowIcon>
+                  }
+                  title={item.title}
+                  subtitle={item.subtitle}
+                  meta={
+                    <span
+                      className={
+                        due.overdue
+                          ? "font-semibold text-amber-700"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {due.text}
+                    </span>
+                  }
+                />
+              );
+            })}
+          </ListRows>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <SectionHeading
+          title="Tu cuadra"
+          description={`${activeHorses} ${activeHorses === 1 ? "caballo activo" : "caballos activos"}`}
+          action={
+            <Button asChild variant="ghost" size="sm">
+              <Link href={`/${tenantSlug}/caballos`}>
+                Ver todos
+                <CaretRight weight="bold" />
+              </Link>
+            </Button>
+          }
+        />
+        {recentHorses.length === 0 ? (
+          <EmptyState
+            icon={<Horse weight="duotone" />}
+            title="Sin caballos aún"
+            description="Registra tu primer caballo para empezar a llevar su sanidad y su documentación."
+            action={
+              <Button asChild>
+                <Link href={`/${tenantSlug}/caballos/nuevo`}>
+                  <Plus weight="bold" />
+                  Añadir el primero
+                </Link>
+              </Button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {recentHorses.map((horse) => (
+              <Link
+                key={horse.id}
+                href={`/${tenantSlug}/caballos/${horse.id}`}
+                className="group overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-foreground/20"
+              >
+                <div className="relative aspect-[4/3] bg-muted">
+                  {horse.photoUrl ? (
+                    <Image
+                      src={horse.photoUrl}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1024px) 12rem, 45vw"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <Horse
+                        weight="duotone"
+                        className="h-7 w-7 text-muted-foreground/40"
+                      />
+                    </span>
+                  )}
+                </div>
+                <div className="px-2.5 py-2">
+                  <p className="truncate text-[13px] font-medium text-foreground">
+                    {horse.name}
+                  </p>
+                  <p className="truncate text-[11.5px] text-muted-foreground">
+                    {horse.breed || "Sin raza"}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -2,6 +2,9 @@ import { auth } from "@/server/auth";
 import { Header } from "@/components/marketing/header";
 import { Footer } from "@/components/marketing/footer";
 
+/* Bump this by hand whenever the text of this document changes. */
+const LAST_UPDATED = "8 de septiembre de 2026";
+
 export const metadata = {
   title: "Política de Cookies - Relincho",
 };
@@ -20,7 +23,7 @@ export default async function CookiesPage() {
         
         <div className="prose prose-slate max-w-none text-muted-foreground prose-headings:font-heading prose-headings:text-foreground">
           <p className="lead text-lg mb-8">
-            Última actualización: {new Date().toLocaleDateString('es-ES')}
+            Última actualización: {LAST_UPDATED}
           </p>
           
           <h2 className="text-2xl font-bold mt-12 mb-4">1. ¿Qué son las cookies?</h2>
@@ -29,14 +32,14 @@ export default async function CookiesPage() {
           </p>
 
           <h2 className="text-2xl font-bold mt-12 mb-4">2. Cómo utilizamos las cookies en Relincho</h2>
-          <p className="mb-6">
+          <p className="mb-4">
             Utilizamos cookies por varias razones, principalmente para:
-            <ul className="list-disc pl-6 mt-4 space-y-2">
+          </p>
+          <ul className="mb-6 list-disc space-y-2 pl-6">
               <li><strong>Cookies Estrictamente Necesarias:</strong> Esenciales para que puedas navegar por la plataforma y usar sus funciones, como acceder a áreas seguras (iniciar sesión en tu cuenta).</li>
               <li><strong>Cookies de Rendimiento:</strong> Nos ayudan a entender cómo los visitantes interactúan con la web, recopilando información de forma anónima.</li>
               <li><strong>Cookies de Funcionalidad:</strong> Permiten que el sitio web recuerde las elecciones que haces (como tu nombre de usuario).</li>
             </ul>
-          </p>
 
           <h2 className="text-2xl font-bold mt-12 mb-4">3. Controlar las cookies</h2>
           <p className="mb-6">

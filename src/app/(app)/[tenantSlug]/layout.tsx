@@ -33,9 +33,17 @@ export default async function TenantLayout({
   return (
     <TRPCProvider tenantSlug={tenantSlug}>
       <div className="flex min-h-screen bg-background">
-        <Sidebar tenantSlug={tenantSlug} tenantName={tenant.name} />
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-6xl mx-auto px-4 py-6 pb-24 md:px-8 md:py-10 md:pb-10">{children}</div>
+        <Sidebar
+          tenantSlug={tenantSlug}
+          tenantName={tenant.name}
+          userName={session.user.name}
+          userEmail={session.user.email}
+        />
+        {/* Top padding on phones clears the fixed bar; bottom clears the tabs. */}
+        <main className="min-w-0 flex-1">
+          <div className="mx-auto max-w-6xl px-4 pt-20 pb-24 md:px-8 md:pt-8 md:pb-12">
+            {children}
+          </div>
         </main>
         <Toaster richColors position="top-right" />
       </div>

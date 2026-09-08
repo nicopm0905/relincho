@@ -39,6 +39,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-primary-ink: var(--primary-ink);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -51,12 +52,25 @@
   --radius-3xl: calc(var(--radius) * 2.5);
   --radius-4xl: calc(var(--radius) * 3);
   --radius-full: 9999px;
+
+  /* Fases de la periodizacion, para las graficas de carga */
+  --color-phase-acumulacion: var(--phase-acumulacion);
+  --color-phase-transmutacion: var(--phase-transmutacion);
+  --color-phase-realizacion: var(--phase-realizacion);
+  --color-phase-transicion: var(--phase-transicion);
 }
 
 :root {
   /* Granola-inspired Light Palette */
   --background: #f9f9f6; /* Warm off-white/cream */
   --foreground: #111111; /* Dark charcoal */
+
+  /* Paleta categorica de fases: cuatro slots validados sobre el blanco de las
+     tarjetas (separacion CVD y vision normal por encima del umbral). */
+  --phase-acumulacion: #2a78d6;
+  --phase-transmutacion: #eb6834;
+  --phase-realizacion: #1baf7a;
+  --phase-transicion: #eda100;
   
   --card: #ffffff;
   --card-foreground: #111111;
@@ -66,12 +80,14 @@
   
   --primary: #a3b846; /* Olive green */
   --primary-foreground: #ffffff;
+  /* Readable olive for text/icons placed on a translucent primary tint. */
+  --primary-ink: #55651c;
   
   --secondary: #eaeaea; /* Very soft gray */
   --secondary-foreground: #111111;
   
   --muted: #f2f2f0;
-  --muted-foreground: #666666; /* Muted slate */
+  --muted-foreground: #5f5f5c; /* Muted slate, AA on cream */
   
   --accent: #f2f2f0;
   --accent-foreground: #111111;
@@ -93,9 +109,9 @@
   --chart-4: #8b5cf6;
   --chart-5: #ef4444;
   
-  --radius: 1.5rem; /* Significantly larger base radius */
+  --radius: 0.625rem; /* Base radius; cards step up from here */
   
-  --sidebar: #ffffff;
+  --sidebar: #f4f4f0;
   --sidebar-foreground: #111111;
   --sidebar-primary: #a3b846;
   --sidebar-primary-foreground: #ffffff;
@@ -109,6 +125,12 @@
   /* Granola-inspired Dark Palette */
   --background: #111111; /* Charcoal */
   --foreground: #f9f9f6; /* Off-white */
+
+  /* Mismos cuatro tonos, escalonados para la superficie oscura. */
+  --phase-acumulacion: #3987e5;
+  --phase-transmutacion: #d95926;
+  --phase-realizacion: #199e70;
+  --phase-transicion: #c98500;
   
   --card: #1c1c1c; 
   --card-foreground: #f9f9f6;
@@ -118,6 +140,7 @@
   
   --primary: #a3b846; 
   --primary-foreground: #111111;
+  --primary-ink: #c3d66a;
   
   --secondary: #2a2a2a;
   --secondary-foreground: #f9f9f6;
@@ -170,7 +193,14 @@
 /* Granola specific styles */
 @layer utilities {
   .shadow-bento {
-    box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.04), 0px 2px 4px rgba(0, 0, 0, 0.02);
+    box-shadow:
+      0 1px 2px rgba(17, 17, 17, 0.04),
+      0 4px 16px rgba(17, 17, 17, 0.03);
+  }
+  .shadow-raised {
+    box-shadow:
+      0 1px 2px rgba(17, 17, 17, 0.05),
+      0 8px 24px rgba(17, 17, 17, 0.06);
   }
   .dark .shadow-bento {
     box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.2), 0px 2px 4px rgba(0, 0, 0, 0.1);
@@ -185,5 +215,68 @@
   
   .dark .glass-panel {
     @apply bg-[#1c1c1c]/70 border-[#2a2a2a]/40 shadow-[0_8px_32px_rgba(0,0,0,0.2)];
+  }
+}
+/* ── Layout & scroll helpers ─────────────────────────────── */
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Fades the edges of a horizontally scrollable strip so users
+     can tell there is more content off-screen. */
+  .scroll-fade-x {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 1.25rem,
+      #000 calc(100% - 1.25rem),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 1.25rem,
+      #000 calc(100% - 1.25rem),
+      transparent 100%
+    );
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Interactive surface used by list rows and clickable cards. */
+  .card-hover {
+    transition: transform 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0px 8px 30px rgba(0, 0, 0, 0.04),
+      0px 2px 4px rgba(0, 0, 0, 0.02);
+  }
+}
+
+@layer base {
+  /* Long words (UELN codes, microchips, emails) must never widen a
+     column on a narrow screen. */
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Comfortable tap targets on touch devices without inflating
+     the desktop layout. */
+  @media (pointer: coarse) {
+    a, button, [role="button"] {
+      -webkit-tap-highlight-color: transparent;
+    }
   }
 }

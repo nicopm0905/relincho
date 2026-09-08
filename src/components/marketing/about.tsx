@@ -24,16 +24,16 @@ const values = [
 
 export function About() {
   return (
-    <section id="nosotros" className="py-24 md:py-32 bg-white relative">
+    <section id="nosotros" className="relative overflow-hidden bg-white py-20 md:py-32">
       <div className="container max-w-6xl mx-auto px-4 sm:px-6">
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24">
+        <div className="mb-16 grid grid-cols-1 items-center gap-10 md:mb-24 lg:grid-cols-2 lg:gap-16">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="order-2 lg:order-1"
+            className="lg:order-1"
           >
             <h2 className="font-heading text-4xl md:text-5xl text-foreground mb-6">
               ¿Quiénes Somos?
@@ -59,7 +59,7 @@ export function About() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="order-1 lg:order-2 relative aspect-square lg:aspect-[4/3] rounded-[2rem] overflow-hidden bg-[#f9f9f6] border border-border/50 flex items-center justify-center p-8 group"
+            className="group relative flex aspect-[4/3] max-h-[300px] items-center justify-center overflow-hidden rounded-[2rem] border border-border/50 bg-[#f9f9f6] p-8 lg:order-2 lg:max-h-none"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent transition-opacity group-hover:opacity-75"></div>
             <div className="text-center relative z-10">
@@ -72,7 +72,7 @@ export function About() {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
           {values.map((value, i) => (
             <motion.div 
               key={i}

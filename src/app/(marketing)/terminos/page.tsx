@@ -2,6 +2,9 @@ import { auth } from "@/server/auth";
 import { Header } from "@/components/marketing/header";
 import { Footer } from "@/components/marketing/footer";
 
+/* Bump this by hand whenever the text of this document changes. */
+const LAST_UPDATED = "8 de septiembre de 2026";
+
 export const metadata = {
   title: "Términos y Condiciones - Relincho",
 };
@@ -20,7 +23,7 @@ export default async function TerminosPage() {
         
         <div className="prose prose-slate max-w-none text-muted-foreground prose-headings:font-heading prose-headings:text-foreground">
           <p className="lead text-lg mb-8">
-            Última actualización: {new Date().toLocaleDateString('es-ES')}
+            Última actualización: {LAST_UPDATED}
           </p>
           
           <h2 className="text-2xl font-bold mt-12 mb-4">1. Introducción</h2>

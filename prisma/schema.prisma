@@ -184,6 +184,12 @@ model Horse {
   feedingLogs      FeedingLog[]
   dailyJournals    DailyJournal[]
   competitionTargets CompetitionTarget[]
+  chipTags         ChipTag[]
+  vetProfile       VeterinaryProfile?
+  macrocycles      Macrocycle[]
+  dailyLoads       DailyLoad[]
+  nutritionBaseline NutritionBaseline?
+  nutritionPrescriptions NutritionPrescription[]
   createdAt        DateTime            @default(now())
 
   @@index([tenantId])
@@ -246,9 +252,15 @@ model TrainingSession {
   minutes   Int
   type      String?
   notes     String?
+  rpe       Int?
+  internalLoadUa Int?
+  fatigueZone    FatigueZone?
+  sweatLoss      SweatLoss?
   horse     Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  dailyLoad DailyLoad?
 
   @@index([tenantId, horseId])
+  @@index([tenantId, date])
 }
 
 model FeedingPlan {
@@ -483,6 +495,242 @@ model CompetitionTarget {
   priority   String?  // Ej. "ALTA", "MEDIA", "BAJA"
   notes      String?
   horse      Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  macrocycles Macrocycle[]
 
   @@index([tenantId, horseId, targetDate])
+}
+
+// ============================================================
+// RENDIMIENTO / PREVENCION DE LESIONES + NUTRICION DINAMICA
+// ============================================================
+
+enum Discipline {
+  DOMA_CLASICA
+  DOMA_VAQUERA
+  SALTO
+  COMPLETO
+  RAID
+  ENGANCHES
+  FUNCIONALIDAD
+  OCIO
+}
+
+enum MesocyclePhase {
+  ACUMULACION
+  TRANSMUTACION
+  REALIZACION
+  TRANSICION
+}
+
+enum PlanStatus {
+  ACTIVE
+  ARCHIVED
+  COMPLETED
+}
+
+enum WorkType {
+  DESCANSO
+  RECUPERACION_ACTIVA
+  PISTA_TECNICA
+  PISTA_ALTA_INTENSIDAD
+  CAMPO_FONDO
+  GIMNASIA_SALTO
+  COMPETICION
+}
+
+enum DayStatus {
+  PLANNED
+  COMPLETED
+  MISSED
+  ADJUSTED
+}
+
+enum FatigueZone {
+  BAJA
+  MEDIA
+  ALTA
+}
+
+enum SweatLoss {
+  BAJA
+  MEDIA
+  ALTA
+}
+
+enum ReproductiveStatus {
+  NA
+  CICLANDO
+  GESTANTE
+  LACTANDO
+  SEMENTAL_EN_MONTA
+  SEMENTAL_REPOSO
+}
+
+/// Emparejamiento chip fisico (NFC/RFID) <-> caballo.
+model ChipTag {
+  id         String   @id @default(uuid())
+  tenantId   String
+  horseId    String
+  chipId     String   @unique
+  kind       String   @default("NFC") // NFC | RFID
+  active     Boolean  @default(true)
+  pairedById String?
+  pairedAt   DateTime @default(now())
+  horse      Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, horseId])
+}
+
+/// Estado basal clinico y restricciones de carga fijadas por el veterinario.
+model VeterinaryProfile {
+  id                      String             @id @default(uuid())
+  tenantId                String
+  horseId                 String             @unique
+  discipline              Discipline?
+  baseWeightKg            Decimal?           @db.Decimal(6, 2)
+  reproductiveStatus      ReproductiveStatus @default(NA)
+  gestationMonth          Int?
+  tendonHistoryAlert      Boolean            @default(false)
+  maxImpactSurfaceMinutes Int?
+  maxRpe                  Int?
+  restrictions            String[]           @default([])
+  notes                   String?
+  horse                   Horse              @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  updatedAt               DateTime           @updatedAt
+
+  @@index([tenantId])
+}
+
+/// Temporada completa hasta la fecha de competicion objetivo.
+model Macrocycle {
+  id                  String             @id @default(uuid())
+  tenantId            String
+  horseId             String
+  name                String
+  discipline          Discipline?
+  startDate           DateTime
+  targetDate          DateTime
+  competitionTargetId String?
+  status              PlanStatus         @default(ACTIVE)
+  recoveryBufferPct   Int                @default(15)
+  horse               Horse              @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  competitionTarget   CompetitionTarget? @relation(fields: [competitionTargetId], references: [id], onDelete: SetNull)
+  mesocycles          Mesocycle[]
+  createdAt           DateTime           @default(now())
+
+  @@index([tenantId, horseId, status])
+}
+
+/// Bloque de 3-6 semanas con una orientacion concreta (volumen, intensidad, tapering).
+model Mesocycle {
+  id             String         @id @default(uuid())
+  tenantId       String
+  macrocycleId   String
+  phase          MesocyclePhase
+  orderIndex     Int
+  startDate      DateTime
+  endDate        DateTime
+  weeks          Int
+  volumeIndex    Float
+  intensityIndex Float
+  macrocycle     Macrocycle     @relation(fields: [macrocycleId], references: [id], onDelete: Cascade)
+  microcycles    Microcycle[]
+
+  @@unique([macrocycleId, orderIndex])
+  @@index([tenantId])
+}
+
+/// Semana de 7 dias con su carga planificada.
+model Microcycle {
+  id                String      @id @default(uuid())
+  tenantId          String
+  mesocycleId       String
+  weekNumber        Int
+  startDate         DateTime
+  endDate           DateTime
+  plannedLoadUa     Int
+  actualLoadUa      Int         @default(0)
+  mandatoryRestDays Int         @default(2)
+  bufferStatus      String      @default("idle") // idle | active | exhausted
+  mesocycle         Mesocycle   @relation(fields: [mesocycleId], references: [id], onDelete: Cascade)
+  days              DailyLoad[]
+
+  @@unique([mesocycleId, weekNumber])
+  @@index([tenantId])
+}
+
+/// Carga diaria planificada y su ejecucion real.
+model DailyLoad {
+  id                   String           @id @default(uuid())
+  tenantId             String
+  microcycleId         String
+  horseId              String
+  date                 DateTime         @db.Date
+  workType             WorkType
+  rpeTarget            Int
+  durationMinutes      Int
+  plannedLoadUa        Int
+  impactSurfaceMinutes Int              @default(0)
+  status               DayStatus        @default(PLANNED)
+  actualRpe            Int?
+  actualMinutes        Int?
+  actualLoadUa         Int?
+  fatigueZone          FatigueZone?
+  adjustmentReason     String?
+  trainingSessionId    String?          @unique
+  microcycle           Microcycle       @relation(fields: [microcycleId], references: [id], onDelete: Cascade)
+  horse                Horse            @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  trainingSession      TrainingSession? @relation(fields: [trainingSessionId], references: [id], onDelete: SetNull)
+
+  @@unique([microcycleId, date])
+  @@index([tenantId, horseId, date])
+}
+
+/// Dieta estatica y techos de seguridad definidos por el veterinario.
+model NutritionBaseline {
+  id                     String   @id @default(uuid())
+  tenantId               String
+  horseId                String   @unique
+  baseForageKg           Decimal  @db.Decimal(5, 2)
+  baseConcentrateKg      Decimal  @db.Decimal(5, 2)
+  proteinPercentTarget   Int      @default(12)
+  mealsPerDay            Int      @default(3)
+  minForagePctBodyweight Decimal  @default(1.5) @db.Decimal(4, 2)
+  maxConcentrateKgPerDay Decimal  @db.Decimal(5, 2)
+  maxConcentrateKgPerMeal Decimal @default(2) @db.Decimal(4, 2)
+  maxElectrolytesGrams   Int      @default(90)
+  maxVitaminEIu          Int      @default(5000)
+  supplements            Json?
+  horse                  Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  updatedAt              DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+/// Racion calculada para un dia concreto a partir de la carga y el estado clinico.
+model NutritionPrescription {
+  id                    String       @id @default(uuid())
+  tenantId              String
+  horseId               String
+  date                  DateTime     @db.Date
+  internalLoadUa        Int          @default(0)
+  fatigueZone           FatigueZone  @default(BAJA)
+  mesocyclePhase        MesocyclePhase?
+  forageKg              Decimal      @db.Decimal(5, 2)
+  concentrateKg         Decimal      @db.Decimal(5, 2)
+  extraConcentrateGrams Int          @default(0)
+  proteinPercentTarget  Int
+  electrolytesGrams     Int          @default(0)
+  vitaminEIu            Int          @default(0)
+  seleniumMg            Decimal?     @db.Decimal(4, 2)
+  bcaa                  Boolean      @default(false)
+  totalMeals            Int
+  instructionsForStaff  String
+  clampNotes            String[]     @default([])
+  ambientTempC          Float?
+  horse                 Horse        @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  computedAt            DateTime     @default(now())
+
+  @@unique([horseId, date])
+  @@index([tenantId, date])
 }

@@ -153,6 +153,7 @@ export default function KioskoPage() {
                       photoUrl={horse.photoUrl}
                       diet={horse.diet as string[]}
                       status={horse.status as any}
+                      dynamic={horse.dynamic}
                       onSwipe={(status) => handleSwipe(horse.horseId, status)}
                     />
                   ))}

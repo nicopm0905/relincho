@@ -2,6 +2,9 @@ import { auth } from "@/server/auth";
 import { Header } from "@/components/marketing/header";
 import { Footer } from "@/components/marketing/footer";
 
+/* Bump this by hand whenever the text of this document changes. */
+const LAST_UPDATED = "8 de septiembre de 2026";
+
 export const metadata = {
   title: "Política de Privacidad - Relincho",
 };
@@ -20,29 +23,29 @@ export default async function PrivacidadPage() {
         
         <div className="prose prose-slate max-w-none text-muted-foreground prose-headings:font-heading prose-headings:text-foreground">
           <p className="lead text-lg mb-8">
-            Última actualización: {new Date().toLocaleDateString('es-ES')}
+            Última actualización: {LAST_UPDATED}
           </p>
           
           <h2 className="text-2xl font-bold mt-12 mb-4">1. Información que recopilamos</h2>
-          <p className="mb-6">
+          <p className="mb-4">
             En Relincho, recopilamos información para proporcionar mejores servicios a todos nuestros usuarios. Esto incluye:
-            <ul className="list-disc pl-6 mt-4 space-y-2">
+          </p>
+          <ul className="mb-6 list-disc space-y-2 pl-6">
               <li>Información personal que nos proporcionas (nombre, correo electrónico, datos de facturación).</li>
               <li>Datos de tus caballos, instalaciones y clientes que introduces en el software.</li>
               <li>Información de uso de la plataforma y cookies (ver Política de Cookies).</li>
             </ul>
-          </p>
 
           <h2 className="text-2xl font-bold mt-12 mb-4">2. Cómo utilizamos tus datos</h2>
-          <p className="mb-6">
+          <p className="mb-4">
             Utilizamos la información recopilada para:
-            <ul className="list-disc pl-6 mt-4 space-y-2">
+          </p>
+          <ul className="mb-6 list-disc space-y-2 pl-6">
               <li>Proveer, mantener y mejorar nuestro software de gestión.</li>
               <li>Procesar tus pagos de suscripción.</li>
               <li>Enviarte notificaciones importantes sobre el servicio y soporte técnico.</li>
               <li>Cumplir con la normativa legal vigente (incluyendo leyes de facturación).</li>
             </ul>
-          </p>
 
           <h2 className="text-2xl font-bold mt-12 mb-4">3. Compartir tus datos</h2>
           <p className="mb-6">

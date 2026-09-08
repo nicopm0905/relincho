@@ -2,85 +2,160 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import type { Session } from "next-auth";
 
 interface HeaderProps {
   session: Session | null;
 }
 
+const navLinks = [
+  { href: "#features", label: "Características" },
+  { href: "#nosotros", label: "Nosotros" },
+  { href: "#pricing", label: "Precios" },
+  { href: "#faq", label: "FAQ" },
+];
+
 export function Header({ session }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Lock the page behind the open mobile menu.
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled ? "py-3" : "py-6"
+        "fixed top-0 right-0 left-0 z-50 transition-all duration-300",
+        scrolled ? "py-3" : "py-4 sm:py-6",
       )}
     >
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="container mx-auto max-w-5xl px-4 sm:px-6">
         <div
           className={cn(
-            "flex items-center justify-between transition-all duration-300 mx-auto",
-            scrolled
-              ? "bg-white/80 backdrop-blur-xl border border-border/50 shadow-sm rounded-full px-4 py-2"
-              : "bg-transparent px-2 py-2"
+            "mx-auto flex items-center justify-between gap-3 transition-all duration-300",
+            scrolled || menuOpen
+              ? "rounded-full border border-border/50 bg-white/85 px-3 py-2 shadow-sm backdrop-blur-xl sm:px-4"
+              : "bg-transparent px-2 py-2",
           )}
         >
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-border/40 shadow-sm relative overflow-hidden group-hover:scale-105 transition-transform">
-              <Image src="/logo.png" alt="Relincho" fill className="object-contain p-1" priority />
-            </div>
-            <span className="font-bold text-lg font-heading tracking-tight">Relincho</span>
+          <Link
+            href="/"
+            className="group flex min-w-0 items-center gap-2"
+            onClick={() => setMenuOpen(false)}
+          >
+            <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/40 bg-white shadow-sm transition-transform group-hover:scale-105">
+              <Image
+                src="/logo.png"
+                alt="Relincho"
+                fill
+                className="object-contain p-1"
+                priority
+              />
+            </span>
+            <span className="truncate font-heading text-lg font-bold tracking-tight">
+              Relincho
+            </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Características
-            </Link>
-            <Link href="#nosotros" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Nosotros
-            </Link>
-            <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Precios
-            </Link>
-            <Link href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              FAQ
-            </Link>
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-8 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             {session?.user ? (
-              <Button asChild className="rounded-full" size="sm">
+              <Button asChild size="sm" className="rounded-full">
                 <Link href="/dashboard">Ir al panel</Link>
               </Button>
             ) : (
               <>
-                <Button variant="ghost" asChild className="rounded-full hidden sm:inline-flex" size="sm">
+                <Button
+                  variant="ghost"
+                  asChild
+                  size="sm"
+                  className="hidden rounded-full sm:inline-flex"
+                >
                   <Link href="/login">Iniciar sesión</Link>
                 </Button>
-                <Button asChild className="rounded-full" size="sm">
+                <Button asChild size="sm" className="rounded-full">
                   <Link href="/login">Empezar gratis</Link>
                 </Button>
               </>
             )}
+
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={menuOpen}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-white text-foreground shadow-sm transition-colors hover:bg-muted md:hidden"
+            >
+              {menuOpen ? (
+                <X className="h-4 w-4" strokeWidth={2.5} />
+              ) : (
+                <Menu className="h-4 w-4" strokeWidth={2.5} />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu panel */}
+        {menuOpen && (
+          <nav className="animate-in fade-in-0 slide-in-from-top-2 mt-2 rounded-3xl border border-border/50 bg-white/95 p-2 shadow-lg backdrop-blur-xl duration-200 md:hidden">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-2xl px-4 py-3 text-[15px] font-semibold text-foreground transition-colors hover:bg-muted"
+              >
+                {link.label}
+              </Link>
+            ))}
+            {!session?.user && (
+              <Link
+                href="/login"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 block border-t border-border/50 px-4 py-3 pt-4 text-[15px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Iniciar sesión
+              </Link>
+            )}
+          </nav>
+        )}
       </div>
     </header>
   );

@@ -17,15 +17,31 @@ export const feedingRouter = createTRPCRouter({
         const endOfDay = new Date(input.date);
         endOfDay.setHours(23, 59, 59, 999);
 
-        // Traer caballos activos con plan de dieta
+        // Racion calculada por el motor de nutricion para hoy, si la hay.
+        const prescriptionDay = new Date(
+          Date.UTC(
+            startOfDay.getFullYear(),
+            startOfDay.getMonth(),
+            startOfDay.getDate(),
+          ),
+        );
+
+        // Caballos activos con plan de dieta o con racion calculada para hoy
         const horses = await tx.horse.findMany({
           where: {
             tenantId: ctx.tenantId,
             status: "ACTIVE",
-            feedingPlan: { isNot: null }
+            OR: [
+              { feedingPlan: { isNot: null } },
+              { nutritionPrescriptions: { some: { date: prescriptionDay } } },
+            ],
           },
           include: {
             feedingPlan: true,
+            nutritionPrescriptions: {
+              where: { date: prescriptionDay },
+              take: 1,
+            },
             feedingLogs: {
               where: {
                 mealType: input.mealType,
@@ -43,13 +59,25 @@ export const feedingRouter = createTRPCRouter({
 
         return horses.map(horse => {
           const log = horse.feedingLogs?.[0];
+          const prescription = horse.nutritionPrescriptions?.[0];
           return {
             horseId: horse.id,
             horseName: horse.name,
             photoUrl: horse.photoUrl,
             boxLocation: horse.boxLocation,
             diet: horse.feedingPlan?.items || [],
-            status: log ? log.status : "PENDING"
+            status: log ? log.status : "PENDING",
+            // Ajuste del dia calculado a partir de la carga de entrenamiento.
+            dynamic: prescription
+              ? {
+                  forageKg: Number(prescription.forageKg),
+                  concentrateKg: Number(prescription.concentrateKg),
+                  extraGrams: prescription.extraConcentrateGrams,
+                  electrolytesGrams: prescription.electrolytesGrams,
+                  totalMeals: prescription.totalMeals,
+                  instructions: prescription.instructionsForStaff,
+                }
+              : null,
           };
         });
       });

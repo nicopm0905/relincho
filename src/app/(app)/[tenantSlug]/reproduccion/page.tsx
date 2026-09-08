@@ -47,7 +47,7 @@ export default async function ReproductionPage({ params }: PageProps) {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">
+          <h1 className="text-[26px] sm:text-3xl font-bold tracking-tight text-foreground font-heading">
             Cuaderno de Parideras
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

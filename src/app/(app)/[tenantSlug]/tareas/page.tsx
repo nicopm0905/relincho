@@ -1,11 +1,18 @@
 import { createServerCaller } from "@/lib/trpc/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatters";
-import { CheckCircle, Circle, ClipboardText } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, Circle, Sun } from "@phosphor-icons/react/dist/ssr";
+import { PageHeader, SectionHeading } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { tenantSlug } = await params;
+  return { title: `Tareas — ${tenantSlug}` };
 }
 
 export default async function TareasPage({ params }: PageProps) {
@@ -16,77 +23,78 @@ export default async function TareasPage({ params }: PageProps) {
     caller.tasks.list({ done: true }),
   ]);
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Tareas</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Gestiona las tareas pendientes de tu ganadería
-        </p>
-      </div>
+  const today = new Date().setHours(0, 0, 0, 0);
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Pendientes ({pending.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {pending.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle weight="duotone" className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <p className="text-sm font-medium text-foreground">¡Todo al día!</p>
-              <p className="text-xs text-muted-foreground mt-1">No hay tareas pendientes</p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {pending.map((task) => {
-                const overdue = new Date(task.dueDate) < new Date();
-                return (
-                  <div key={task.id} className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0 text-sm">
-                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <Circle weight="regular" className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground">{task.title}</p>
-                      {task.notes && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{task.notes}</p>
-                      )}
-                    </div>
-                    <Badge
-                      variant={overdue ? "destructive" : "outline"}
-                    >
+  return (
+    <div className="animate-in fade-in-0 space-y-8 duration-300">
+      <PageHeader
+        title="Tareas"
+        description="Lo que queda por hacer en la cuadra"
+      />
+
+      <section className="space-y-3">
+        <SectionHeading
+          title="Pendientes"
+          description={`${pending.length} sin completar`}
+        />
+        {pending.length === 0 ? (
+          <EmptyState
+            icon={<Sun weight="duotone" />}
+            title="Todo al día"
+            description="No hay tareas pendientes."
+          />
+        ) : (
+          <ListRows>
+            {pending.map((task) => {
+              const overdue =
+                new Date(task.dueDate).setHours(0, 0, 0, 0) < today;
+              return (
+                <ListRow
+                  key={task.id}
+                  leading={
+                    <RowIcon tone={overdue ? "alert" : "neutral"}>
+                      <Circle weight="regular" />
+                    </RowIcon>
+                  }
+                  title={task.title}
+                  subtitle={task.notes || undefined}
+                  meta={
+                    <Badge variant={overdue ? "destructive" : "secondary"}>
                       {formatDate(task.dueDate)}
                     </Badge>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  }
+                />
+              );
+            })}
+          </ListRows>
+        )}
+      </section>
 
       {done.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-muted-foreground">
-              Completadas ({done.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {done.slice(0, 10).map((task) => (
-                <div key={task.id} className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0 text-sm text-muted-foreground">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <CheckCircle weight="fill" className="h-3.5 w-3.5 text-primary-foreground" />
-                  </div>
-                  <span className="line-through flex-1">{task.title}</span>
-                  <span className="text-xs shrink-0">{task.doneAt ? formatDate(task.doneAt) : ""}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <section className="space-y-3">
+          <SectionHeading
+            title="Completadas"
+            description={`Últimas ${Math.min(done.length, 10)} de ${done.length}`}
+          />
+          <ListRows>
+            {done.slice(0, 10).map((task) => (
+              <ListRow
+                key={task.id}
+                leading={
+                  <RowIcon>
+                    <CheckCircle weight="fill" />
+                  </RowIcon>
+                }
+                title={
+                  <span className="text-muted-foreground line-through">
+                    {task.title}
+                  </span>
+                }
+                meta={task.doneAt ? formatDate(task.doneAt) : undefined}
+              />
+            ))}
+          </ListRows>
+        </section>
       )}
     </div>
   );

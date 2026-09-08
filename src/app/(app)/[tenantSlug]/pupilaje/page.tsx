@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatters";
 import { NewContractDialog } from "@/components/pupilaje/new-contract-dialog";
+import { PageHeader } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -26,31 +28,20 @@ export default async function PupilajePage({ params }: PageProps) {
 
   return (
     <div className="space-y-8 animate-in fade-in-0 duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center border border-orange-200">
-              <Storefront weight="duotone" className="h-6 w-6" />
-            </div>
-            Gestión de Pupilajes
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Administra los contratos de alojamiento (boxes y prados) de los caballos de tus clientes.
-          </p>
-        </div>
-        <NewContractDialog tenantSlug={tenantSlug} horses={horses} clients={contacts} />
-      </div>
+      <PageHeader
+        title="Pupilaje"
+        description="Contratos de alojamiento en boxes y prados para caballos de clientes"
+        actions={<NewContractDialog tenantSlug={tenantSlug} horses={horses} clients={contacts} />}
+      />
 
       {contracts.length === 0 ? (
-        <Card className="bg-white shadow-bento border-border/40 overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-orange-400 to-amber-400 w-full" />
-          <div className="flex flex-col items-center justify-center text-center py-24 text-muted-foreground p-6">
-            <Storefront weight="duotone" className="h-16 w-16 text-muted/40 mb-4" />
-            <p className="text-lg font-bold font-heading text-foreground">No tienes caballos en pupilaje</p>
-            <p className="text-sm mt-2 max-w-sm">
-              Si ofreces servicio de pupilaje en tus instalaciones, añade contratos aquí para generar la facturación mensual automáticamente.
-            </p>
-          </div>
+        <Card>
+          <EmptyState
+              variant="plain"
+              icon={<Storefront weight="duotone" />}
+              title="Sin caballos en pupilaje"
+              description="Añade contratos de alojamiento para generar la facturación mensual automáticamente."
+            />
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

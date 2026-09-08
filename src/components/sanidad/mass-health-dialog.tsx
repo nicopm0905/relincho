@@ -60,7 +60,7 @@ export function MassHealthDialog({ horses, tenantSlug }: { horses: any[], tenant
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button className="rounded-full shadow-sm bg-primary text-primary-foreground hover:bg-primary/90" />}>
+      <DialogTrigger render={<Button variant="outline" size="lg" className="shadow-sm" />}>
         <Heartbeat weight="bold" className="mr-2 h-4 w-4" />
         Tratamiento Múltiple
       </DialogTrigger>
