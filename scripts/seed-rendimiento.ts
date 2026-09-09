@@ -24,7 +24,14 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL })),
 });
 
-const TENANT_SLUG = "yeguada-demo-andalucia";
+/**
+ * Cuadra a sembrar. Se puede cambiar por linea de comandos:
+ *   npm run seed:rendimiento -- --tenant=fincaolivos
+ */
+const TENANT_SLUG =
+  process.argv
+    .find((arg) => arg.startsWith("--tenant="))
+    ?.split("=")[1] ?? "yeguada-demo-andalucia";
 
 /** Fecha a medianoche UTC, con desplazamiento en dias respecto a hoy. */
 function day(offsetDays = 0): Date {
@@ -44,13 +51,56 @@ function previousMonday(date: Date): Date {
   return d;
 }
 
-async function horseByName(tenantId: string, name: string) {
-  const horse = await prisma.horse.findFirst({
-    where: { tenantId, name },
-    select: { id: true, name: true },
+interface DemoHorse {
+  id: string;
+  name: string;
+  sex: "MALE" | "FEMALE" | "GELDING";
+}
+
+/** Estado reproductivo coherente con el sexo del caballo de la cuadra. */
+function defaultReproductiveStatus(sex: DemoHorse["sex"]) {
+  if (sex === "MALE") return "SEMENTAL_EN_MONTA" as const;
+  if (sex === "FEMALE") return "CICLANDO" as const;
+  return "NA" as const;
+}
+
+/**
+ * Reparte los papeles de la demo entre los caballos que ya tenga la cuadra, en
+ * vez de exigir unos nombres concretos. La yegua gestante tiene que ser hembra;
+ * el resto de papeles valen para cualquiera.
+ */
+async function assignRoles(tenantId: string) {
+  const horses = await prisma.horse.findMany({
+    where: { tenantId, status: { in: ["ACTIVE", "IN_TRAINING"] } },
+    select: { id: true, name: true, sex: true },
+    orderBy: { name: "asc" },
   });
-  if (!horse) throw new Error(`No existe el caballo "${name}" en la cuadra demo`);
-  return horse;
+  if (horses.length < 5) {
+    throw new Error(
+      `La cuadra necesita al menos 5 caballos en activo para la demo y tiene ${horses.length}.`,
+    );
+  }
+
+  const mare = horses.find((h) => h.sex === "FEMALE");
+  if (!mare) throw new Error("La demo necesita al menos una yegua para el caso de gestacion.");
+
+  const rest = horses.filter((h) => h.id !== mare.id);
+  const [clean, tendon, overload, missed] = rest;
+
+  return {
+    clean: clean as DemoHorse,
+    tendon: tendon as DemoHorse,
+    overload: overload as DemoHorse,
+    missed: missed as DemoHorse,
+    mare: mare as DemoHorse,
+  };
+}
+
+/** Codigo de chip legible y unico entre cuadras. */
+function chipCode(slug: string, horseName: string, index: number, kind: string) {
+  const tenantPart = slug.replace(/[^a-z0-9]/gi, "").slice(0, 3).toUpperCase();
+  const horsePart = horseName.replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase();
+  return `${kind}-${tenantPart}${horsePart}-${String(index).padStart(4, "0")}`;
 }
 
 /**
@@ -107,11 +157,20 @@ async function main() {
   const tenantId = tenant.id;
   console.log(`Sembrando rendimiento en ${tenant.name}\n`);
 
-  const espartero = await horseByName(tenantId, "Espartero VII");
-  const zalamera = await horseByName(tenantId, "Zalamera IX");
-  const brillante = await horseByName(tenantId, "Brillante III");
-  const llorona = await horseByName(tenantId, "Llorona V");
-  const gallardo = await horseByName(tenantId, "Gallardo XI");
+  const roles = await assignRoles(tenantId);
+  const espartero = roles.clean;
+  const brillante = roles.tendon;
+  const llorona = roles.overload;
+  const gallardo = roles.missed;
+  const zalamera = roles.mare;
+
+  console.log("Reparto de la demo:");
+  console.log(`  Caso limpio ....... ${espartero.name}`);
+  console.log(`  Alerta de tendón .. ${brillante.name}`);
+  console.log(`  Sobrecarga aguda .. ${llorona.name}`);
+  console.log(`  Día perdido ....... ${gallardo.name}`);
+  console.log(`  Yegua gestante .... ${zalamera.name}
+`);
 
   // Punto de partida limpio para poder relanzar la semilla las veces que haga falta.
   const seededHorseIds = [espartero, zalamera, brillante, llorona, gallardo].map(
@@ -129,13 +188,23 @@ async function main() {
     where: { horseId: { in: seededHorseIds } },
   });
 
+  // La pantalla del mozo agrupa por ubicacion, asi que damos caja a quien no la
+  // tenga. Nunca se pisa una ubicacion ya puesta por el usuario.
+  const roleList = [espartero, brillante, llorona, gallardo, zalamera];
+  for (const [index, horse] of roleList.entries()) {
+    await prisma.horse.updateMany({
+      where: { id: horse.id, OR: [{ boxLocation: null }, { boxLocation: "" }] },
+      data: { boxLocation: `Box ${index + 1}` },
+    });
+  }
+
   // --- Chips fisicos -------------------------------------------------------
   const chips: [string, string, string][] = [
-    [espartero.id, "NFC-ESP-0001", "NFC"],
-    [zalamera.id, "NFC-ZAL-0002", "NFC"],
-    [brillante.id, "RFID-BRI-0003", "RFID"],
-    [llorona.id, "NFC-LLO-0004", "NFC"],
-    [gallardo.id, "NFC-GAL-0005", "NFC"],
+    [espartero.id, chipCode(TENANT_SLUG, espartero.name, 1, "NFC"), "NFC"],
+    [zalamera.id, chipCode(TENANT_SLUG, zalamera.name, 2, "NFC"), "NFC"],
+    [brillante.id, chipCode(TENANT_SLUG, brillante.name, 3, "RFID"), "RFID"],
+    [llorona.id, chipCode(TENANT_SLUG, llorona.name, 4, "NFC"), "NFC"],
+    [gallardo.id, chipCode(TENANT_SLUG, gallardo.name, 5, "NFC"), "NFC"],
   ];
   for (const [horseId, chipId, kind] of chips) {
     await prisma.chipTag.create({ data: { tenantId, horseId, chipId, kind } });
@@ -148,7 +217,7 @@ async function main() {
       horseId: espartero.id,
       discipline: "DOMA_CLASICA" as const,
       baseWeightKg: 540,
-      reproductiveStatus: "SEMENTAL_EN_MONTA" as const,
+      reproductiveStatus: defaultReproductiveStatus(espartero.sex),
       tendonHistoryAlert: false,
       restrictions: [],
     },
@@ -165,7 +234,7 @@ async function main() {
       horseId: brillante.id,
       discipline: "SALTO" as const,
       baseWeightKg: 560,
-      reproductiveStatus: "NA" as const,
+      reproductiveStatus: defaultReproductiveStatus(brillante.sex),
       tendonHistoryAlert: true,
       maxImpactSurfaceMinutes: 20,
       maxRpe: 8,
@@ -176,7 +245,7 @@ async function main() {
       horseId: llorona.id,
       discipline: "DOMA_VAQUERA" as const,
       baseWeightKg: 495,
-      reproductiveStatus: "CICLANDO" as const,
+      reproductiveStatus: defaultReproductiveStatus(llorona.sex),
       tendonHistoryAlert: false,
       restrictions: [],
     },
@@ -184,7 +253,7 @@ async function main() {
       horseId: gallardo.id,
       discipline: "RAID" as const,
       baseWeightKg: 470,
-      reproductiveStatus: "NA" as const,
+      reproductiveStatus: defaultReproductiveStatus(gallardo.sex),
       tendonHistoryAlert: false,
       restrictions: [],
     },
@@ -289,7 +358,7 @@ async function main() {
   }
 
   // --- Sesiones ya ejecutadas ----------------------------------------------
-  // Espartero cumple lo planificado: el plan no se toca.
+  // El caso limpio cumple lo planificado: el plan no se toca.
   for (let offset = -18; offset <= -1; offset++) {
     await reportPlannedDay({
       tenantId,
@@ -299,7 +368,7 @@ async function main() {
     });
   }
 
-  // Brillante trabaja algo por debajo del plan tras su lesión de tendón.
+  // El de tendón trabaja algo por debajo del plan tras su lesión de tendón.
   for (let offset = -18; offset <= -1; offset++) {
     await reportPlannedDay({
       tenantId,
@@ -311,7 +380,7 @@ async function main() {
     });
   }
 
-  // Llorona sufre una sobrecarga aguda hoy: el motor descarga el mesociclo.
+  // Sobrecarga aguda hoy: el motor descarga el mesociclo.
   for (let offset = -18; offset <= -1; offset++) {
     await reportPlannedDay({
       tenantId,
@@ -333,7 +402,7 @@ async function main() {
     riderReportedFatigue: true,
   });
   console.log(
-    `Sobrecarga de Llorona V: ${overload.internalLoadUa} UA (${overload.fatigueZone}), ` +
+    `Sobrecarga de ${llorona.name}: ${overload.internalLoadUa} UA (${overload.fatigueZone}), ` +
       `${overload.adjustments.length} días reajustados`,
   );
 
@@ -347,7 +416,7 @@ async function main() {
     isProjection: false,
   });
 
-  // Gallardo pierde un día de trabajo: la carga se reparte por el microciclo.
+  // Pierde un día de trabajo: la carga se reparte por el microciclo.
   for (let offset = -18; offset <= -3; offset++) {
     await reportPlannedDay({
       tenantId,
@@ -364,12 +433,12 @@ async function main() {
     reason: "Herrado de urgencia",
   });
   console.log(
-    `Día perdido de Gallardo XI: ${missed.adjustments.length} días reajustados, ` +
+    `Día perdido de ${gallardo.name}: ${missed.adjustments.length} días reajustados, ` +
       `margen ${missed.bufferStatus}`,
   );
 
   // --- Raciones del dia ----------------------------------------------------
-  // Zalamera no entrena: solo paseo suave, pero es yegua gestante de nueve meses.
+  // La yegua gestante no entrena: solo paseo suave, pero es yegua gestante de nueve meses.
   const mare = await syncNutritionForDay({
     tenantId,
     horseId: zalamera.id,
@@ -379,7 +448,7 @@ async function main() {
     ambientTempC: 31,
   });
   console.log(
-    `Ración de Zalamera IX: ${Number(mare.forageKg)} kg forraje, ` +
+    `Ración de ${zalamera.name}: ${Number(mare.forageKg)} kg forraje, ` +
       `${Number(mare.concentrateKg)} kg concentrado en ${mare.totalMeals} tomas`,
   );
 
@@ -397,8 +466,13 @@ async function main() {
     );
   }
 
-  console.log("\nListo. Entra en /yeguada-demo-andalucia/rendimiento");
-  console.log("Chips para probar el escáner: NFC-ESP-0001, RFID-BRI-0003, NFC-LLO-0004");
+  console.log(`
+Listo. Entra en /${TENANT_SLUG}/rendimiento`);
+  console.log("Chips para probar el escáner:");
+  for (const [horseId, chipId] of chips) {
+    const horse = roleList.find((h) => h.id === horseId);
+    console.log(`  ${chipId.padEnd(22)}${horse?.name ?? ""}`);
+  }
 }
 
 main()
