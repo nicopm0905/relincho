@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import type { Session } from "next-auth";
 
 interface HeaderProps {
@@ -13,13 +15,14 @@ interface HeaderProps {
 }
 
 const navLinks = [
-  { href: "#features", label: "Características" },
-  { href: "#nosotros", label: "Nosotros" },
-  { href: "#pricing", label: "Precios" },
-  { href: "#faq", label: "FAQ" },
-];
+  { href: "#features", key: "features" },
+  { href: "#nosotros", key: "about" },
+  { href: "#pricing", key: "pricing" },
+  { href: "#faq", key: "faq" },
+] as const;
 
 export function Header({ session }: HeaderProps) {
+  const t = useTranslations("marketing");
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -89,15 +92,16 @@ export function Header({ session }: HeaderProps) {
                 href={link.href}
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                {link.label}
+                {t(`nav.${link.key}`)}
               </Link>
             ))}
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
+            <LocaleSwitcher className="hidden sm:inline-flex" />
             {session?.user ? (
               <Button asChild size="sm" className="rounded-full">
-                <Link href="/dashboard">Ir al panel</Link>
+                <Link href="/dashboard">{t("actions.goToPanel")}</Link>
               </Button>
             ) : (
               <>
@@ -107,10 +111,10 @@ export function Header({ session }: HeaderProps) {
                   size="sm"
                   className="hidden rounded-full sm:inline-flex"
                 >
-                  <Link href="/login">Iniciar sesión</Link>
+                  <Link href="/login">{t("actions.login")}</Link>
                 </Button>
                 <Button asChild size="sm" className="rounded-full">
-                  <Link href="/login">Empezar gratis</Link>
+                  <Link href="/login">{t("actions.startFree")}</Link>
                 </Button>
               </>
             )}
@@ -119,7 +123,7 @@ export function Header({ session }: HeaderProps) {
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
-              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-label={menuOpen ? t("actions.closeMenu") : t("actions.openMenu")}
               aria-expanded={menuOpen}
               className="flex h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-white text-foreground shadow-sm transition-colors hover:bg-muted md:hidden"
             >
@@ -142,18 +146,21 @@ export function Header({ session }: HeaderProps) {
                 onClick={() => setMenuOpen(false)}
                 className="block rounded-2xl px-4 py-3 text-[15px] font-semibold text-foreground transition-colors hover:bg-muted"
               >
-                {link.label}
+                {t(`nav.${link.key}`)}
               </Link>
             ))}
-            {!session?.user && (
-              <Link
-                href="/login"
-                onClick={() => setMenuOpen(false)}
-                className="mt-1 block border-t border-border/50 px-4 py-3 pt-4 text-[15px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Iniciar sesión
-              </Link>
-            )}
+            <div className="flex items-center justify-between px-4 py-3">
+              {!session?.user && (
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-[15px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t("actions.login")}
+                </Link>
+              )}
+              <LocaleSwitcher className="ml-auto" />
+            </div>
           </nav>
         )}
       </div>

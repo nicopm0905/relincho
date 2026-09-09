@@ -1,45 +1,47 @@
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/server/auth";
 import { Header } from "@/components/marketing/header";
 import { Footer } from "@/components/marketing/footer";
-import { Button } from "@/components/ui/button";
 
-export const metadata = {
-  title: "Contacto - Relincho",
-};
+export async function generateMetadata() {
+  const t = await getTranslations("metadata.contact");
+  return { title: t("title") };
+}
 
 export default async function ContactoPage() {
   const session = await auth();
+  const t = await getTranslations("legal.contact");
 
   return (
     <div className="flex min-h-screen flex-col selection:bg-primary/20 bg-white">
       <Header session={session} />
-      
+
       <main className="flex-1 container max-w-4xl mx-auto px-4 sm:px-6 py-32 md:py-40">
         <h1 className="font-heading text-4xl md:text-5xl font-bold mb-6 text-foreground text-center">
-          Contacta con nosotros
+          {t("title")}
         </h1>
         <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-16">
-          ¿Tienes alguna duda sobre Relincho o necesitas ayuda con tu cuenta? Nuestro equipo de soporte está listo para ayudarte.
+          {t("intro")}
         </p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="bg-[#f9f9f6] p-8 rounded-[2rem] border border-border/50">
-            <h3 className="text-2xl font-bold font-heading mb-4 text-foreground">Soporte Técnico</h3>
+            <h3 className="text-2xl font-bold font-heading mb-4 text-foreground">{t("support.title")}</h3>
             <p className="text-muted-foreground mb-6">
-              Si ya eres cliente y tienes algún problema técnico o duda sobre cómo usar una funcionalidad.
+              {t("support.body")}
             </p>
-            <a href="mailto:soporte@relincho.com" className="text-primary font-medium hover:underline">
-              soporte@relincho.com
+            <a href={`mailto:${t("support.email")}`} className="text-primary font-medium hover:underline">
+              {t("support.email")}
             </a>
           </div>
 
           <div className="bg-white p-8 rounded-[2rem] border border-border/50 shadow-sm">
-            <h3 className="text-2xl font-bold font-heading mb-4 text-foreground">Ventas e Información</h3>
+            <h3 className="text-2xl font-bold font-heading mb-4 text-foreground">{t("sales.title")}</h3>
             <p className="text-muted-foreground mb-6">
-              ¿Quieres saber más sobre cómo Relincho puede ayudar a tu yeguada? Hablemos.
+              {t("sales.body")}
             </p>
-            <a href="mailto:info@relincho.com" className="text-primary font-medium hover:underline">
-              info@relincho.com
+            <a href={`mailto:${t("sales.email")}`} className="text-primary font-medium hover:underline">
+              {t("sales.email")}
             </a>
           </div>
         </div>

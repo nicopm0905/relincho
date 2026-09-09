@@ -1,1 +1,362 @@
-{"app":{"title":"Relincho","description":"Gestión equina para yeguadas PRE"},"nav":{"horses":"Caballos","health":"Sanidad","tasks":"Tareas","reproduction":"Reproducción","documents":"Documentos","boarding":"Pupilaje","invoicing":"Facturación","contacts":"Contactos","settings":"Ajustes"}}
+{
+  "app": {
+    "title": "Relincho — Gestión equina para yeguadas PRE",
+    "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje y facturación Veri*Factu."
+  },
+  "nav": {
+    "horses": "Caballos",
+    "health": "Sanidad",
+    "tasks": "Tareas",
+    "reproduction": "Reproducción",
+    "documents": "Documentos",
+    "boarding": "Pupilaje",
+    "invoicing": "Facturación",
+    "contacts": "Contactos",
+    "settings": "Ajustes"
+  },
+  "metadata": {
+    "home": {
+      "title": "Relincho — Gestión equina para yeguadas PRE",
+      "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje y facturación Veri*Factu."
+    },
+    "contact": { "title": "Contacto - Relincho" },
+    "privacy": { "title": "Política de Privacidad - Relincho" },
+    "terms": { "title": "Términos y Condiciones - Relincho" },
+    "cookies": { "title": "Política de Cookies - Relincho" },
+    "login": { "title": "Iniciar sesión — Relincho" },
+    "verify": { "title": "Revisa tu correo — Relincho" },
+    "authError": { "title": "Error de acceso — Relincho" },
+    "onboarding": { "title": "Crear tu finca — Relincho" }
+  },
+  "common": {
+    "back": "Atrás",
+    "localeSwitcher": {
+      "label": "Cambiar idioma",
+      "es": "ES",
+      "en": "EN"
+    }
+  },
+  "marketing": {
+    "nav": {
+      "features": "Características",
+      "about": "Nosotros",
+      "pricing": "Precios",
+      "faq": "FAQ"
+    },
+    "actions": {
+      "login": "Iniciar sesión",
+      "startFree": "Empezar gratis",
+      "goToPanel": "Ir al panel",
+      "openMenu": "Abrir menú",
+      "closeMenu": "Cerrar menú"
+    },
+    "hero": {
+      "badgeNew": "Nuevo",
+      "badgeFeature": "Veri*Factu integrado",
+      "titleLead": "El software de",
+      "titleHighlight": "gestión equina",
+      "titleTail": "para yeguadas.",
+      "subtitle": "Sanidad, reproducción, pupilaje y facturación. Todo en un solo lugar. Sin complicaciones.",
+      "ctaPrimary": "Pruébalo gratis",
+      "ctaSecondary": "Ver características",
+      "disclaimer": "Sin tarjeta de crédito · Cancela cuando quieras"
+    },
+    "features": {
+      "title": "Todo lo que necesitas. Y nada más.",
+      "subtitle": "Hemos eliminado el ruido para que puedas centrarte en lo que de verdad importa: tus caballos. Relincho simplifica tu día a día.",
+      "items": {
+        "health": {
+          "title": "Sanidad y controles",
+          "description": "Registra vacunas, desparasitaciones y tratamientos. Nunca olvides una fecha importante gracias a las alertas automáticas."
+        },
+        "reproduction": {
+          "title": "Control reproductivo",
+          "description": "Seguimiento de celos, inseminaciones, ecografías y partos con cálculos predictivos."
+        },
+        "boarding": {
+          "title": "Pupilaje y estancias",
+          "description": "Gestiona los boxes, dietas y tarifas de caballos estabulados de clientes."
+        },
+        "invoicing": {
+          "title": "Facturación Veri*Factu",
+          "description": "Emite facturas legales, genera cuotas automáticas y envía recibos SEPA. Todo adaptado a la nueva normativa de la AEAT."
+        }
+      }
+    },
+    "about": {
+      "title": "¿Quiénes Somos?",
+      "subtitle": "Dos jóvenes de Jerez uniendo tecnología y conocimiento ecuestre.",
+      "p1": "Somos dos chavales de Jerez de la Frontera, una tierra donde el caballo es mucho más que una tradición. Haber crecido aquí nos ha permitido conocer de buena mano cómo funcionan las yeguadas y cuáles son sus problemas reales en el día a día.",
+      "p2": "<strong>Relincho</strong> nace como la combinación perfecta de nuestras dos pasiones. Uno de nosotros es <strong>Ingeniero Informático del Software</strong>, encargado de toda la arquitectura técnica para que la plataforma sea moderna, rápida y segura.",
+      "p3": "El otro está inmerso en estudios de <strong>Fisioterapia y Ciencias del Deporte</strong>. Gracias a esto, aportamos un conocimiento técnico profundo sobre la musculatura del caballo, su recuperación y los diferentes tipos de entrenamientos, trasladando todo ese rigor científico al software.",
+      "cardTitle": "Relincho Team",
+      "cardSubtitle": "Hecho con pasión desde Jerez",
+      "values": {
+        "local": {
+          "title": "Conocimiento del terreno",
+          "description": "Al ser de Jerez, conocemos de primera mano las tierras, la cultura y lo que realmente necesita el mundo del caballo en su día a día."
+        },
+        "tech": {
+          "title": "Excelencia Técnica",
+          "description": "Desarrollamos software de primer nivel. Una plataforma rápida, segura y moderna que automatiza el trabajo pesado por ti."
+        },
+        "welfare": {
+          "title": "Bienestar Animal",
+          "description": "Aplicamos conocimientos de biomecánica y entrenamiento deportivo para asegurar que el seguimiento de los caballos sea el óptimo."
+        }
+      }
+    },
+    "faq": {
+      "title": "Preguntas Frecuentes",
+      "subtitle": "Resolvemos tus dudas sobre cómo Relincho puede ayudar a transformar y facilitar la gestión diaria de tus caballos.",
+      "items": [
+        {
+          "question": "¿Qué es Relincho y para quién está pensado?",
+          "answer": "Relincho es un software integral de gestión diseñado para yeguadas, centros ecuestres, hípicas y profesionales del sector equino que buscan digitalizar y simplificar su día a día. Desde la sanidad hasta la facturación, todo en una sola plataforma."
+        },
+        {
+          "question": "¿Necesito conocimientos técnicos para usar la plataforma?",
+          "answer": "En absoluto. Hemos diseñado Relincho con una interfaz limpia, intuitiva y fácil de usar. Nuestro objetivo es que cualquier persona pueda empezar a gestionar sus caballos desde el primer minuto, sin necesidad de manuales complejos."
+        },
+        {
+          "question": "¿Están mis datos y los de mis clientes seguros?",
+          "answer": "Sí. Utilizamos los más altos estándares de seguridad en la nube. Tus datos y los de tus clientes están encriptados y realizamos copias de seguridad automáticas de forma constante para que nunca pierdas información importante."
+        },
+        {
+          "question": "¿Cumple con la normativa de facturación y Veri*Factu?",
+          "answer": "Totalmente. Nuestro módulo de facturación está actualizado y adaptado a las nuevas normativas de la AEAT (incluyendo Veri*Factu). Puedes emitir facturas legales, generar cuotas automáticas y automatizar el envío de recibos SEPA sin preocupaciones."
+        },
+        {
+          "question": "¿Puedo probar Relincho antes de suscribirme?",
+          "answer": "¡Por supuesto! Entendemos que quieres asegurarte de que Relincho es la herramienta perfecta para ti. Ofrecemos una prueba donde podrás explorar todas las funcionalidades clave y descubrir cómo podemos ayudarte a optimizar tu centro ecuestre."
+        }
+      ]
+    },
+    "pricing": {
+      "title": "Precios simples. Sin sorpresas.",
+      "subtitle": "Escoge el plan que mejor se adapte a tu ganadería. Puedes cambiar de plan o cancelar en cualquier momento.",
+      "recommended": "Recomendado",
+      "perMonth": "/mes",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "description": "Perfecto para yeguadas pequeñas o picaderos que están empezando.",
+          "price": "29",
+          "cta": "Seleccionar Starter",
+          "features": [
+            "Hasta 20 caballos",
+            "Control de Sanidad y Reproducción",
+            "Facturación básica",
+            "Soporte por email"
+          ]
+        },
+        "pro": {
+          "name": "Pro",
+          "description": "Para negocios establecidos que necesitan automatización total.",
+          "price": "79",
+          "cta": "Empezar prueba gratis",
+          "features": [
+            "Caballos ilimitados",
+            "Pupilajes y Contratos",
+            "Facturación avanzada (AEAT Veri*Factu)",
+            "Gestión de empleados",
+            "Soporte prioritario 24/7"
+          ]
+        }
+      }
+    }
+  },
+  "footer": {
+    "links": {
+      "terms": "Términos",
+      "privacy": "Privacidad",
+      "cookies": "Cookies",
+      "contact": "Contacto"
+    }
+  },
+  "legal": {
+    "common": {
+      "lastUpdated": "Última actualización: {date}",
+      "updatedDate": "8 de septiembre de 2026"
+    },
+    "contact": {
+      "title": "Contacta con nosotros",
+      "intro": "¿Tienes alguna duda sobre Relincho o necesitas ayuda con tu cuenta? Nuestro equipo de soporte está listo para ayudarte.",
+      "support": {
+        "title": "Soporte Técnico",
+        "body": "Si ya eres cliente y tienes algún problema técnico o duda sobre cómo usar una funcionalidad.",
+        "email": "soporte@relincho.com"
+      },
+      "sales": {
+        "title": "Ventas e Información",
+        "body": "¿Quieres saber más sobre cómo Relincho puede ayudar a tu yeguada? Hablemos.",
+        "email": "info@relincho.com"
+      }
+    },
+    "privacy": {
+      "title": "Política de Privacidad",
+      "s1": {
+        "title": "1. Información que recopilamos",
+        "intro": "En Relincho, recopilamos información para proporcionar mejores servicios a todos nuestros usuarios. Esto incluye:",
+        "items": [
+          "Información personal que nos proporcionas (nombre, correo electrónico, datos de facturación).",
+          "Datos de tus caballos, instalaciones y clientes que introduces en el software.",
+          "Información de uso de la plataforma y cookies (ver Política de Cookies)."
+        ]
+      },
+      "s2": {
+        "title": "2. Cómo utilizamos tus datos",
+        "intro": "Utilizamos la información recopilada para:",
+        "items": [
+          "Proveer, mantener y mejorar nuestro software de gestión.",
+          "Procesar tus pagos de suscripción.",
+          "Enviarte notificaciones importantes sobre el servicio y soporte técnico.",
+          "Cumplir con la normativa legal vigente (incluyendo leyes de facturación)."
+        ]
+      },
+      "s3": {
+        "title": "3. Compartir tus datos",
+        "body": "No vendemos tus datos personales a terceros. Solo compartimos información con proveedores de servicios esenciales (como plataformas de pago y alojamiento en la nube) que cumplen con los estándares de seguridad RGPD, y cuando lo exija la ley."
+      },
+      "s4": {
+        "title": "4. Seguridad de los datos",
+        "body": "Tus datos están encriptados y almacenados en servidores seguros. Realizamos copias de seguridad regulares para garantizar la integridad y disponibilidad de la información de tu yeguada o centro ecuestre."
+      },
+      "s5": {
+        "title": "5. Tus derechos",
+        "body": "Tienes derecho a acceder, rectificar o eliminar tus datos personales en cualquier momento. Para ejercer estos derechos, contacta con nosotros en privacidad@relincho.com."
+      }
+    },
+    "terms": {
+      "title": "Términos y Condiciones",
+      "s1": {
+        "title": "1. Introducción",
+        "body": "Bienvenido a Relincho. Al acceder y utilizar nuestro software de gestión para centros ecuestres y yeguadas, aceptas estar sujeto a estos términos y condiciones. Si no estás de acuerdo con alguna parte de los términos, no podrás acceder al servicio."
+      },
+      "s2": {
+        "title": "2. Uso del Servicio",
+        "body": "Relincho proporciona una plataforma de software como servicio (SaaS) para la gestión equina. Te comprometes a utilizar el servicio únicamente para fines legales y de acuerdo con estos Términos. Eres responsable de mantener la confidencialidad de tu cuenta y contraseña."
+      },
+      "s3": {
+        "title": "3. Suscripción y Pagos",
+        "body": "Algunos aspectos del Servicio se facturan mediante suscripción. Los pagos se procesan de forma segura a través de nuestros proveedores de pago (ej. Stripe). Nos reservamos el derecho de modificar nuestras tarifas, notificándote con al menos 30 días de antelación."
+      },
+      "s4": {
+        "title": "4. Propiedad Intelectual",
+        "body": "El Servicio y su contenido original, características y funcionalidad son y seguirán siendo propiedad exclusiva de Relincho y sus licenciantes. El software está protegido por derechos de autor y marcas registradas."
+      },
+      "s5": {
+        "title": "5. Limitación de Responsabilidad",
+        "body": "En ningún caso Relincho, ni sus directores, empleados o afiliados, serán responsables de ningún daño indirecto, incidental, especial o consecuente derivado de tu uso del servicio."
+      },
+      "contactNote": "Para cualquier duda sobre estos términos, contáctanos en contacto@relincho.com"
+    },
+    "cookies": {
+      "title": "Política de Cookies",
+      "s1": {
+        "title": "1. ¿Qué son las cookies?",
+        "body": "Una cookie es un pequeño archivo de texto que un sitio web guarda en tu ordenador o dispositivo móvil cuando lo visitas. Permite al sitio web recordar tus acciones y preferencias (como inicio de sesión, idioma y otras preferencias de visualización) durante un período de tiempo."
+      },
+      "s2": {
+        "title": "2. Cómo utilizamos las cookies en Relincho",
+        "intro": "Utilizamos cookies por varias razones, principalmente para:",
+        "items": [
+          {
+            "term": "Cookies Estrictamente Necesarias:",
+            "description": "Esenciales para que puedas navegar por la plataforma y usar sus funciones, como acceder a áreas seguras (iniciar sesión en tu cuenta)."
+          },
+          {
+            "term": "Cookies de Rendimiento:",
+            "description": "Nos ayudan a entender cómo los visitantes interactúan con la web, recopilando información de forma anónima."
+          },
+          {
+            "term": "Cookies de Funcionalidad:",
+            "description": "Permiten que el sitio web recuerde las elecciones que haces (como tu nombre de usuario)."
+          }
+        ]
+      },
+      "s3": {
+        "title": "3. Controlar las cookies",
+        "body": "Puedes controlar y/o eliminar las cookies como desees. Puedes eliminar todas las cookies que ya están en tu ordenador y puedes configurar la mayoría de los navegadores para evitar que se instalen. Sin embargo, si haces esto, es posible que tengas que ajustar manualmente algunas preferencias cada vez que visites un sitio web y que algunos servicios y funcionalidades (como el acceso a tu cuenta) no funcionen."
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "brandSubtitle": "Gestión equina para yeguadas PRE",
+      "cardTitle": "Iniciar sesión",
+      "google": "Continuar con Google",
+      "or": "o",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "nombre@yeguada.es",
+      "submit": "Enviar enlace mágico"
+    },
+    "verify": {
+      "title": "Revisa tu correo",
+      "body": "Te hemos enviado un enlace mágico. Haz clic en él para iniciar sesión en Relincho.",
+      "closeTab": "Puedes cerrar esta pestaña."
+    },
+    "error": {
+      "title": "Error de acceso",
+      "body": "Ha ocurrido un error al iniciar sesión. El enlace puede haber expirado o ya ha sido usado.",
+      "backToLogin": "Volver al inicio de sesión"
+    }
+  },
+  "onboarding": {
+    "title": "Crea tu finca en Relincho",
+    "description": "Configura los datos básicos de tu yeguada o picadero.",
+    "form": {
+      "nameLabel": "Nombre de la finca *",
+      "namePlaceholder": "Yeguada El Rocío",
+      "slugLabel": "Identificador URL *",
+      "slugPrefix": "Relincho.es/",
+      "slugPlaceholder": "yeguada-el-rocio",
+      "provinceLabel": "Provincia",
+      "provincePlaceholder": "Sevilla",
+      "nifLabel": "NIF / CIF (opcional)",
+      "nifPlaceholder": "12345678A",
+      "submit": "Crear mi finca"
+    },
+    "errors": {
+      "required": "El nombre y el identificador son obligatorios",
+      "slugFormat": "El identificador solo puede contener letras minúsculas, números y guiones"
+    },
+    "serverErrors": {
+      "unauthorized": "No autorizado",
+      "invalid": "Datos inválidos",
+      "slugTaken": "Este identificador ya está en uso"
+    }
+  },
+  "cookieBanner": {
+    "title": "Aviso de Cookies",
+    "body": "Utilizamos cookies propias y de terceros para mejorar nuestros servicios y mostrarle publicidad relacionada con sus preferencias mediante el análisis de sus hábitos de navegación. Si continúa navegando, consideramos que acepta su uso.",
+    "accept": "Aceptar",
+    "more": "Más información"
+  },
+  "sidebar": {
+    "brand": "Relincho",
+    "home": "Inicio",
+    "groups": {
+      "stable": "Cuadra",
+      "business": "Negocio"
+    },
+    "sections": {
+      "horses": "Caballos",
+      "performance": "Rendimiento",
+      "health": "Sanidad",
+      "reproduction": "Reproducción",
+      "movements": "Movimientos",
+      "tasks": "Tareas",
+      "boarding": "Pupilaje",
+      "invoicing": "Facturación",
+      "contacts": "Contactos",
+      "documents": "Documentos",
+      "settings": "Ajustes"
+    },
+    "more": "Más",
+    "moreSheet": "Más secciones",
+    "close": "Cerrar",
+    "logout": "Cerrar sesión",
+    "account": "Cuenta"
+  }
+}

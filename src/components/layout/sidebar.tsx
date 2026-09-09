@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Home,
   Layers,
@@ -22,40 +23,55 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { useState, useEffect } from "react";
 
-type NavItem = { label: string; href: string; icon: LucideIcon };
+type NavKey =
+  | "home"
+  | "horses"
+  | "performance"
+  | "health"
+  | "reproduction"
+  | "movements"
+  | "tasks"
+  | "boarding"
+  | "invoicing"
+  | "contacts"
+  | "documents"
+  | "settings";
+
+type NavItem = { key: NavKey; href: string; icon: LucideIcon };
 
 /** Grouped so the rail reads as a hierarchy instead of a wall of ten links. */
-const navGroups: { label?: string; items: NavItem[] }[] = [
+const navGroups: { groupKey?: "stable" | "business"; items: NavItem[] }[] = [
   {
-    items: [{ label: "Inicio", href: "inicio", icon: Home }],
+    items: [{ key: "home", href: "inicio", icon: Home }],
   },
   {
-    label: "Cuadra",
+    groupKey: "stable",
     items: [
-      { label: "Caballos", href: "caballos", icon: Layers },
-      { label: "Rendimiento", href: "rendimiento", icon: Gauge },
-      { label: "Sanidad", href: "sanidad", icon: Activity },
-      { label: "Reproducción", href: "reproduccion", icon: Baby },
-      { label: "Movimientos", href: "movimientos", icon: Route },
-      { label: "Tareas", href: "tareas", icon: CheckSquare },
+      { key: "horses", href: "caballos", icon: Layers },
+      { key: "performance", href: "rendimiento", icon: Gauge },
+      { key: "health", href: "sanidad", icon: Activity },
+      { key: "reproduction", href: "reproduccion", icon: Baby },
+      { key: "movements", href: "movimientos", icon: Route },
+      { key: "tasks", href: "tareas", icon: CheckSquare },
     ],
   },
   {
-    label: "Negocio",
+    groupKey: "business",
     items: [
-      { label: "Pupilaje", href: "pupilaje", icon: Store },
-      { label: "Facturación", href: "facturacion", icon: Receipt },
-      { label: "Contactos", href: "contactos", icon: Users },
-      { label: "Documentos", href: "documentos", icon: Files },
+      { key: "boarding", href: "pupilaje", icon: Store },
+      { key: "invoicing", href: "facturacion", icon: Receipt },
+      { key: "contacts", href: "contactos", icon: Users },
+      { key: "documents", href: "documentos", icon: Files },
     ],
   },
 ];
 
 const allNavItems = navGroups.flatMap((group) => group.items);
 const settingsItem: NavItem = {
-  label: "Ajustes",
+  key: "settings",
   href: "ajustes",
   icon: Settings,
 };
@@ -91,6 +107,7 @@ export function Sidebar({
   userName,
   userEmail,
 }: SidebarProps) {
+  const t = useTranslations("sidebar");
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -116,10 +133,10 @@ export function Sidebar({
   const isActive = (href: string) =>
     pathname.startsWith(`/${tenantSlug}/${href}`);
 
-  const displayName = userName || userEmail || "Cuenta";
+  const displayName = userName || userEmail || t("account");
 
   const navLink = (
-    { label, href, icon: Icon }: NavItem,
+    { key, href, icon: Icon }: NavItem,
     { large = false }: { large?: boolean } = {},
   ) => {
     const active = isActive(href);
@@ -145,7 +162,9 @@ export function Sidebar({
               : "text-muted-foreground/80 group-hover:text-foreground",
           )}
         />
-        <span className="truncate">{label}</span>
+        <span className="truncate">
+          {key === "home" ? t("home") : t(`sections.${key}`)}
+        </span>
       </Link>
     );
   };
@@ -172,17 +191,17 @@ export function Sidebar({
               {tenantName}
             </span>
             <span className="text-[11px] leading-tight text-muted-foreground">
-              Relincho
+              {t("brand")}
             </span>
           </span>
         </Link>
 
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 pt-2 pb-6">
           {navGroups.map((group, index) => (
-            <div key={group.label ?? index} className="space-y-0.5">
-              {group.label && (
+            <div key={group.groupKey ?? index} className="space-y-0.5">
+              {group.groupKey && (
                 <p className="px-3 pb-1.5 text-[10.5px] font-semibold tracking-[0.08em] text-muted-foreground/70 uppercase">
-                  {group.label}
+                  {t(`groups.${group.groupKey}`)}
                 </p>
               )}
               {group.items.map((item) => navLink(item))}
@@ -201,12 +220,15 @@ export function Sidebar({
             </span>
             <Link
               href="/api/auth/signout"
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
+              aria-label={t("logout")}
+              title={t("logout")}
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
             >
               <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
             </Link>
+          </div>
+          <div className="px-3 pt-1">
+            <LocaleSwitcher />
           </div>
         </div>
       </aside>
@@ -226,7 +248,7 @@ export function Sidebar({
         </Link>
         <Link
           href={`/${tenantSlug}/ajustes`}
-          aria-label="Ajustes"
+          aria-label={t("sections.settings")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
         >
           <Settings className="h-[18px] w-[18px]" strokeWidth={2} />
@@ -236,7 +258,7 @@ export function Sidebar({
       {/* ── Mobile bottom tabs ───────────────────────────────── */}
       <nav className="safe-area-bottom fixed right-0 bottom-0 left-0 z-40 border-t border-border bg-sidebar/95 backdrop-blur-lg md:hidden">
         <div className="flex h-16 items-stretch">
-          {mobileTabItems.map(({ label, href, icon: Icon }) => {
+          {mobileTabItems.map(({ key, href, icon: Icon }) => {
             const active = isActive(href);
             return (
               <Link
@@ -260,7 +282,7 @@ export function Sidebar({
                       : "font-medium text-muted-foreground",
                   )}
                 >
-                  {label}
+                  {key === "home" ? t("home") : t(`sections.${key}`)}
                 </span>
               </Link>
             );
@@ -286,7 +308,7 @@ export function Sidebar({
                   : "font-medium text-muted-foreground",
               )}
             >
-              Más
+              {t("more")}
             </span>
           </button>
         </div>
@@ -301,7 +323,7 @@ export function Sidebar({
           />
           <div
             role="dialog"
-            aria-label="Más secciones"
+            aria-label={t("moreSheet")}
             className="safe-area-bottom animate-in slide-in-from-bottom fixed right-0 bottom-0 left-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-border bg-background duration-200 md:hidden"
           >
             <div className="flex justify-center pt-3 pb-1">
@@ -309,12 +331,12 @@ export function Sidebar({
             </div>
             <div className="flex items-center justify-between px-4 py-3">
               <p className="text-[13px] font-semibold text-foreground">
-                Más secciones
+                {t("moreSheet")}
               </p>
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                aria-label="Cerrar"
+                aria-label={t("close")}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <X className="h-4 w-4" strokeWidth={2.5} />
@@ -330,8 +352,11 @@ export function Sidebar({
                   className="h-[18px] w-[18px] shrink-0"
                   strokeWidth={2}
                 />
-                Cerrar sesión
+                {t("logout")}
               </Link>
+              <div className="px-3 pt-3">
+                <LocaleSwitcher />
+              </div>
             </div>
           </div>
         </>

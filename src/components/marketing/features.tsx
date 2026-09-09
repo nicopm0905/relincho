@@ -2,44 +2,19 @@
 
 import { Baby, Receipt, Layers, HeartPulse } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 const features = [
-  {
-    title: "Sanidad y controles",
-    description:
-      "Registra vacunas, desparasitaciones y tratamientos. Nunca olvides una fecha importante gracias a las alertas automáticas.",
-    icon: HeartPulse,
-    span: "md:col-span-2",
-    dark: false,
-  },
-  {
-    title: "Control reproductivo",
-    description:
-      "Seguimiento de celos, inseminaciones, ecografías y partos con cálculos predictivos.",
-    icon: Baby,
-    span: "md:col-span-1",
-    dark: false,
-  },
-  {
-    title: "Pupilaje y estancias",
-    description:
-      "Gestiona los boxes, dietas y tarifas de caballos estabulados de clientes.",
-    icon: Layers,
-    span: "md:col-span-1",
-    dark: false,
-  },
-  {
-    title: "Facturación Veri*Factu",
-    description:
-      "Emite facturas legales, genera cuotas automáticas y envía recibos SEPA. Todo adaptado a la nueva normativa de la AEAT.",
-    icon: Receipt,
-    span: "md:col-span-2",
-    dark: true,
-  },
-];
+  { key: "health", icon: HeartPulse, span: "md:col-span-2", dark: false },
+  { key: "reproduction", icon: Baby, span: "md:col-span-1", dark: false },
+  { key: "boarding", icon: Layers, span: "md:col-span-1", dark: false },
+  { key: "invoicing", icon: Receipt, span: "md:col-span-2", dark: true },
+] as const;
 
 export function Features() {
+  const t = useTranslations("marketing.features");
+
   return (
     <section id="features" className="relative overflow-hidden bg-white py-20 md:py-32">
       <div className="container mx-auto max-w-5xl px-4 sm:px-6">
@@ -51,18 +26,17 @@ export function Features() {
           className="mb-12 max-w-2xl md:mb-20"
         >
           <h2 className="mb-5 font-heading text-3xl text-foreground sm:text-4xl md:text-6xl">
-            Todo lo que necesitas. <br className="hidden sm:block" /> Y nada más.
+            {t("title")}
           </h2>
           <p className="text-base text-muted-foreground sm:text-lg">
-            Hemos eliminado el ruido para que puedas centrarte en lo que de verdad
-            importa: tus caballos. Relincho simplifica tu día a día.
+            {t("subtitle")}
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
           {features.map((feature, index) => (
             <motion.article
-              key={feature.title}
+              key={feature.key}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
@@ -93,7 +67,7 @@ export function Features() {
                     feature.dark ? "text-white" : "text-foreground",
                   )}
                 >
-                  {feature.title}
+                  {t(`items.${feature.key}.title`)}
                 </h3>
                 <p
                   className={cn(
@@ -101,7 +75,7 @@ export function Features() {
                     feature.dark ? "text-white/70" : "text-muted-foreground",
                   )}
                 >
-                  {feature.description}
+                  {t(`items.${feature.key}.description`)}
                 </p>
               </div>
             </motion.article>

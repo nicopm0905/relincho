@@ -1,0 +1,362 @@
+{
+  "app": {
+    "title": "Relincho — Equine management for PRE studs",
+    "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding and Veri*Factu invoicing."
+  },
+  "nav": {
+    "horses": "Horses",
+    "health": "Health",
+    "tasks": "Tasks",
+    "reproduction": "Breeding",
+    "documents": "Documents",
+    "boarding": "Boarding",
+    "invoicing": "Invoicing",
+    "contacts": "Contacts",
+    "settings": "Settings"
+  },
+  "metadata": {
+    "home": {
+      "title": "Relincho — Equine management for PRE studs",
+      "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding and Veri*Factu invoicing."
+    },
+    "contact": { "title": "Contact - Relincho" },
+    "privacy": { "title": "Privacy Policy - Relincho" },
+    "terms": { "title": "Terms and Conditions - Relincho" },
+    "cookies": { "title": "Cookie Policy - Relincho" },
+    "login": { "title": "Sign in — Relincho" },
+    "verify": { "title": "Check your email — Relincho" },
+    "authError": { "title": "Sign-in error — Relincho" },
+    "onboarding": { "title": "Create your farm — Relincho" }
+  },
+  "common": {
+    "back": "Back",
+    "localeSwitcher": {
+      "label": "Change language",
+      "es": "ES",
+      "en": "EN"
+    }
+  },
+  "marketing": {
+    "nav": {
+      "features": "Features",
+      "about": "About",
+      "pricing": "Pricing",
+      "faq": "FAQ"
+    },
+    "actions": {
+      "login": "Sign in",
+      "startFree": "Start for free",
+      "goToPanel": "Go to dashboard",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu"
+    },
+    "hero": {
+      "badgeNew": "New",
+      "badgeFeature": "Veri*Factu built in",
+      "titleLead": "The",
+      "titleHighlight": "equine management",
+      "titleTail": "software for stud farms.",
+      "subtitle": "Health, breeding, boarding and invoicing. All in one place. No hassle.",
+      "ctaPrimary": "Try it for free",
+      "ctaSecondary": "See features",
+      "disclaimer": "No credit card · Cancel anytime"
+    },
+    "features": {
+      "title": "Everything you need. And nothing else.",
+      "subtitle": "We stripped out the noise so you can focus on what really matters: your horses. Relincho simplifies your day to day.",
+      "items": {
+        "health": {
+          "title": "Health and check-ups",
+          "description": "Log vaccinations, deworming and treatments. Never forget an important date thanks to automatic reminders."
+        },
+        "reproduction": {
+          "title": "Breeding control",
+          "description": "Track heats, inseminations, ultrasounds and foalings with predictive calculations."
+        },
+        "boarding": {
+          "title": "Boarding and stays",
+          "description": "Manage stalls, diets and rates for clients' stabled horses."
+        },
+        "invoicing": {
+          "title": "Veri*Factu invoicing",
+          "description": "Issue legal invoices, generate recurring fees and send SEPA direct debits. All adapted to the new AEAT regulation."
+        }
+      }
+    },
+    "about": {
+      "title": "Who are we?",
+      "subtitle": "Two young people from Jerez bringing together technology and equestrian know-how.",
+      "p1": "We are two guys from Jerez de la Frontera, a land where the horse is far more than a tradition. Growing up here has let us learn first-hand how stud farms work and what their real day-to-day problems are.",
+      "p2": "<strong>Relincho</strong> was born as the perfect combination of our two passions. One of us is a <strong>Software Engineer</strong>, responsible for the entire technical architecture so the platform is modern, fast and secure.",
+      "p3": "The other is immersed in studies of <strong>Physiotherapy and Sports Science</strong>. Thanks to this, we bring deep technical knowledge about the horse's musculature, its recovery and the different types of training, carrying all that scientific rigour into the software.",
+      "cardTitle": "Relincho Team",
+      "cardSubtitle": "Made with passion from Jerez",
+      "values": {
+        "local": {
+          "title": "Knowledge of the ground",
+          "description": "Being from Jerez, we know first-hand the land, the culture and what the horse world really needs day to day."
+        },
+        "tech": {
+          "title": "Technical excellence",
+          "description": "We build top-tier software. A fast, secure and modern platform that automates the heavy lifting for you."
+        },
+        "welfare": {
+          "title": "Animal welfare",
+          "description": "We apply knowledge of biomechanics and sports training to make sure horse monitoring is optimal."
+        }
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "We answer your questions about how Relincho can help transform and ease the daily management of your horses.",
+      "items": [
+        {
+          "question": "What is Relincho and who is it for?",
+          "answer": "Relincho is comprehensive management software designed for stud farms, equestrian centres, riding schools and equine professionals who want to digitise and simplify their day to day. From health to invoicing, all on a single platform."
+        },
+        {
+          "question": "Do I need technical knowledge to use the platform?",
+          "answer": "Not at all. We designed Relincho with a clean, intuitive and easy-to-use interface. Our goal is for anyone to be able to start managing their horses from the very first minute, with no need for complex manuals."
+        },
+        {
+          "question": "Is my data and my clients' data safe?",
+          "answer": "Yes. We use the highest cloud security standards. Your data and your clients' data are encrypted and we run automatic backups constantly so you never lose important information."
+        },
+        {
+          "question": "Does it comply with invoicing regulations and Veri*Factu?",
+          "answer": "Completely. Our invoicing module is up to date and adapted to the new AEAT regulations (including Veri*Factu). You can issue legal invoices, generate recurring fees and automate SEPA direct debits without worry."
+        },
+        {
+          "question": "Can I try Relincho before subscribing?",
+          "answer": "Of course! We understand you want to make sure Relincho is the perfect tool for you. We offer a trial where you can explore all the key features and discover how we can help you optimise your equestrian centre."
+        }
+      ]
+    },
+    "pricing": {
+      "title": "Simple pricing. No surprises.",
+      "subtitle": "Choose the plan that best fits your operation. You can change plan or cancel at any time.",
+      "recommended": "Recommended",
+      "perMonth": "/mo",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "description": "Perfect for small stud farms or riding schools just getting started.",
+          "price": "29",
+          "cta": "Choose Starter",
+          "features": [
+            "Up to 20 horses",
+            "Health and breeding control",
+            "Basic invoicing",
+            "Email support"
+          ]
+        },
+        "pro": {
+          "name": "Pro",
+          "description": "For established businesses that need full automation.",
+          "price": "79",
+          "cta": "Start free trial",
+          "features": [
+            "Unlimited horses",
+            "Boarding and contracts",
+            "Advanced invoicing (AEAT Veri*Factu)",
+            "Staff management",
+            "Priority 24/7 support"
+          ]
+        }
+      }
+    }
+  },
+  "footer": {
+    "links": {
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "cookies": "Cookies",
+      "contact": "Contact"
+    }
+  },
+  "legal": {
+    "common": {
+      "lastUpdated": "Last updated: {date}",
+      "updatedDate": "8 September 2026"
+    },
+    "contact": {
+      "title": "Get in touch",
+      "intro": "Have a question about Relincho or need help with your account? Our support team is ready to help you.",
+      "support": {
+        "title": "Technical Support",
+        "body": "If you are already a customer and have a technical problem or a question about how to use a feature.",
+        "email": "soporte@relincho.com"
+      },
+      "sales": {
+        "title": "Sales and Information",
+        "body": "Want to know more about how Relincho can help your stud farm? Let's talk.",
+        "email": "info@relincho.com"
+      }
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "s1": {
+        "title": "1. Information we collect",
+        "intro": "At Relincho, we collect information to provide better services to all our users. This includes:",
+        "items": [
+          "Personal information you provide to us (name, email, billing details).",
+          "Data about your horses, facilities and clients that you enter into the software.",
+          "Platform usage information and cookies (see Cookie Policy)."
+        ]
+      },
+      "s2": {
+        "title": "2. How we use your data",
+        "intro": "We use the information collected to:",
+        "items": [
+          "Provide, maintain and improve our management software.",
+          "Process your subscription payments.",
+          "Send you important notifications about the service and technical support.",
+          "Comply with applicable law (including invoicing regulations)."
+        ]
+      },
+      "s3": {
+        "title": "3. Sharing your data",
+        "body": "We do not sell your personal data to third parties. We only share information with essential service providers (such as payment platforms and cloud hosting) that comply with GDPR security standards, and where required by law."
+      },
+      "s4": {
+        "title": "4. Data security",
+        "body": "Your data is encrypted and stored on secure servers. We run regular backups to guarantee the integrity and availability of your stud farm or equestrian centre's information."
+      },
+      "s5": {
+        "title": "5. Your rights",
+        "body": "You have the right to access, rectify or delete your personal data at any time. To exercise these rights, contact us at privacidad@relincho.com."
+      }
+    },
+    "terms": {
+      "title": "Terms and Conditions",
+      "s1": {
+        "title": "1. Introduction",
+        "body": "Welcome to Relincho. By accessing and using our management software for equestrian centres and stud farms, you agree to be bound by these terms and conditions. If you do not agree with any part of the terms, you may not access the service."
+      },
+      "s2": {
+        "title": "2. Use of the Service",
+        "body": "Relincho provides a software-as-a-service (SaaS) platform for equine management. You agree to use the service only for lawful purposes and in accordance with these Terms. You are responsible for keeping your account and password confidential."
+      },
+      "s3": {
+        "title": "3. Subscription and Payments",
+        "body": "Some aspects of the Service are billed on a subscription basis. Payments are processed securely through our payment providers (e.g. Stripe). We reserve the right to change our rates, giving you at least 30 days' notice."
+      },
+      "s4": {
+        "title": "4. Intellectual Property",
+        "body": "The Service and its original content, features and functionality are and will remain the exclusive property of Relincho and its licensors. The software is protected by copyright and trademarks."
+      },
+      "s5": {
+        "title": "5. Limitation of Liability",
+        "body": "In no event shall Relincho, nor its directors, employees or affiliates, be liable for any indirect, incidental, special or consequential damages arising from your use of the service."
+      },
+      "contactNote": "For any questions about these terms, contact us at contacto@relincho.com"
+    },
+    "cookies": {
+      "title": "Cookie Policy",
+      "s1": {
+        "title": "1. What are cookies?",
+        "body": "A cookie is a small text file that a website saves on your computer or mobile device when you visit it. It lets the website remember your actions and preferences (such as sign-in, language and other display preferences) for a period of time."
+      },
+      "s2": {
+        "title": "2. How we use cookies at Relincho",
+        "intro": "We use cookies for several reasons, mainly to:",
+        "items": [
+          {
+            "term": "Strictly Necessary Cookies:",
+            "description": "Essential for you to browse the platform and use its features, such as accessing secure areas (signing in to your account)."
+          },
+          {
+            "term": "Performance Cookies:",
+            "description": "Help us understand how visitors interact with the site, collecting information anonymously."
+          },
+          {
+            "term": "Functionality Cookies:",
+            "description": "Allow the website to remember the choices you make (such as your username)."
+          }
+        ]
+      },
+      "s3": {
+        "title": "3. Controlling cookies",
+        "body": "You can control and/or delete cookies as you wish. You can delete all cookies already on your computer and you can set most browsers to prevent them from being installed. However, if you do this, you may have to manually adjust some preferences every time you visit a site, and some services and features (such as access to your account) may not work."
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "brandSubtitle": "Equine management for PRE studs",
+      "cardTitle": "Sign in",
+      "google": "Continue with Google",
+      "or": "or",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@studfarm.com",
+      "submit": "Send magic link"
+    },
+    "verify": {
+      "title": "Check your email",
+      "body": "We have sent you a magic link. Click it to sign in to Relincho.",
+      "closeTab": "You can close this tab."
+    },
+    "error": {
+      "title": "Sign-in error",
+      "body": "Something went wrong while signing in. The link may have expired or already been used.",
+      "backToLogin": "Back to sign in"
+    }
+  },
+  "onboarding": {
+    "title": "Create your farm on Relincho",
+    "description": "Set up the basic details of your stud farm or riding school.",
+    "form": {
+      "nameLabel": "Farm name *",
+      "namePlaceholder": "Yeguada El Rocío",
+      "slugLabel": "URL identifier *",
+      "slugPrefix": "Relincho.es/",
+      "slugPlaceholder": "yeguada-el-rocio",
+      "provinceLabel": "Province",
+      "provincePlaceholder": "Sevilla",
+      "nifLabel": "Tax ID (optional)",
+      "nifPlaceholder": "12345678A",
+      "submit": "Create my farm"
+    },
+    "errors": {
+      "required": "Name and identifier are required",
+      "slugFormat": "The identifier may only contain lowercase letters, numbers and hyphens"
+    },
+    "serverErrors": {
+      "unauthorized": "Not authorized",
+      "invalid": "Invalid data",
+      "slugTaken": "This identifier is already in use"
+    }
+  },
+  "cookieBanner": {
+    "title": "Cookie Notice",
+    "body": "We use our own and third-party cookies to improve our services and show you advertising related to your preferences by analysing your browsing habits. If you continue browsing, we consider that you accept their use.",
+    "accept": "Accept",
+    "more": "Learn more"
+  },
+  "sidebar": {
+    "brand": "Relincho",
+    "home": "Home",
+    "groups": {
+      "stable": "Stable",
+      "business": "Business"
+    },
+    "sections": {
+      "horses": "Horses",
+      "performance": "Performance",
+      "health": "Health",
+      "reproduction": "Breeding",
+      "movements": "Movements",
+      "tasks": "Tasks",
+      "boarding": "Boarding",
+      "invoicing": "Invoicing",
+      "contacts": "Contacts",
+      "documents": "Documents",
+      "settings": "Settings"
+    },
+    "more": "More",
+    "moreSheet": "More sections",
+    "close": "Close",
+    "logout": "Sign out",
+    "account": "Account"
+  }
+}

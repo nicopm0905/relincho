@@ -6,8 +6,10 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export function Hero() {
+  const t = useTranslations("marketing.hero");
   const containerRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -38,10 +40,10 @@ export function Hero() {
             className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur-md"
           >
             <span className="flex items-center justify-center rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-primary-ink uppercase">
-              Nuevo
+              {t("badgeNew")}
             </span>
             <span className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
-              Veri*Factu integrado <ArrowRight className="h-3 w-3" />
+              {t("badgeFeature")} <ArrowRight className="h-3 w-3" />
             </span>
           </motion.div>
 
@@ -51,12 +53,12 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="font-heading text-[2.75rem] leading-[1.02] tracking-tight text-balance text-foreground sm:text-6xl md:text-7xl lg:text-8xl lg:leading-[0.95]"
           >
-            El software de{" "}
+            {t("titleLead")}{" "}
             <span className="relative inline-block">
-              gestión equina
+              {t("titleHighlight")}
               <span className="absolute -bottom-1 left-0 -z-10 h-1 w-full rounded-full bg-primary/30 md:-bottom-3 md:h-2" />
             </span>{" "}
-            para yeguadas.
+            {t("titleTail")}
           </motion.h1>
 
           <motion.p
@@ -65,8 +67,7 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="max-w-md text-base leading-relaxed font-medium text-muted-foreground sm:text-lg md:text-xl"
           >
-            Sanidad, reproducción, pupilaje y facturación. Todo en un solo lugar.
-            Sin complicaciones.
+            {t("subtitle")}
           </motion.p>
 
           <motion.div
@@ -81,7 +82,7 @@ export function Hero() {
               className="h-13 w-full rounded-full px-8 text-base shadow-[0_4px_14px_0_rgba(163,184,70,0.35)] transition-all duration-300 hover:shadow-[0_6px_20px_rgba(163,184,70,0.28)] sm:h-14 sm:w-auto"
             >
               <Link href="/login">
-                Pruébalo gratis <ArrowRight className="h-5 w-5" />
+                {t("ctaPrimary")} <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
             <Button
@@ -90,7 +91,7 @@ export function Hero() {
               asChild
               className="h-13 w-full rounded-full bg-white/80 px-8 text-base shadow-sm backdrop-blur-sm transition-all duration-300 sm:h-14 sm:w-auto"
             >
-              <Link href="#features">Ver características</Link>
+              <Link href="#features">{t("ctaSecondary")}</Link>
             </Button>
           </motion.div>
 
@@ -100,7 +101,7 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="text-[13px] font-medium text-muted-foreground"
           >
-            Sin tarjeta de crédito · Cancela cuando quieras
+            {t("disclaimer")}
           </motion.p>
         </motion.div>
 

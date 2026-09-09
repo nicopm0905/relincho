@@ -1,9 +1,16 @@
+import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
+import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import Image from "next/image";
 
-export const metadata = { title: "Iniciar sesión — Relincho" };
+export async function generateMetadata() {
+  const t = await getTranslations("metadata.login");
+  return { title: t("title") };
+}
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const t = await getTranslations("auth.login");
+
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
@@ -15,11 +22,14 @@ export default function LoginPage() {
             Relincho
           </h1>
           <p className="text-[15px] font-medium text-muted-foreground mt-1">
-            Gestión equina para yeguadas PRE
+            {t("brandSubtitle")}
           </p>
         </div>
       </div>
       <LoginForm />
+      <div className="flex justify-center">
+        <LocaleSwitcher />
+      </div>
     </div>
   );
 }

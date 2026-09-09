@@ -1,5 +1,6 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
 import { z } from "zod";
@@ -16,16 +17,18 @@ const schema = z.object({
 });
 
 export async function createTenantAction(input: z.infer<typeof schema>) {
+  const t = await getTranslations("onboarding.serverErrors");
+
   const session = await auth();
-  if (!session?.user) return { error: "No autorizado" };
+  if (!session?.user) return { error: t("unauthorized") };
 
   const data = schema.safeParse(input);
-  if (!data.success) return { error: "Datos inválidos" };
+  if (!data.success) return { error: t("invalid") };
 
   const { name, slug, province, nif } = data.data;
 
   const existing = await prisma.tenant.findUnique({ where: { slug } });
-  if (existing) return { error: "Este identificador ya está en uso" };
+  if (existing) return { error: t("slugTaken") };
 
   const tenant = await prisma.tenant.create({
     data: {

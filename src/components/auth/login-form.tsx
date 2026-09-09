@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { GoogleLogo, CircleNotch } from "@phosphor-icons/react";
 
 export function LoginForm() {
+  const t = useTranslations("auth.login");
+
   // Adonde iba el usuario antes de que le pidieramos entrar, por ejemplo la
   // ficha del caballo cuyo QR acaba de escanear.
   const searchParams = useSearchParams();
@@ -35,7 +38,7 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-center">Iniciar sesión</CardTitle>
+        <CardTitle className="text-center">{t("cardTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button
@@ -49,22 +52,22 @@ export function LoginForm() {
           ) : (
             <GoogleLogo weight="bold" className="mr-2 h-4 w-4" />
           )}
-          Continuar con Google
+          {t("google")}
         </Button>
 
         <div className="flex items-center gap-4">
           <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">o</span>
+          <span className="text-xs text-muted-foreground">{t("or")}</span>
           <Separator className="flex-1" />
         </div>
 
         <form onSubmit={handleMagicLink} className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="email">{t("emailLabel")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="nombre@yeguada.es"
+              placeholder={t("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -74,7 +77,7 @@ export function LoginForm() {
             {loading && (
               <CircleNotch weight="bold" className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Enviar enlace mágico
+            {t("submit")}
           </Button>
         </form>
       </CardContent>

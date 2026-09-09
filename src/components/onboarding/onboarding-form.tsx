@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardContent,
@@ -16,6 +17,7 @@ import { createTenantAction } from "@/server/actions/tenant";
 import { CircleNotch } from "@phosphor-icons/react";
 
 export function OnboardingForm() {
+  const t = useTranslations("onboarding");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,11 +45,11 @@ export function OnboardingForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim() || !form.slug.trim()) {
-      setError("El nombre y el identificador son obligatorios");
+      setError(t("errors.required"));
       return;
     }
     if (!/^[a-z0-9-]+$/.test(form.slug)) {
-      setError("El identificador solo puede contener letras minúsculas, números y guiones");
+      setError(t("errors.slugFormat"));
       return;
     }
     setLoading(true);
@@ -64,18 +66,16 @@ export function OnboardingForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Crea tu finca en Relincho</CardTitle>
-        <CardDescription>
-          Configura los datos básicos de tu yeguada o picadero.
-        </CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="name">Nombre de la finca *</Label>
+            <Label htmlFor="name">{t("form.nameLabel")}</Label>
             <Input
               id="name"
-              placeholder="Yeguada El Rocío"
+              placeholder={t("form.namePlaceholder")}
               value={form.name}
               onChange={(e) => {
                 set("name", e.target.value);
@@ -88,14 +88,14 @@ export function OnboardingForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="slug">Identificador URL *</Label>
+            <Label htmlFor="slug">{t("form.slugLabel")}</Label>
             <div className="flex items-center gap-1">
               <span className="text-sm text-muted-foreground shrink-0">
-                Relincho.es/
+                {t("form.slugPrefix")}
               </span>
               <Input
                 id="slug"
-                placeholder="yeguada-el-rocio"
+                placeholder={t("form.slugPlaceholder")}
                 value={form.slug}
                 onChange={(e) => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                 required
@@ -104,20 +104,20 @@ export function OnboardingForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="province">Provincia</Label>
+            <Label htmlFor="province">{t("form.provinceLabel")}</Label>
             <Input
               id="province"
-              placeholder="Sevilla"
+              placeholder={t("form.provincePlaceholder")}
               value={form.province}
               onChange={(e) => set("province", e.target.value)}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="nif">NIF / CIF (opcional)</Label>
+            <Label htmlFor="nif">{t("form.nifLabel")}</Label>
             <Input
               id="nif"
-              placeholder="12345678A"
+              placeholder={t("form.nifPlaceholder")}
               value={form.nif}
               onChange={(e) => set("nif", e.target.value)}
             />
@@ -127,7 +127,7 @@ export function OnboardingForm() {
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <CircleNotch weight="bold" className="mr-2 h-4 w-4 animate-spin" />}
-            Crear mi finca
+            {t("form.submit")}
           </Button>
         </form>
       </CardContent>
