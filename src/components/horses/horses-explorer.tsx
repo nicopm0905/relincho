@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HorseCard } from "@/components/horses/horse-card";
+import { HorseImportDialog } from "@/components/horses/horse-import-dialog";
 import { cn } from "@/lib/utils";
 
 type Horse = {
@@ -112,12 +113,15 @@ export function HorsesExplorer({
         title="Sin caballos aún"
         description="Registra tu primer caballo para empezar a llevar su sanidad, su reproducción y su documentación."
         action={
-          <Button asChild>
-            <Link href={`/${tenantSlug}/caballos/nuevo`}>
-              <Plus weight="bold" />
-              Añadir el primero
-            </Link>
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button asChild>
+              <Link href={`/${tenantSlug}/caballos/nuevo`}>
+                <Plus weight="bold" />
+                Añadir el primero
+              </Link>
+            </Button>
+            <HorseImportDialog />
+          </div>
         }
       />
     );

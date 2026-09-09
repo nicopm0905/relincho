@@ -88,6 +88,85 @@ export const horsesRouter = createTRPCRouter({
     );
   }),
 
+  bulkImport: tenantProcedure
+    .input(
+      z.object({
+        rows: z
+          .array(
+            z.object({
+              name: z.string().min(1),
+              sex: z.nativeEnum(Sex),
+              status: z.nativeEnum(HorseStatus).default("ACTIVE"),
+              breed: z.string().optional(),
+              coat: z.string().optional(),
+              birthDate: z.coerce.date().optional(),
+              uelnCode: z.string().optional(),
+              microchip: z.string().optional(),
+              hierro: z.string().optional(),
+              boxLocation: z.string().optional(),
+            }),
+          )
+          .min(1)
+          .max(1000),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        // No volvemos a crear un caballo cuyo microchip o UELN ya esta dado
+        // de alta: asi el usuario puede reimportar el Excel sin duplicar.
+        const microchips = input.rows
+          .map((r) => r.microchip)
+          .filter((v): v is string => !!v);
+        const uelnCodes = input.rows
+          .map((r) => r.uelnCode)
+          .filter((v): v is string => !!v);
+
+        const existing =
+          microchips.length || uelnCodes.length
+            ? await tx.horse.findMany({
+                where: {
+                  tenantId: ctx.tenantId,
+                  OR: [
+                    ...(microchips.length
+                      ? [{ microchip: { in: microchips } }]
+                      : []),
+                    ...(uelnCodes.length
+                      ? [{ uelnCode: { in: uelnCodes } }]
+                      : []),
+                  ],
+                },
+                select: { microchip: true, uelnCode: true },
+              })
+            : [];
+
+        const takenChips = new Set(
+          existing.map((h) => h.microchip).filter(Boolean),
+        );
+        const takenUeln = new Set(
+          existing.map((h) => h.uelnCode).filter(Boolean),
+        );
+
+        const toCreate = input.rows.filter((row) => {
+          if (row.microchip && takenChips.has(row.microchip)) return false;
+          if (row.uelnCode && takenUeln.has(row.uelnCode)) return false;
+          return true;
+        });
+
+        if (toCreate.length === 0) {
+          return { created: 0, skipped: input.rows.length };
+        }
+
+        const result = await tx.horse.createMany({
+          data: toCreate.map((row) => ({ ...row, tenantId: ctx.tenantId })),
+        });
+
+        return {
+          created: result.count,
+          skipped: input.rows.length - toCreate.length,
+        };
+      });
+    }),
+
   update: tenantProcedure
     .input(z.object({ id: z.string().uuid() }).merge(horseInput.partial()))
     .mutation(async ({ ctx, input }) => {

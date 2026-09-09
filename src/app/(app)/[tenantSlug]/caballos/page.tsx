@@ -4,6 +4,7 @@ import { Plus } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { HorsesExplorer } from "@/components/horses/horses-explorer";
+import { HorseImportDialog } from "@/components/horses/horse-import-dialog";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -29,12 +30,15 @@ export default async function CaballosPage({ params }: PageProps) {
             : `${horses.length} caballos registrados en tu ganadería`
         }
         actions={
-          <Button asChild size="lg">
-            <Link href={`/${tenantSlug}/caballos/nuevo`}>
-              <Plus weight="bold" />
-              Añadir caballo
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <HorseImportDialog />
+            <Button asChild size="lg">
+              <Link href={`/${tenantSlug}/caballos/nuevo`}>
+                <Plus weight="bold" />
+                Añadir caballo
+              </Link>
+            </Button>
+          </div>
         }
       />
 
