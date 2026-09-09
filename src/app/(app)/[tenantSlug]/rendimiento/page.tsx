@@ -11,6 +11,7 @@ import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 import {
   Horse as HorseIcon,
   MagnifyingGlass,
+  QrCode,
   CalendarCheck,
   Warning,
 } from "@phosphor-icons/react/dist/ssr";
@@ -51,12 +52,20 @@ export default async function RendimientoPage({ params }: PageProps) {
         title="Rendimiento"
         description="Periodización por competición y prevención de lesiones"
         actions={
-          <Button asChild variant="outline">
-            <Link href={`/${tenantSlug}/escaner`}>
-              <MagnifyingGlass weight="bold" />
-              Buscar por chip
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <a href={`/api/horses/qr-pdf?tenant=${tenantSlug}`}>
+                <QrCode weight="bold" />
+                Carteles QR
+              </a>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/${tenantSlug}/escaner`}>
+                <MagnifyingGlass weight="bold" />
+                Buscar por chip
+              </Link>
+            </Button>
+          </>
         }
       />
 

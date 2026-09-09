@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatDate } from "@/lib/formatters";
-import { CalendarCheck, Warning } from "@phosphor-icons/react/dist/ssr";
+import { CalendarCheck, QrCode, Warning } from "@phosphor-icons/react/dist/ssr";
 import { WeekStrip } from "@/components/rendimiento/week-strip";
 import { MesocycleTimeline } from "@/components/rendimiento/mesocycle-timeline";
 import { PlanActions } from "@/components/rendimiento/plan-actions";
@@ -254,9 +254,25 @@ export default async function PlanCaballoPage({ params }: PageProps) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Chip de identificación</CardTitle>
+            <CardTitle>Identificación</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/40 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[13px] font-medium text-foreground">
+                  Cartel QR para la puerta del box
+                </p>
+                <p className="text-[12px] text-muted-foreground">
+                  Se imprime y se cuelga. La cámara del móvil abre esta ficha.
+                </p>
+              </div>
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <a href={`/api/horses/qr-pdf?tenant=${tenantSlug}&horse=${horseId}`}>
+                  <QrCode weight="bold" />
+                  Descargar
+                </a>
+              </Button>
+            </div>
             <ChipPairing horseId={horseId} chips={chips} />
           </CardContent>
         </Card>
