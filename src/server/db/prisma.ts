@@ -38,9 +38,9 @@ export async function withTenant<T>(
   options: { timeout?: number; maxWait?: number } = {},
 ): Promise<T> {
   return prisma.$transaction(async (tx) => {
-    await tx.$executeRawUnsafe(
-      `SET LOCAL app.current_tenant = '${tenantId.replace(/'/g, "''")}'`,
-    );
+    // `set_config(..., true)` = equivalente a SET LOCAL: el valor vive solo
+    // dentro de esta transaccion. Parametrizado para evitar inyeccion.
+    await tx.$executeRaw`SELECT set_config('app.current_tenant', ${tenantId}, true)`;
     return fn(tx as unknown as PrismaClient);
   }, {
     timeout: options.timeout ?? 20_000,

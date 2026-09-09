@@ -1,7 +1,11 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { allowedHorseIds } from "../access";
 import { withTenant } from "@/server/db/prisma";
 import { HealthEventType } from "@prisma/client";
+
+const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
+const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
 export const healthRouter = createTRPCRouter({
   list: tenantProcedure
@@ -12,11 +16,18 @@ export const healthRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const ids = await allowedHorseIds(ctx);
+      if (ids && input.horseId && !ids.includes(input.horseId)) return [];
+      const horseWhere = ids
+        ? { horseId: input.horseId ?? { in: ids } }
+        : input.horseId
+          ? { horseId: input.horseId }
+          : {};
       return withTenant(ctx.tenantId, (tx) =>
         tx.healthEvent.findMany({
           where: {
             tenantId: ctx.tenantId,
-            ...(input.horseId ? { horseId: input.horseId } : {}),
+            ...horseWhere,
             ...(input.type ? { type: input.type } : {}),
           },
           include: { horse: { select: { id: true, name: true } } },
@@ -28,6 +39,7 @@ export const healthRouter = createTRPCRouter({
   upcoming: tenantProcedure
     .input(z.object({ days: z.number().default(30) }))
     .query(async ({ ctx, input }) => {
+      const ids = await allowedHorseIds(ctx);
       const until = new Date();
       until.setDate(until.getDate() + input.days);
       return withTenant(ctx.tenantId, (tx) =>
@@ -35,6 +47,7 @@ export const healthRouter = createTRPCRouter({
           where: {
             tenantId: ctx.tenantId,
             nextDueDate: { lte: until, gte: new Date() },
+            ...(ids ? { horseId: { in: ids } } : {}),
           },
           include: { horse: { select: { id: true, name: true } } },
           orderBy: { nextDueDate: "asc" },
@@ -42,7 +55,7 @@ export const healthRouter = createTRPCRouter({
       );
     }),
 
-  create: tenantProcedure
+  create: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -69,7 +82,7 @@ export const healthRouter = createTRPCRouter({
       );
     }),
 
-  delete: tenantProcedure
+  delete: managerProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       await withTenant(ctx.tenantId, (tx) =>

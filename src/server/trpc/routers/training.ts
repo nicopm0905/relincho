@@ -1,9 +1,12 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { allowedHorseIds } from "../access";
 import { withTenant } from "@/server/db/prisma";
 
+const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
+
 export const trainingRouter = createTRPCRouter({
-  create: tenantProcedure
+  create: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -28,11 +31,18 @@ export const trainingRouter = createTRPCRouter({
   list: tenantProcedure
     .input(z.object({ horseId: z.string().uuid().optional() }).optional())
     .query(async ({ ctx, input }) => {
+      const ids = await allowedHorseIds(ctx);
+      if (ids && input?.horseId && !ids.includes(input.horseId)) return [];
+      const horseWhere = ids
+        ? { horseId: input?.horseId ?? { in: ids } }
+        : input?.horseId
+          ? { horseId: input.horseId }
+          : {};
       return withTenant(ctx.tenantId, (tx) =>
         tx.trainingSession.findMany({
           where: {
             tenantId: ctx.tenantId,
-            ...(input?.horseId ? { horseId: input.horseId } : {}),
+            ...horseWhere,
           },
           include: { horse: { select: { id: true, name: true } } },
           orderBy: { date: "desc" },

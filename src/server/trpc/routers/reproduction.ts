@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
 import { TRPCError } from "@trpc/server";
 import { withTenant } from "@/server/db/prisma";
+
+const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
 export const reproductionRouter = createTRPCRouter({
   listActiveCycles: tenantProcedure
@@ -67,7 +69,7 @@ export const reproductionRouter = createTRPCRouter({
       return cycle;
     }),
 
-  createCycle: tenantProcedure
+  createCycle: managerProcedure
     .input(z.object({
       mareId: z.string(),
       season: z.number(),
@@ -102,7 +104,7 @@ export const reproductionRouter = createTRPCRouter({
       }));
     }),
 
-  addCovering: tenantProcedure
+  addCovering: managerProcedure
     .input(z.object({
       cycleId: z.string(),
       stallionId: z.string().optional(),
@@ -132,7 +134,7 @@ export const reproductionRouter = createTRPCRouter({
       }));
     }),
 
-  addPregnancyCheck: tenantProcedure
+  addPregnancyCheck: managerProcedure
     .input(z.object({
       coveringId: z.string(),
       date: z.date(),
@@ -168,7 +170,7 @@ export const reproductionRouter = createTRPCRouter({
       return check;
     }),
 
-  addFoaling: tenantProcedure
+  addFoaling: managerProcedure
     .input(z.object({
       coveringId: z.string(),
       date: z.date(),

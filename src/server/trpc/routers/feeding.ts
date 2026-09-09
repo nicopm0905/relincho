@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
+
+const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
 
 export const feedingRouter = createTRPCRouter({
   // Obtiene los caballos con plan de dieta y su estado actual para la comida indicada
@@ -84,7 +86,7 @@ export const feedingRouter = createTRPCRouter({
     }),
 
   // Marca una ración como completada o saltada
-  logMeal: tenantProcedure
+  logMeal: dailyProcedure
     .input(z.object({
       horseId: z.string(),
       mealType: z.string(),
@@ -132,7 +134,7 @@ export const feedingRouter = createTRPCRouter({
     }),
 
   // Crea o actualiza la dieta / plan de alimentación
-  upsertPlan: tenantProcedure
+  upsertPlan: dailyProcedure
     .input(
       z.object({
         horseId: z.string(),

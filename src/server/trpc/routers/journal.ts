@@ -1,8 +1,10 @@
 import { z } from "zod"
-import { createTRPCRouter, tenantProcedure } from "../init"
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init"
 import { generateText } from "ai"
 import { google } from "@ai-sdk/google"
 import { prisma, withTenant } from "@/server/db/prisma"
+
+const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM")
 
 export const journalRouter = createTRPCRouter({
   list: tenantProcedure
@@ -21,7 +23,7 @@ export const journalRouter = createTRPCRouter({
       )
     }),
 
-  add: tenantProcedure
+  add: dailyProcedure
     .input(
       z.object({
         horseId: z.string(),

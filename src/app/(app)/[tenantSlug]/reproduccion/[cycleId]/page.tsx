@@ -221,6 +221,30 @@ export default async function CycleDetailPage({ params }: PageProps) {
                       </div>
                     )}
 
+                    {/* Fase 2: plantillas PDF ANCCE prellenadas */}
+                    <div className="flex flex-wrap gap-2 border-t border-border/50 pt-4">
+                      <Button asChild variant="outline" size="sm">
+                        <a
+                          href={`/api/reproduction/covering/${covering.id}/solicitud-ancce`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Solicitud ANCCE (PDF)
+                        </a>
+                      </Button>
+                      {covering.foaling && (
+                        <Button asChild variant="outline" size="sm">
+                          <a
+                            href={`/api/reproduction/foaling/${covering.foaling.id}/comunicacion-nacimiento`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Comunicación de nacimiento (PDF)
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+
                     {/* Action Buttons */}
                     {!covering.foaling && (
                       <div className="flex gap-2 pt-2 justify-end">

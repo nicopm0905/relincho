@@ -1,8 +1,10 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
 import { InvoiceStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
+
+const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
 export const invoicesRouter = createTRPCRouter({
   list: tenantProcedure
@@ -54,7 +56,7 @@ export const invoicesRouter = createTRPCRouter({
       return (last?.number ?? 0) + 1;
     }),
 
-  updateStatus: tenantProcedure
+  updateStatus: managerProcedure
     .input(
       z.object({
         id: z.string().uuid(),
@@ -70,7 +72,7 @@ export const invoicesRouter = createTRPCRouter({
       );
     }),
 
-  generateMonthly: tenantProcedure
+  generateMonthly: managerProcedure
     .mutation(async ({ ctx }) => {
       return withTenant(ctx.tenantId, async (tx) => {
         // Buscar contratos activos

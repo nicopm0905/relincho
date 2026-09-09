@@ -1,9 +1,11 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
-import { prisma, withTenant } from "@/server/db/prisma";
+import { createTRPCRouter, roleProcedure } from "../init";
+import { prisma } from "@/server/db/prisma";
+
+const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
 export const tenantRouter = createTRPCRouter({
-  update: tenantProcedure
+  update: managerProcedure
     .input(
       z.object({
         name: z.string().min(1).optional(),

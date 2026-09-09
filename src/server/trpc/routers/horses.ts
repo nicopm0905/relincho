@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, tenantProcedure } from "../init";
+import { allowedHorseIds } from "../access";
 import { prisma, withTenant } from "@/server/db/prisma";
 import { HorseStatus, Sex } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
@@ -32,10 +33,12 @@ export const horsesRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
+      const ids = await allowedHorseIds(ctx);
       return withTenant(ctx.tenantId, (tx) =>
         tx.horse.findMany({
           where: {
             tenantId: ctx.tenantId,
+            ...(ids ? { id: { in: ids } } : {}),
             ...(input?.status ? { status: input.status } : {}),
             ...(input?.search
               ? { name: { contains: input.search, mode: "insensitive" } }
@@ -50,6 +53,10 @@ export const horsesRouter = createTRPCRouter({
   byId: tenantProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      const ids = await allowedHorseIds(ctx);
+      if (ids && !ids.includes(input.id)) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
       const horse = await withTenant(ctx.tenantId, (tx) =>
         tx.horse.findFirst({
           where: { id: input.id, tenantId: ctx.tenantId },

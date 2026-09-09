@@ -48,6 +48,37 @@ export async function sendHealthReminder(opts: {
   });
 }
 
+export async function sendTeamInvite(opts: {
+  to: string;
+  tenantName: string;
+  inviterName?: string | null;
+  url: string;
+}) {
+  const { to, tenantName, inviterName, url } = opts;
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Te han invitado a ${tenantName} en Relincho`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #171717;">Te han invitado a ${tenantName}</h2>
+        <p>
+          ${inviterName ? `${inviterName} te ha` : "Te han"} dado acceso al equipo
+          de <strong>${tenantName}</strong> en Relincho.
+        </p>
+        <p>Haz clic en el botón para acceder. Te pediremos tu email para iniciar sesión.</p>
+        <p>
+          <a href="${url}"
+             style="background:#171717;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
+            Aceptar invitación
+          </a>
+        </p>
+        <p style="color:#888;font-size:12px;">Si no esperabas esta invitación, ignora este email.</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendMagicLink(opts: {
   to: string;
   url: string;

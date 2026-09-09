@@ -1,6 +1,9 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
+
+const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
+const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
 export const tasksRouter = createTRPCRouter({
   list: tenantProcedure
@@ -27,7 +30,7 @@ export const tasksRouter = createTRPCRouter({
       );
     }),
 
-  create: tenantProcedure
+  create: dailyProcedure
     .input(
       z.object({
         title: z.string().min(1),
@@ -43,7 +46,7 @@ export const tasksRouter = createTRPCRouter({
       );
     }),
 
-  complete: tenantProcedure
+  complete: dailyProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       return withTenant(ctx.tenantId, (tx) =>
@@ -54,7 +57,7 @@ export const tasksRouter = createTRPCRouter({
       );
     }),
 
-  delete: tenantProcedure
+  delete: managerProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       await withTenant(ctx.tenantId, (tx) =>

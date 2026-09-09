@@ -4,9 +4,10 @@ import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BillingButton } from "@/components/settings/billing-button";
-import { Buildings, CreditCard } from "@phosphor-icons/react/dist/ssr";
+import { CreditCard, UsersThree } from "@phosphor-icons/react/dist/ssr";
 
 import { TenantSettingsForm } from "@/components/settings/tenant-settings-form";
+import { TeamManagement } from "@/components/settings/team-management";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -26,6 +27,14 @@ export default async function AjustesPage({ params }: PageProps) {
   const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
   if (!tenant) notFound();
 
+  const membership = await prisma.membership.findUnique({
+    where: {
+      userId_tenantId: { userId: session.user.id, tenantId: tenant.id },
+    },
+    select: { role: true },
+  });
+  if (!membership) notFound();
+
   return (
     <div className="space-y-8 max-w-2xl">
       <div>
@@ -42,6 +51,23 @@ export default async function AjustesPage({ params }: PageProps) {
         province: tenant.province,
         regaCode: tenant.regaCode,
       }} />
+
+      {membership.role === "OWNER" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UsersThree weight="fill" className="h-4 w-4" />
+              Equipo
+            </CardTitle>
+            <CardDescription>
+              Invita a tu equipo y controla qué puede ver y hacer cada persona
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TeamManagement />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

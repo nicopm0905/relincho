@@ -5,6 +5,7 @@ import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { TRPCProvider } from "@/lib/trpc/react";
+import { OwnerExternalGate } from "@/components/portal/owner-external-gate";
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -30,6 +31,21 @@ export default async function TenantLayout({
     },
   });
   if (!membership) notFound();
+
+  // Portal del propietario externo (Fase 1): si el único rol del usuario en el
+  // tenant es OWNER_EXTERNAL, sólo puede usar /[tenantSlug]/portal. Se le sirve
+  // un layout reducido (sin el sidebar del panel completo) y <OwnerExternalGate>
+  // (client component, porque un layout de servidor no ve el pathname) lo
+  // redirige a /portal cuando intenta abrir cualquier otra ruta del tenant.
+  if (membership.role === "OWNER_EXTERNAL") {
+    return (
+      <TRPCProvider tenantSlug={tenantSlug}>
+        <OwnerExternalGate tenantSlug={tenantSlug} />
+        {children}
+        <Toaster richColors position="top-right" />
+      </TRPCProvider>
+    );
+  }
 
   return (
     <TRPCProvider tenantSlug={tenantSlug}>

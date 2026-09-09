@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
 import { getGroomList, syncNutritionForDay } from "@/server/services/nutrition/sync";
 import {
@@ -8,6 +8,8 @@ import {
 } from "@/server/services/nutrition/projection";
 import { stripTime } from "@/server/services/performance/periodization";
 import { sweatLossSchema } from "@/lib/schemas/performance";
+
+const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
 
 export const nutritionRouter = createTRPCRouter({
   /** Dieta estatica y techos de seguridad, editables solo desde el panel veterinario. */
@@ -19,7 +21,7 @@ export const nutritionRouter = createTRPCRouter({
       );
     }),
 
-  upsertBaseline: tenantProcedure
+  upsertBaseline: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -64,7 +66,7 @@ export const nutritionRouter = createTRPCRouter({
     }),
 
   /** Fuerza el recalculo de la racion (panel veterinario o correccion manual). */
-  recompute: tenantProcedure
+  recompute: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -97,7 +99,7 @@ export const nutritionRouter = createTRPCRouter({
    * planificada. Se dispara solo al generar o reajustar el plan; aqui queda
    * expuesta para cuando el veterinario cambia la ficha o los techos.
    */
-  projectPlan: tenantProcedure
+  projectPlan: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),

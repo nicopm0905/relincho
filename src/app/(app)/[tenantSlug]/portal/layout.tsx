@@ -1,0 +1,99 @@
+import Link from "next/link";
+import { redirect, notFound } from "next/navigation";
+import { auth } from "@/server/auth";
+import { prisma } from "@/server/db/prisma";
+import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
+import {
+  Horse,
+  Receipt,
+  Files,
+  SignOut,
+} from "@phosphor-icons/react/dist/ssr";
+
+interface PortalLayoutProps {
+  children: React.ReactNode;
+  params: Promise<{ tenantSlug: string }>;
+}
+
+export default async function PortalLayout({
+  children,
+  params,
+}: PortalLayoutProps) {
+  const { tenantSlug } = await params;
+
+  const session = await auth();
+  if (!session?.user) redirect(await loginUrlForCurrentPage());
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { slug: tenantSlug },
+    select: { id: true, name: true },
+  });
+  if (!tenant) notFound();
+
+  const membership = await prisma.membership.findUnique({
+    where: {
+      userId_tenantId: { userId: session.user.id, tenantId: tenant.id },
+    },
+    select: { role: true },
+  });
+  if (!membership) notFound();
+
+  // El portal es exclusivo del propietario externo. Cualquier otro rol vuelve
+  // al panel completo.
+  if (membership.role !== "OWNER_EXTERNAL") {
+    redirect(`/${tenantSlug}/inicio`);
+  }
+
+  const nav = [
+    { href: `/${tenantSlug}/portal`, label: "Mi caballo", icon: Horse },
+    {
+      href: `/${tenantSlug}/portal/facturas`,
+      label: "Facturas",
+      icon: Receipt,
+    },
+    {
+      href: `/${tenantSlug}/portal/documentos`,
+      label: "Documentos",
+      icon: Files,
+    },
+  ];
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="sticky top-0 z-20 border-b border-border bg-card/80 backdrop-blur">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3 md:px-8">
+          <div className="flex items-center gap-2">
+            <Horse weight="duotone" className="h-5 w-5 text-primary" />
+            <span className="text-sm font-semibold text-foreground">
+              {tenant.name}
+            </span>
+            <span className="text-xs text-muted-foreground">· Portal del propietario</span>
+          </div>
+          <nav className="flex items-center gap-1 text-sm">
+            {nav.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Icon weight="bold" className="h-4 w-4" />
+                {label}
+              </Link>
+            ))}
+            <a
+              href="/api/auth/signout"
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <SignOut weight="bold" className="h-4 w-4" />
+              Cerrar sesión
+            </a>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10">
+        {children}
+      </main>
+    </div>
+  );
+}

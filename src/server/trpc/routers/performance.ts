@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
 import {
   generatePlan,
@@ -19,9 +19,11 @@ import {
   sweatLossSchema,
 } from "@/lib/schemas/performance";
 
+const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
+
 export const performanceRouter = createTRPCRouter({
   // --- Emparejamiento chip fisico <-> caballo -----------------------------
-  pairChip: tenantProcedure
+  pairChip: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -67,7 +69,7 @@ export const performanceRouter = createTRPCRouter({
       });
     }),
 
-  unpairChip: tenantProcedure
+  unpairChip: dailyProcedure
     .input(z.object({ chipId: chipIdSchema }))
     .mutation(async ({ ctx, input }) => {
       return withTenant(ctx.tenantId, (tx) =>
@@ -98,7 +100,7 @@ export const performanceRouter = createTRPCRouter({
       );
     }),
 
-  upsertVetProfile: tenantProcedure
+  upsertVetProfile: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -136,7 +138,7 @@ export const performanceRouter = createTRPCRouter({
       );
     }),
 
-  createCompetition: tenantProcedure
+  createCompetition: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -155,7 +157,7 @@ export const performanceRouter = createTRPCRouter({
     }),
 
   // --- Periodizacion ------------------------------------------------------
-  generatePlan: tenantProcedure
+  generatePlan: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -264,7 +266,7 @@ export const performanceRouter = createTRPCRouter({
     }),
 
   /** Reporte de fin de sesion: recalcula el plan y resincroniza la racion. */
-  reportSession: tenantProcedure
+  reportSession: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),
@@ -303,7 +305,7 @@ export const performanceRouter = createTRPCRouter({
       return { ...result, prescription };
     }),
 
-  markMissedDay: tenantProcedure
+  markMissedDay: dailyProcedure
     .input(
       z.object({
         horseId: z.string().uuid(),

@@ -97,12 +97,20 @@ export default async function CaballoDetailPage({ params }: PageProps) {
             Atrás
           </Link>
         </Button>
-        <Button asChild variant="outline" size="sm" className="shadow-sm">
-          <Link href={`/${tenantSlug}/caballos/${id}/editar`}>
-            <PencilSimple weight="bold" className="mr-2 h-4 w-4" />
-            Editar
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Fase 2: ficha de venta */}
+          <Button asChild variant="outline" size="sm" className="shadow-sm">
+            <a href={`/api/horses/${id}/ficha-venta`} target="_blank" rel="noreferrer">
+              Ficha de venta (PDF)
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="shadow-sm">
+            <Link href={`/${tenantSlug}/caballos/${id}/editar`}>
+              <PencilSimple weight="bold" className="mr-2 h-4 w-4" />
+              Editar
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* HERO SECTION */}
