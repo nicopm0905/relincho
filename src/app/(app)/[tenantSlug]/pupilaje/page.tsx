@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatters";
 import { NewContractDialog } from "@/components/pupilaje/new-contract-dialog";
+import { ContractExtras } from "@/components/pupilaje/contract-extras";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -91,6 +92,18 @@ export default async function PupilajePage({ params }: PageProps) {
                       <span>Fin: {formatDate(contract.endDate)}</span>
                     )}
                   </div>
+
+                  <ContractExtras
+                    contractId={contract.id}
+                    extras={contract.extras.map((e) => ({
+                      id: e.id,
+                      concept: e.concept,
+                      amount: Number(e.amount),
+                      vatRate: Number(e.vatRate),
+                      recurring: e.recurring,
+                      oneOffApplied: e.oneOffApplied,
+                    }))}
+                  />
                 </div>
               </CardContent>
             </Card>

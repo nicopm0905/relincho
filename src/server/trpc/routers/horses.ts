@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
 import { allowedHorseIds } from "../access";
 import { prisma, withTenant } from "@/server/db/prisma";
 import { HorseStatus, Sex } from "@prisma/client";
@@ -21,6 +21,8 @@ const horseInput = z.object({
   damId: z.string().uuid().optional(),
   currentOwnerId: z.string().uuid().optional(),
 });
+
+const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
 export const horsesRouter = createTRPCRouter({
   list: tenantProcedure
@@ -87,7 +89,7 @@ export const horsesRouter = createTRPCRouter({
       return horse;
     }),
 
-  create: tenantProcedure.input(horseInput).mutation(async ({ ctx, input }) => {
+  create: managerProcedure.input(horseInput).mutation(async ({ ctx, input }) => {
     return withTenant(ctx.tenantId, (tx) =>
       tx.horse.create({
         data: { ...input, tenantId: ctx.tenantId },
@@ -95,7 +97,7 @@ export const horsesRouter = createTRPCRouter({
     );
   }),
 
-  bulkImport: tenantProcedure
+  bulkImport: managerProcedure
     .input(
       z.object({
         rows: z
@@ -174,7 +176,7 @@ export const horsesRouter = createTRPCRouter({
       });
     }),
 
-  update: tenantProcedure
+  update: managerProcedure
     .input(z.object({ id: z.string().uuid() }).merge(horseInput.partial()))
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
@@ -186,7 +188,7 @@ export const horsesRouter = createTRPCRouter({
       );
     }),
 
-  delete: tenantProcedure
+  delete: managerProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       await withTenant(ctx.tenantId, (tx) =>

@@ -290,14 +290,36 @@ async function main() {
     }
   });
 
+  // Serie de facturación por defecto
+  const currentYear = new Date().getFullYear();
+  const series = await prisma.invoiceSeries.upsert({
+    where: {
+      tenantId_code: { tenantId: tenant.id, code: String(currentYear) },
+    },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      code: String(currentYear),
+      prefix: String(currentYear),
+      year: currentYear,
+      isDefault: true,
+      nextNumber: 2, // la factura demo de abajo ocupa el número 1
+    },
+  });
+
   // Factura
+  const issueDate = new Date();
+  const dueDate = new Date(issueDate);
+  dueDate.setDate(dueDate.getDate() + 30);
   const invoice = await prisma.invoice.create({
     data: {
       tenantId: tenant.id,
       clientId: externalOwner.id,
-      series: "2026",
+      seriesId: series.id,
+      series: String(currentYear),
       number: 1,
-      issueDate: new Date(),
+      issueDate,
+      dueDate,
       subtotal: "450.00",
       vatTotal: "94.50",
       total: "544.50",

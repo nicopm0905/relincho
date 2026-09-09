@@ -15,7 +15,8 @@ export async function GET(
       include: {
         client: true,
         lines: true,
-        tenant: true
+        tenant: true,
+        invoiceSeries: true,
       },
     });
 
@@ -38,10 +39,19 @@ export async function GET(
     doc.moveDown();
 
     // Título factura
+    // `invoice.series` guarda ya la etiqueta prefijo+año de la serie.
+    const seriesPrefix = invoice.invoiceSeries?.prefix
+      ? (invoice.series || invoice.invoiceSeries.prefix)
+      : invoice.series;
     doc.fontSize(24).text("FACTURA", { align: "left" });
-    doc.fontSize(12).text(`Nº ${invoice.series}-${invoice.number.toString().padStart(4, '0')}`);
-    doc.text(`Fecha: ${invoice.issueDate.toLocaleDateString('es-ES')}`);
+    doc.fontSize(12).text(`Nº ${seriesPrefix}-${invoice.number.toString().padStart(4, '0')}`);
+    doc.text(`Fecha de emisión: ${invoice.issueDate.toLocaleDateString('es-ES')}`);
+    if (invoice.dueDate) {
+      doc.text(`Fecha de vencimiento: ${invoice.dueDate.toLocaleDateString('es-ES')}`);
+    }
     doc.moveDown(2);
+
+    // Veri*Factu (fase posterior): aquí irán el código QR y la huella SHA-256 encadenada.
 
     // Datos Cliente
     doc.fontSize(14).text("Facturado a:");

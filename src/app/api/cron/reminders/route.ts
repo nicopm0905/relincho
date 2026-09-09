@@ -11,6 +11,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Marca como vencidas las facturas emitidas cuyo vencimiento ya paso.
+  const overdue = await prisma.invoice.updateMany({
+    where: {
+      status: "ISSUED",
+      dueDate: { lt: new Date() },
+    },
+    data: { status: "OVERDUE" },
+  });
+
   const in7Days = new Date();
   in7Days.setDate(in7Days.getDate() + 7);
   const today = new Date();
@@ -63,5 +72,10 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, sent, events: events.length });
+  return NextResponse.json({
+    ok: true,
+    sent,
+    events: events.length,
+    invoicesMarkedOverdue: overdue.count,
+  });
 }

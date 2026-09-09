@@ -54,6 +54,50 @@ export async function POST(req: NextRequest) {
 
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      // Pago de una factura desde el portal del propietario externo.
+      // Este checkout se crea en `src/server/actions/portal-payment.ts` en
+      // modo `payment` con metadata.kind === "portal_invoice_payment".
+      if (session.metadata?.kind === "portal_invoice_payment") {
+        const invoiceId = session.metadata.invoiceId;
+        const tenantId = session.metadata.tenantId;
+        if (!invoiceId || !tenantId) break;
+
+        const invoice = await prisma.invoice.findFirst({
+          where: { id: invoiceId, tenantId },
+          include: { payments: true },
+        });
+        if (!invoice) break;
+
+        const reference = String(session.payment_intent);
+
+        // Idempotencia: Stripe puede reintentar el webhook.
+        if (invoice.payments.some((p) => p.reference === reference)) break;
+
+        await prisma.payment.create({
+          data: {
+            invoiceId: invoice.id,
+            amount: (session.amount_total ?? 0) / 100,
+            method: "STRIPE",
+            reference,
+            date: new Date(),
+          },
+        });
+
+        const paid =
+          invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0) +
+          (session.amount_total ?? 0) / 100;
+        if (paid >= Number(invoice.total)) {
+          await prisma.invoice.update({
+            where: { id: invoice.id },
+            data: { status: "PAID" },
+          });
+        }
+        break;
+      }
+
+      // Checkout de la suscripción al SaaS (mode: "subscription"): sólo
+      // enlazamos el customer de Stripe con el tenant.
       const customerId = session.customer as string;
       const tenantId = session.metadata?.tenantId;
 
