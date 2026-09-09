@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { disciplineLabels, reproductiveStatusLabels } from "./labels";
 
 /** Etiquetas de restriccion que el motor de nutricion entiende. */
@@ -70,10 +72,79 @@ interface Props {
 const num = (value: unknown, fallback: number) =>
   value == null ? String(fallback) : String(Number(value));
 
+/** Titulo de seccion dentro del formulario. */
+function SectionTitle({
+  children,
+  hint,
+}: {
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="space-y-0.5">
+      <h3 className="text-[12px] font-semibold tracking-wide text-muted-foreground uppercase">
+        {children}
+      </h3>
+      {hint && <p className="text-[12px] text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+/** Campo numerico con su unidad a la derecha, para no inflar la etiqueta. */
+function NumberField({
+  id,
+  label,
+  unit,
+  value,
+  onChange,
+  placeholder,
+  step,
+  min,
+  max,
+  hint,
+}: {
+  id: string;
+  label: string;
+  unit?: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  step?: string;
+  min?: number;
+  max?: number;
+  hint?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <Input
+          id={id}
+          type="number"
+          inputMode="decimal"
+          step={step}
+          min={min}
+          max={max}
+          placeholder={placeholder}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={cn("w-full", unit && "pr-11")}
+        />
+        {unit && (
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[12px] text-muted-foreground">
+            {unit}
+          </span>
+        )}
+      </div>
+      {hint && <p className="text-[11.5px] text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
 /**
  * Panel del veterinario: estado basal, restricciones de carga y techos de
- * seguridad de la dieta. Es el unico sitio donde se fijan los limites que la
- * IA nunca puede sobrepasar.
+ * seguridad de la dieta. Es el unico sitio donde se fijan los limites que el
+ * calculo automatico nunca puede sobrepasar.
  */
 export function VetPanelDialog({ horseId, horseName, profile, baseline }: Props) {
   const router = useRouter();
@@ -114,6 +185,10 @@ export function VetPanelDialog({ horseId, horseName, profile, baseline }: Props)
   const saveBaseline = trpc.nutrition.upsertBaseline.useMutation();
   const pending = saveProfile.isPending || saveBaseline.isPending;
 
+  const isPregnant = reproStatus === "GESTANTE";
+  const forageFloorKg =
+    (Number(weight) || 0) * ((Number(minForagePct) || 0) / 100);
+
   const toggleRestriction = (value: string) =>
     setRestrictions((prev) =>
       prev.includes(value) ? prev.filter((r) => r !== value) : [...prev, value],
@@ -126,7 +201,7 @@ export function VetPanelDialog({ horseId, horseName, profile, baseline }: Props)
         discipline: discipline as never,
         baseWeightKg: Number(weight) || undefined,
         reproductiveStatus: reproStatus as never,
-        gestationMonth: gestationMonth ? Number(gestationMonth) : undefined,
+        gestationMonth: isPregnant && gestationMonth ? Number(gestationMonth) : undefined,
         tendonHistoryAlert: tendon,
         maxImpactSurfaceMinutes: maxImpact ? Number(maxImpact) : undefined,
         maxRpe: maxRpe ? Number(maxRpe) : undefined,
@@ -160,123 +235,147 @@ export function VetPanelDialog({ horseId, horseName, profile, baseline }: Props)
         <Stethoscope weight="bold" className="mr-2 h-4 w-4" />
         Panel veterinario
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Ficha veterinaria de {horseName}</DialogTitle>
           <DialogDescription>
-            Estado basal, restricciones de carga y techos de la dieta. El motor
-            nunca prescribe por encima de estos límites.
+            Lo que se fije aquí es un techo, no una sugerencia. El cálculo
+            automático nunca prescribe por encima de estos límites.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="clinico">
           <TabsList className="w-full">
-            <TabsTrigger value="clinico">Estado clínico</TabsTrigger>
-            <TabsTrigger value="dieta">Dieta y techos</TabsTrigger>
+            <TabsTrigger value="clinico" className="flex-1">
+              Estado clínico
+            </TabsTrigger>
+            <TabsTrigger value="dieta" className="flex-1">
+              Dieta y techos
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="clinico" className="space-y-4 pt-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Disciplina</Label>
-                <Select
-                  value={discipline}
-                  onValueChange={(v) => setDiscipline(v ?? "DOMA_CLASICA")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(disciplineLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="weight">Peso base (kg)</Label>
-                <Input
+          <TabsContent value="clinico" className="space-y-6 pt-4">
+            <section className="space-y-3">
+              <SectionTitle>Perfil deportivo</SectionTitle>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>Disciplina</Label>
+                  <Select
+                    items={disciplineLabels}
+                    value={discipline}
+                    onValueChange={(v) => setDiscipline(v ?? "DOMA_CLASICA")}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(disciplineLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11.5px] text-muted-foreground">
+                    Fija la carga semanal de referencia del plan.
+                  </p>
+                </div>
+                <NumberField
                   id="weight"
-                  type="number"
+                  label="Peso base"
+                  unit="kg"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  onChange={setWeight}
+                  min={100}
+                  max={1200}
+                  hint="Base de todos los cálculos de ración."
                 />
               </div>
-            </div>
+            </section>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Estado reproductivo</Label>
-                <Select
-                  value={reproStatus}
-                  onValueChange={(v) => setReproStatus(v ?? "NA")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(reproductiveStatusLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {reproStatus === "GESTANTE" && (
+            <section className="space-y-3">
+              <SectionTitle>Estado reproductivo</SectionTitle>
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="gestation">Mes de gestación</Label>
-                  <Input
+                  <Label>Situación</Label>
+                  <Select
+                    items={reproductiveStatusLabels}
+                    value={reproStatus}
+                    onValueChange={(v) => setReproStatus(v ?? "NA")}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(reproductiveStatusLabels).map(
+                        ([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {isPregnant && (
+                  <NumberField
                     id="gestation"
-                    type="number"
+                    label="Mes de gestación"
+                    value={gestationMonth}
+                    onChange={setGestationMonth}
                     min={1}
                     max={12}
-                    value={gestationMonth}
-                    onChange={(e) => setGestationMonth(e.target.value)}
+                    placeholder="1 a 11"
+                    hint="Desde el octavo mes suben proteína y tomas."
                   />
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between gap-4 rounded-lg border border-border px-3.5 py-3">
-              <div>
-                <Label htmlFor="tendon">Historial de tendón</Label>
-                <p className="text-[12px] text-muted-foreground">
-                  Limita la intensidad a RPE 8 y recorta el trabajo de impacto.
-                </p>
+                )}
               </div>
-              <Switch id="tendon" checked={tendon} onCheckedChange={setTendon} />
-            </div>
+            </section>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="maxImpact">Máx. minutos de impacto</Label>
-                <Input
+            <section className="space-y-3">
+              <SectionTitle hint="Vacío significa sin límite. Solo se rellenan cuando hay motivo clínico.">
+                Límites de carga
+              </SectionTitle>
+
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-border px-3.5 py-3">
+                <div>
+                  <Label htmlFor="tendon">Historial de tendón</Label>
+                  <p className="text-[12px] text-muted-foreground">
+                    Limita la intensidad a RPE 8 y recorta el trabajo de impacto.
+                  </p>
+                </div>
+                <Switch id="tendon" checked={tendon} onCheckedChange={setTendon} />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <NumberField
                   id="maxImpact"
-                  type="number"
+                  label="Máximo sobre impacto"
+                  unit="min"
                   placeholder="Sin límite"
                   value={maxImpact}
-                  onChange={(e) => setMaxImpact(e.target.value)}
+                  onChange={setMaxImpact}
+                  min={0}
+                  max={240}
+                  hint="Por sesión, sobre pista o terreno duro."
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="maxRpe">RPE máximo</Label>
-                <Input
+                <NumberField
                   id="maxRpe"
-                  type="number"
-                  min={1}
-                  max={10}
+                  label="RPE máximo"
                   placeholder="Sin límite"
                   value={maxRpe}
-                  onChange={(e) => setMaxRpe(e.target.value)}
+                  onChange={setMaxRpe}
+                  min={1}
+                  max={10}
+                  hint="Intensidad tope que puede programar el plan."
                 />
               </div>
-            </div>
+            </section>
 
-            <div className="space-y-2">
-              <Label>Restricciones</Label>
+            <section className="space-y-3">
+              <SectionTitle hint="Condicionan la ración: reducen el almidón y fraccionan más las tomas.">
+                Restricciones
+              </SectionTitle>
               <div className="flex flex-wrap gap-2">
                 {RESTRICTION_OPTIONS.map((option) => {
                   const active = restrictions.includes(option.value);
@@ -284,128 +383,128 @@ export function VetPanelDialog({ horseId, horseName, profile, baseline }: Props)
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => toggleRestriction(option.value)}
                       aria-pressed={active}
-                      className={`rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors ${
+                      onClick={() => toggleRestriction(option.value)}
+                      className={cn(
+                        "rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors",
                         active
                           ? "border-transparent bg-foreground text-background"
-                          : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
+                          : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
                     >
                       {option.label}
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </section>
           </TabsContent>
 
-          <TabsContent value="dieta" className="space-y-4 pt-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="forage">Forraje base (kg)</Label>
-                <Input
+          <TabsContent value="dieta" className="space-y-6 pt-4">
+            <section className="space-y-3">
+              <SectionTitle hint="Lo que come el caballo un día sin trabajo. El plan suma sobre esto.">
+                Ración base
+              </SectionTitle>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <NumberField
                   id="forage"
-                  type="number"
+                  label="Forraje"
+                  unit="kg"
                   step="0.1"
                   value={forage}
-                  onChange={(e) => setForage(e.target.value)}
+                  onChange={setForage}
+                  hint={
+                    forageFloorKg > 0
+                      ? `Mínimo por peso vivo: ${forageFloorKg.toFixed(1)} kg.`
+                      : undefined
+                  }
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="concentrate">Concentrado base (kg)</Label>
-                <Input
+                <NumberField
                   id="concentrate"
-                  type="number"
+                  label="Concentrado"
+                  unit="kg"
                   step="0.1"
                   value={concentrate}
-                  onChange={(e) => setConcentrate(e.target.value)}
+                  onChange={setConcentrate}
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="protein">Proteína objetivo (%)</Label>
-                <Input
+                <NumberField
                   id="protein"
-                  type="number"
+                  label="Proteína objetivo"
+                  unit="%"
                   value={protein}
-                  onChange={(e) => setProtein(e.target.value)}
+                  onChange={setProtein}
+                  min={8}
+                  max={20}
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="meals">Tomas al día</Label>
-                <Input
+                <NumberField
                   id="meals"
-                  type="number"
+                  label="Tomas al día"
+                  value={meals}
+                  onChange={setMeals}
                   min={2}
                   max={6}
-                  value={meals}
-                  onChange={(e) => setMeals(e.target.value)}
                 />
               </div>
-            </div>
+            </section>
 
-            <div className="rounded-lg border border-amber-300/70 bg-amber-50/50 p-3.5">
-              <p className="text-[13px] font-semibold text-amber-900">
-                Techos de seguridad
-              </p>
-              <p className="mt-0.5 text-[12px] text-amber-800">
-                Ningún cálculo automático puede superar estos valores.
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="minForagePct">Forraje mínimo (% peso vivo)</Label>
-                  <Input
-                    id="minForagePct"
-                    type="number"
-                    step="0.1"
-                    value={minForagePct}
-                    onChange={(e) => setMinForagePct(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="maxConcentrate">Máx. concentrado (kg/día)</Label>
-                  <Input
-                    id="maxConcentrate"
-                    type="number"
-                    step="0.1"
-                    value={maxConcentrate}
-                    onChange={(e) => setMaxConcentrate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="maxPerMeal">Máx. concentrado (kg/toma)</Label>
-                  <Input
-                    id="maxPerMeal"
-                    type="number"
-                    step="0.1"
-                    value={maxPerMeal}
-                    onChange={(e) => setMaxPerMeal(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="maxElectrolytes">Máx. electrolitos (g)</Label>
-                  <Input
-                    id="maxElectrolytes"
-                    type="number"
-                    value={maxElectrolytes}
-                    onChange={(e) => setMaxElectrolytes(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="maxVitE">Máx. vitamina E (UI)</Label>
-                  <Input
-                    id="maxVitE"
-                    type="number"
-                    value={maxVitE}
-                    onChange={(e) => setMaxVitE(e.target.value)}
-                  />
-                </div>
+            <section className="space-y-3 rounded-lg border border-amber-300/70 bg-amber-50/50 p-3.5">
+              <div className="space-y-0.5">
+                <h3 className="text-[12px] font-semibold tracking-wide text-amber-900 uppercase">
+                  Techos de seguridad
+                </h3>
+                <p className="text-[12px] text-amber-800">
+                  Ningún cálculo automático puede superar estos valores, pase lo
+                  que pase con el entrenamiento.
+                </p>
               </div>
-            </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <NumberField
+                  id="minForagePct"
+                  label="Forraje mínimo"
+                  unit="%"
+                  step="0.1"
+                  value={minForagePct}
+                  onChange={setMinForagePct}
+                  hint="Sobre el peso vivo. Nunca baja de aquí."
+                />
+                <NumberField
+                  id="maxConcentrate"
+                  label="Máx. concentrado al día"
+                  unit="kg"
+                  step="0.1"
+                  value={maxConcentrate}
+                  onChange={setMaxConcentrate}
+                />
+                <NumberField
+                  id="maxPerMeal"
+                  label="Máx. concentrado por toma"
+                  unit="kg"
+                  step="0.1"
+                  value={maxPerMeal}
+                  onChange={setMaxPerMeal}
+                  hint="Si se pasa, el sistema parte la ración en más tomas."
+                />
+                <NumberField
+                  id="maxElectrolytes"
+                  label="Máx. electrolitos"
+                  unit="g"
+                  value={maxElectrolytes}
+                  onChange={setMaxElectrolytes}
+                />
+                <NumberField
+                  id="maxVitE"
+                  label="Máx. vitamina E"
+                  unit="UI"
+                  value={maxVitE}
+                  onChange={setMaxVitE}
+                />
+              </div>
+            </section>
           </TabsContent>
         </Tabs>
 
         <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>Cancelar</DialogClose>
           <Button onClick={handleSave} disabled={pending}>
             {pending && <SpinnerGap className="animate-spin" />}
             Guardar ficha

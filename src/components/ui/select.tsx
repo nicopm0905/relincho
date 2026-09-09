@@ -6,7 +6,46 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { CaretDown, Check, CaretUp } from "@phosphor-icons/react"
 
-const Select = SelectPrimitive.Root
+/**
+ * Recorre los hijos y monta el mapa valor -> etiqueta que Base UI necesita para
+ * pintar el texto del disparador. Sin el, el Select muestra el valor en crudo
+ * (DOMA_CLASICA en vez de "Doma clásica").
+ */
+function collectItemLabels(
+  children: React.ReactNode,
+  acc: Record<string, React.ReactNode> = {},
+): Record<string, React.ReactNode> {
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return
+    const props = child.props as {
+      value?: unknown
+      children?: React.ReactNode
+    }
+    if (child.type === SelectItem && typeof props.value === "string") {
+      acc[props.value] = props.children
+    }
+    if (props.children) collectItemLabels(props.children, acc)
+  })
+  return acc
+}
+
+function Select<Value, Multiple extends boolean | undefined = false>({
+  items,
+  children,
+  ...props
+}: SelectPrimitive.Root.Props<Value, Multiple>) {
+  // `items` explicito gana; si no, se deduce de los SelectItem declarados.
+  const derivedItems = React.useMemo(
+    () => items ?? collectItemLabels(children),
+    [items, children],
+  )
+
+  return (
+    <SelectPrimitive.Root items={derivedItems} {...props}>
+      {children}
+    </SelectPrimitive.Root>
+  )
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
