@@ -1,6 +1,7 @@
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
 import { redirect, notFound } from "next/navigation";
+import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { TRPCProvider } from "@/lib/trpc/react";
@@ -16,7 +17,7 @@ export default async function TenantLayout({
 }: TenantLayoutProps) {
   const { tenantSlug } = await params;
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect(await loginUrlForCurrentPage());
 
   const tenant = await prisma.tenant.findUnique({
     where: { slug: tenantSlug },

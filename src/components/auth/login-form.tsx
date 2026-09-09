@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,11 @@ import { Separator } from "@/components/ui/separator";
 import { GoogleLogo, CircleNotch } from "@phosphor-icons/react";
 
 export function LoginForm() {
+  // Adonde iba el usuario antes de que le pidieramos entrar, por ejemplo la
+  // ficha del caballo cuyo QR acaba de escanear.
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -17,13 +23,13 @@ export function LoginForm() {
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await signIn("resend", { email, callbackUrl: "/dashboard" });
+    await signIn("resend", { email, callbackUrl });
     setLoading(false);
   }
 
   async function handleGoogle() {
     setGoogleLoading(true);
-    await signIn("google", { callbackUrl: "/dashboard" });
+    await signIn("google", { callbackUrl });
   }
 
   return (
