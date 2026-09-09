@@ -175,10 +175,16 @@ export function computeDailyPrescription(params: {
 
   // --- Electrolitos: sudoracion o calor ------------------------------------
   const hot = (training.ambientTempC ?? 0) > HIGH_TEMP_C;
+  // Sin trabajo no hay perdida por sudor que reponer, por mucho calor que haga.
+  const worked = training.internalLoadUa > 0;
   let electrolytesGrams = 0;
-  if (training.sweatLoss === "ALTA" || (hot && fatigueZone !== "BAJA")) {
+  if (training.sweatLoss === "ALTA" || (hot && worked && fatigueZone !== "BAJA")) {
     electrolytesGrams = 60;
-  } else if (training.sweatLoss === "MEDIA" || fatigueZone === "ALTA" || hot) {
+  } else if (
+    training.sweatLoss === "MEDIA" ||
+    fatigueZone === "ALTA" ||
+    (hot && worked)
+  ) {
     electrolytesGrams = 30;
   }
   if (electrolytesGrams > baseline.maxElectrolytesGrams) {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, tenantProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
@@ -9,6 +10,7 @@ import {
   reportSession,
 } from "@/server/services/performance/plan-service";
 import { syncNutritionForDay } from "@/server/services/nutrition/sync";
+import { projectNutrition } from "@/server/services/nutrition/projection";
 import { stripTime } from "@/server/services/performance/periodization";
 import {
   chipIdSchema,
@@ -166,7 +168,13 @@ export const performanceRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        return await generatePlan({ tenantId: ctx.tenantId, ...input });
+        const plan = await generatePlan({ tenantId: ctx.tenantId, ...input });
+        // El plan nace con la dieta de las proximas semanas ya calculada.
+        const projection = await projectNutrition({
+          tenantId: ctx.tenantId,
+          horseId: input.horseId,
+        });
+        return { ...plan, projectedRations: projection.written };
       } catch (error) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -279,7 +287,19 @@ export const performanceRouter = createTRPCRouter({
         internalLoadUa: result.internalLoadUa,
         sweatLoss: input.sweatLoss ?? null,
         strengthSession: input.strengthSession,
+        isProjection: false,
       });
+
+      // Si el plan se ha reajustado, la dieta prevista de los dias siguientes
+      // deja de ser valida y hay que rehacerla con las cargas nuevas.
+      if (result.adjustments.length > 0) {
+        await projectNutrition({
+          tenantId: ctx.tenantId,
+          horseId: input.horseId,
+          from: addDays(input.date, 1),
+        });
+      }
+
       return { ...result, prescription };
     }),
 
@@ -293,7 +313,15 @@ export const performanceRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        return await markMissedDay({ tenantId: ctx.tenantId, ...input });
+        const result = await markMissedDay({ tenantId: ctx.tenantId, ...input });
+        if (result.adjustments.length > 0) {
+          await projectNutrition({
+            tenantId: ctx.tenantId,
+            horseId: input.horseId,
+            from: input.date,
+          });
+        }
+        return result;
       } catch (error) {
         throw new TRPCError({
           code: "BAD_REQUEST",

@@ -2,6 +2,10 @@ import { z } from "zod";
 import { createTRPCRouter, tenantProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
 import { getGroomList, syncNutritionForDay } from "@/server/services/nutrition/sync";
+import {
+  getUpcomingRations,
+  projectNutrition,
+} from "@/server/services/nutrition/projection";
 import { stripTime } from "@/server/services/performance/periodization";
 import { sweatLossSchema } from "@/lib/schemas/performance";
 
@@ -73,6 +77,38 @@ export const nutritionRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       return syncNutritionForDay({ tenantId: ctx.tenantId, ...input });
+    }),
+
+  /** Raciones previstas de los proximos dias, dia a dia. */
+  upcoming: tenantProcedure
+    .input(
+      z.object({
+        horseId: z.string().uuid(),
+        from: z.coerce.date().optional(),
+        days: z.number().int().min(1).max(60).default(7),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return getUpcomingRations({ tenantId: ctx.tenantId, ...input });
+    }),
+
+  /**
+   * Recalcula la dieta prevista de los proximos dias a partir de la carga
+   * planificada. Se dispara solo al generar o reajustar el plan; aqui queda
+   * expuesta para cuando el veterinario cambia la ficha o los techos.
+   */
+  projectPlan: tenantProcedure
+    .input(
+      z.object({
+        horseId: z.string().uuid(),
+        from: z.coerce.date().optional(),
+        days: z.number().int().min(1).max(60).optional(),
+        /** Rehace tambien los dias ya confirmados por un reporte del jinete. */
+        overwriteConfirmed: z.boolean().default(false),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return projectNutrition({ tenantId: ctx.tenantId, ...input });
     }),
 
   /** Vista de fricción cero para el mozo de cuadras. */

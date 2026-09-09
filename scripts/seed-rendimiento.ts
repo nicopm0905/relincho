@@ -18,6 +18,7 @@ import {
   reportSession,
 } from "../src/server/services/performance/plan-service";
 import { syncNutritionForDay } from "../src/server/services/nutrition/sync";
+import { projectNutrition } from "../src/server/services/nutrition/projection";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL })),
@@ -336,6 +337,16 @@ async function main() {
       `${overload.adjustments.length} días reajustados`,
   );
 
+  // La sesion reportada confirma la racion de ese dia, igual que hace la app.
+  await syncNutritionForDay({
+    tenantId,
+    horseId: llorona.id,
+    date: day(0),
+    internalLoadUa: overload.internalLoadUa,
+    sweatLoss: "ALTA",
+    isProjection: false,
+  });
+
   // Gallardo pierde un día de trabajo: la carga se reparte por el microciclo.
   for (let offset = -18; offset <= -3; offset++) {
     await reportPlannedDay({
@@ -372,14 +383,18 @@ async function main() {
       `${Number(mare.concentrateKg)} kg concentrado en ${mare.totalMeals} tomas`,
   );
 
-  for (const horse of [espartero, brillante, gallardo, llorona]) {
-    await syncNutritionForDay({
+  // Dieta dia a dia de las proximas dos semanas, calculada sobre la carga
+  // prevista para que el mozo vea la comida por adelantado.
+  for (const horse of [espartero, brillante, llorona, gallardo]) {
+    const projection = await projectNutrition({
       tenantId,
       horseId: horse.id,
-      date: day(0),
-      sweatLoss: "MEDIA",
-      ambientTempC: 31,
+      days: 14,
     });
+    console.log(
+      `Dieta proyectada de ${horse.name}: ${projection.written} días ` +
+        `(${projection.skipped} ya confirmados por el jinete)`,
+    );
   }
 
   console.log("\nListo. Entra en /yeguada-demo-andalucia/rendimiento");

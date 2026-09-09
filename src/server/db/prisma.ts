@@ -31,12 +31,20 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 export async function withTenant<T>(
   tenantId: string,
   fn: (tx: PrismaClient) => Promise<T>,
+  /**
+   * El limite por defecto de Prisma son 5 s, insuficiente para operaciones que
+   * escriben una temporada entera contra una base de datos remota.
+   */
+  options: { timeout?: number; maxWait?: number } = {},
 ): Promise<T> {
   return prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe(
       `SET LOCAL app.current_tenant = '${tenantId.replace(/'/g, "''")}'`,
     );
     return fn(tx as unknown as PrismaClient);
+  }, {
+    timeout: options.timeout ?? 20_000,
+    maxWait: options.maxWait ?? 10_000,
   });
 }
 

@@ -728,6 +728,11 @@ model NutritionPrescription {
   instructionsForStaff  String
   clampNotes            String[]     @default([])
   ambientTempC          Float?
+  /// true mientras la racion sale de la carga planificada. Pasa a false cuando
+  /// el jinete reporta la sesion real de ese dia.
+  isProjection          Boolean      @default(false)
+  /// Tipo de trabajo previsto, para que el mozo entienda de donde sale la racion.
+  workType              WorkType?
   horse                 Horse        @relation(fields: [horseId], references: [id], onDelete: Cascade)
   computedAt            DateTime     @default(now())
 

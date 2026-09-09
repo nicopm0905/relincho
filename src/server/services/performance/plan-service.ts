@@ -1,5 +1,7 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
 import { withTenant } from "@/server/db/prisma";
 import type { PrismaClient } from "@prisma/client";
 import {
@@ -98,38 +100,45 @@ export async function generatePlan(input: GeneratePlanInput) {
       },
     });
 
+    // Una temporada son decenas de filas. Se generan los identificadores en
+    // memoria para poder escribir todo en tres inserciones en vez de una por
+    // semana, que contra una base de datos remota agota la transaccion.
+    const mesocycleRows = [];
+    const microcycleRows = [];
+    const dailyRows = [];
+
     for (const meso of plan.mesocycles) {
-      const mesoRow = await tx.mesocycle.create({
-        data: {
-          tenantId: input.tenantId,
-          macrocycleId: macro.id,
-          phase: meso.phase,
-          orderIndex: meso.orderIndex,
-          startDate: meso.startDate,
-          endDate: meso.endDate,
-          weeks: meso.weeks,
-          volumeIndex: meso.volumeIndex,
-          intensityIndex: meso.intensityIndex,
-        },
+      const mesocycleId = randomUUID();
+      mesocycleRows.push({
+        id: mesocycleId,
+        tenantId: input.tenantId,
+        macrocycleId: macro.id,
+        phase: meso.phase,
+        orderIndex: meso.orderIndex,
+        startDate: meso.startDate,
+        endDate: meso.endDate,
+        weeks: meso.weeks,
+        volumeIndex: meso.volumeIndex,
+        intensityIndex: meso.intensityIndex,
       });
 
       for (const micro of meso.microcycles) {
-        const microRow = await tx.microcycle.create({
-          data: {
-            tenantId: input.tenantId,
-            mesocycleId: mesoRow.id,
-            weekNumber: micro.weekNumber,
-            startDate: micro.startDate,
-            endDate: micro.endDate,
-            plannedLoadUa: micro.plannedLoadUa,
-            mandatoryRestDays: micro.mandatoryRestDays,
-          },
+        const microcycleId = randomUUID();
+        microcycleRows.push({
+          id: microcycleId,
+          tenantId: input.tenantId,
+          mesocycleId,
+          weekNumber: micro.weekNumber,
+          startDate: micro.startDate,
+          endDate: micro.endDate,
+          plannedLoadUa: micro.plannedLoadUa,
+          mandatoryRestDays: micro.mandatoryRestDays,
         });
 
-        await tx.dailyLoad.createMany({
-          data: micro.days.map((day) => ({
+        for (const day of micro.days) {
+          dailyRows.push({
             tenantId: input.tenantId,
-            microcycleId: microRow.id,
+            microcycleId,
             horseId: horse.id,
             date: day.date,
             workType: day.workType,
@@ -137,10 +146,14 @@ export async function generatePlan(input: GeneratePlanInput) {
             durationMinutes: day.durationMinutes,
             plannedLoadUa: day.plannedLoadUa,
             impactSurfaceMinutes: day.impactSurfaceMinutes,
-          })),
-        });
+          });
+        }
       }
     }
+
+    await tx.mesocycle.createMany({ data: mesocycleRows });
+    await tx.microcycle.createMany({ data: microcycleRows });
+    await tx.dailyLoad.createMany({ data: dailyRows });
 
     return {
       macrocycleId: macro.id,

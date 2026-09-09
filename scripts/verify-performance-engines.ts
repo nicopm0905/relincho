@@ -252,5 +252,35 @@ const walk = computeDailyPrescription({
 check("paseo suave no anade concentrado", walk.extraConcentrateGrams === 0);
 check("paseo suave no dispara electrolitos", walk.electrolytesGrams === 0);
 
+// Dia de descanso en plena ola de calor: sin trabajo no hay que reponer sales.
+const restDayRation = computeDailyPrescription({
+  vet: { baseWeightKg: 500, reproductiveStatus: "NA" },
+  baseline: {
+    baseForageKg: 8,
+    baseConcentrateKg: 1.5,
+    proteinPercentTarget: 12,
+    mealsPerDay: 3,
+    minForagePctBodyweight: 1.5,
+    maxConcentrateKgPerDay: 5,
+    maxConcentrateKgPerMeal: 2,
+    maxElectrolytesGrams: 90,
+    maxVitaminEIu: 5000,
+  },
+  training: {
+    internalLoadUa: 0,
+    mesocyclePhase: "ACUMULACION",
+    ambientTempC: 34,
+  },
+});
+check(
+  "un dia de descanso con calor no lleva electrolitos",
+  restDayRation.electrolytesGrams === 0,
+  restDayRation.electrolytesGrams,
+);
+check(
+  "un dia de descanso no lleva concentrado extra",
+  restDayRation.extraConcentrateGrams === 0,
+);
+
 console.log(`\n${failures === 0 ? "TODO OK" : failures + " COMPROBACIONES FALLIDAS"}`);
 process.exit(failures === 0 ? 0 : 1);

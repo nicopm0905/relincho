@@ -16,6 +16,7 @@ import { ReportSessionDialog } from "@/components/rendimiento/report-session-dia
 import { VetPanelDialog } from "@/components/rendimiento/vet-panel-dialog";
 import { ChipPairing } from "@/components/rendimiento/chip-pairing";
 import { RationCard } from "@/components/rendimiento/ration-card";
+import { RationForecast } from "@/components/rendimiento/ration-forecast";
 import {
   bufferStatusLabels,
   disciplineLabels,
@@ -45,7 +46,15 @@ export default async function PlanCaballoPage({ params }: PageProps) {
   const horse = await caller.horses.byId({ id: horseId }).catch(() => null);
   if (!horse) notFound();
 
-  const [snapshot, vetProfile, baseline, chips, competitions, prescription] =
+  const [
+    snapshot,
+    vetProfile,
+    baseline,
+    chips,
+    competitions,
+    prescription,
+    forecast,
+  ] =
     await Promise.all([
       caller.performance.snapshot({ horseId }),
       caller.performance.getVetProfile({ horseId }),
@@ -53,6 +62,7 @@ export default async function PlanCaballoPage({ params }: PageProps) {
       caller.performance.chipsByHorse({ horseId }),
       caller.performance.listCompetitions({ horseId }),
       caller.nutrition.getPrescription({ horseId, date: new Date() }),
+      caller.nutrition.upcoming({ horseId, days: 10 }),
     ]);
 
   const daysToTarget = snapshot
@@ -216,6 +226,28 @@ export default async function PlanCaballoPage({ params }: PageProps) {
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Dieta de los próximos días</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RationForecast
+                rows={forecast.map((row) => ({
+                  id: row.id,
+                  date: row.date,
+                  workType: row.workType,
+                  internalLoadUa: row.internalLoadUa,
+                  forageKg: row.forageKg,
+                  concentrateKg: row.concentrateKg,
+                  extraConcentrateGrams: row.extraConcentrateGrams,
+                  electrolytesGrams: row.electrolytesGrams,
+                  totalMeals: row.totalMeals,
+                  isProjection: row.isProjection,
+                }))}
+              />
+            </CardContent>
+          </Card>
         </>
       )}
 

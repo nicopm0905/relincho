@@ -3,29 +3,9 @@ import "server-only";
 import { withTenant } from "@/server/db/prisma";
 import { stripTime, type PhaseValue } from "../performance/periodization";
 import { getPhaseForDate } from "../performance/plan-service";
-import {
-  computeDailyPrescription,
-  type NutritionBaselineInput,
-  type NutritionVetContext,
-  type ReproductiveStatusValue,
-  type SweatLossValue,
-} from "./engine";
+import { computeDailyPrescription, type SweatLossValue } from "./engine";
+import { loadNutritionContext } from "./context";
 import { getMaxTempC } from "./weather";
-
-/** Valores por defecto cuando el veterinario aun no ha fijado la dieta base. */
-function fallbackBaseline(weightKg: number): NutritionBaselineInput {
-  return {
-    baseForageKg: Math.round(weightKg * 0.017 * 10) / 10,
-    baseConcentrateKg: 1.5,
-    proteinPercentTarget: 12,
-    mealsPerDay: 3,
-    minForagePctBodyweight: 1.5,
-    maxConcentrateKgPerDay: Math.round(weightKg * 0.01 * 10) / 10,
-    maxConcentrateKgPerMeal: 2,
-    maxElectrolytesGrams: 90,
-    maxVitaminEIu: 5000,
-  };
-}
 
 export interface SyncNutritionInput {
   tenantId: string;
@@ -38,6 +18,13 @@ export interface SyncNutritionInput {
   /** Si se omite, se consulta la temperatura maxima prevista. */
   ambientTempC?: number | null;
   mesocyclePhase?: PhaseValue | null;
+  /** Tipo de trabajo previsto para ese dia, informativo para el mozo. */
+  workType?: string | null;
+  /**
+   * true cuando la racion sale de la carga planificada y todavia no del
+   * reporte del jinete. Una racion confirmada nunca vuelve a previsión.
+   */
+  isProjection?: boolean;
 }
 
 /**
@@ -62,44 +49,11 @@ export async function syncNutritionForDay(input: SyncNutritionInput) {
     input.ambientTempC ?? (await getMaxTempC({ date: day }));
 
   return withTenant(input.tenantId, async (tx) => {
-    const horse = await tx.horse.findFirst({
-      where: { id: input.horseId, tenantId: input.tenantId },
-      include: { vetProfile: true, nutritionBaseline: true },
-    });
-    if (!horse) throw new Error("Caballo no encontrado");
-
-    const weightKg = horse.vetProfile?.baseWeightKg
-      ? Number(horse.vetProfile.baseWeightKg)
-      : 500;
-
-    const vet: NutritionVetContext = {
-      baseWeightKg: weightKg,
-      reproductiveStatus:
-        (horse.vetProfile?.reproductiveStatus as ReproductiveStatusValue | undefined) ??
-        "NA",
-      gestationMonth: horse.vetProfile?.gestationMonth ?? null,
-      restrictions: horse.vetProfile?.restrictions ?? [],
-    };
-
-    const baseline: NutritionBaselineInput = horse.nutritionBaseline
-      ? {
-          baseForageKg: Number(horse.nutritionBaseline.baseForageKg),
-          baseConcentrateKg: Number(horse.nutritionBaseline.baseConcentrateKg),
-          proteinPercentTarget: horse.nutritionBaseline.proteinPercentTarget,
-          mealsPerDay: horse.nutritionBaseline.mealsPerDay,
-          minForagePctBodyweight: Number(
-            horse.nutritionBaseline.minForagePctBodyweight,
-          ),
-          maxConcentrateKgPerDay: Number(
-            horse.nutritionBaseline.maxConcentrateKgPerDay,
-          ),
-          maxConcentrateKgPerMeal: Number(
-            horse.nutritionBaseline.maxConcentrateKgPerMeal,
-          ),
-          maxElectrolytesGrams: horse.nutritionBaseline.maxElectrolytesGrams,
-          maxVitaminEIu: horse.nutritionBaseline.maxVitaminEIu,
-        }
-      : fallbackBaseline(weightKg);
+    const { vet, baseline } = await loadNutritionContext(
+      tx,
+      input.tenantId,
+      input.horseId,
+    );
 
     const prescription = computeDailyPrescription({
       vet,
@@ -132,6 +86,8 @@ export async function syncNutritionForDay(input: SyncNutritionInput) {
       instructionsForStaff: prescription.instructionsForStaff,
       clampNotes: prescription.clampNotes,
       ambientTempC,
+      workType: (input.workType as never) ?? null,
+      isProjection: input.isProjection ?? false,
     };
 
     return tx.nutritionPrescription.upsert({
@@ -166,6 +122,7 @@ export async function getGroomList(params: { tenantId: string; date: Date }) {
         totalMeals: row.totalMeals,
         electrolytes: row.electrolytesGrams > 0,
         instructions: row.instructionsForStaff,
+        isProjection: row.isProjection,
       }));
   });
 }
