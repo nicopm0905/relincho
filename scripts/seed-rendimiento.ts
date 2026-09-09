@@ -198,6 +198,16 @@ async function main() {
     });
   }
 
+  // Numero de microchip real, con el prefijo 724 de España. Es lo que el
+  // buscador espera que teclee el veterinario, asi que sin esto la pantalla de
+  // busqueda no tendria nada que encontrar.
+  for (const [index, horse] of roleList.entries()) {
+    await prisma.horse.updateMany({
+      where: { id: horse.id, OR: [{ microchip: null }, { microchip: "" }] },
+      data: { microchip: `72409810000${String(index + 1).padStart(4, "0")}` },
+    });
+  }
+
   // --- Chips fisicos -------------------------------------------------------
   const chips: [string, string, string][] = [
     [espartero.id, chipCode(TENANT_SLUG, espartero.name, 1, "NFC"), "NFC"],
@@ -468,12 +478,16 @@ async function main() {
 
   console.log(`
 Listo. Entra en /${TENANT_SLUG}/rendimiento`);
-  console.log("Chips para probar el escáner:");
-  for (const [horseId, chipId] of chips) {
-    const horse = roleList.find((h) => h.id === horseId);
-    console.log(`  ${chipId.padEnd(22)}${horse?.name ?? ""}`);
+  console.log("Microchips para probar el buscador:");
+  const seeded = await prisma.horse.findMany({
+    where: { id: { in: roleList.map((h) => h.id) } },
+    select: { name: true, microchip: true },
+    orderBy: { name: "asc" },
+  });
+  for (const horse of seeded) {
+    console.log(`  ${(horse.microchip ?? "-").padEnd(18)}${horse.name}`);
   }
-}
+  }
 
 main()
   .catch((error) => {

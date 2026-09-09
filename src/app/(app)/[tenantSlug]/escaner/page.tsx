@@ -7,7 +7,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { tenantSlug } = await params;
-  return { title: `Escáner de chip — ${tenantSlug}` };
+  return { title: `Buscar por chip — ${tenantSlug}` };
 }
 
 export default async function EscanerPage({ params }: PageProps) {
@@ -18,8 +18,8 @@ export default async function EscanerPage({ params }: PageProps) {
       <PageHeader
         backHref={`/${tenantSlug}/rendimiento`}
         backLabel="Rendimiento"
-        title="Escanear chip"
-        description="Acerca el chip del caballo o teclea su código para abrir su ficha deportiva"
+        title="Buscar por chip"
+        description="Teclea el microchip del caballo para abrir su ficha deportiva"
       />
       <ChipScanner tenantSlug={tenantSlug} />
     </div>

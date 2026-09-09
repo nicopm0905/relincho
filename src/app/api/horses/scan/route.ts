@@ -27,44 +27,51 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const tag = await prisma.chipTag.findUnique({
-    where: { chipId: parsed.data },
-    include: {
-      horse: {
-        include: {
-          vetProfile: true,
-          competitionTargets: { orderBy: { targetDate: "asc" } },
-          healthEvents: {
-            where: { type: "INJURY" },
-            orderBy: { date: "desc" },
-            take: 20,
-          },
-        },
-      },
+  const code = parsed.data.trim();
+
+  // Solo se buscan caballos de las cuadras a las que pertenece quien consulta.
+  const memberships = await prisma.membership.findMany({
+    where: { userId: session.user.id },
+    select: { tenantId: true },
+  });
+  const tenantIds = memberships.map((m) => m.tenantId);
+  if (tenantIds.length === 0) {
+    return NextResponse.json({ error: "Sin acceso a ninguna cuadra" }, { status: 403 });
+  }
+
+  const horseInclude = {
+    vetProfile: true,
+    competitionTargets: { orderBy: { targetDate: "asc" } },
+    healthEvents: {
+      where: { type: "INJURY" },
+      orderBy: { date: "desc" },
+      take: 20,
     },
+  } as const;
+
+  // Se acepta tanto un codigo vinculado desde la app como el numero de
+  // microchip real que el veterinario ya tiene apuntado en la ficha.
+  const tag = await prisma.chipTag.findFirst({
+    where: { chipId: code, active: true, tenantId: { in: tenantIds } },
+    include: { horse: { include: horseInclude } },
   });
 
-  if (!tag || !tag.active) {
+  const horse =
+    tag?.horse ??
+    (await prisma.horse.findFirst({
+      where: { microchip: code, tenantId: { in: tenantIds } },
+      include: horseInclude,
+    }));
+
+  if (!horse) {
     return NextResponse.json(
-      { error: "Chip no reconocido o desvinculado" },
+      { error: "Ningún caballo tuyo tiene ese chip o microchip" },
       { status: 404 },
     );
   }
 
-  // El lector solo puede consultar caballos del tenant al que pertenece.
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_tenantId: { userId: session.user.id, tenantId: tag.tenantId },
-    },
-    select: { id: true },
-  });
-  if (!membership) {
-    return NextResponse.json({ error: "Sin acceso a este caballo" }, { status: 403 });
-  }
-
-  const horse = tag.horse;
   const snapshot = await getPlanSnapshot({
-    tenantId: tag.tenantId,
+    tenantId: horse.tenantId,
     horseId: horse.id,
   });
   const nextTarget = horse.competitionTargets.find(
@@ -73,7 +80,7 @@ export async function GET(request: NextRequest) {
 
   const payload: ScanResponse = {
     horse_id: horse.id,
-    chip_id: tag.chipId,
+    chip_id: tag?.chipId ?? horse.microchip ?? code,
     name: horse.name,
     discipline: horse.vetProfile?.discipline ?? null,
     competition_target: nextTarget

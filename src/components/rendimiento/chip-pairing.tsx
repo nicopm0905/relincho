@@ -89,8 +89,9 @@ export function ChipPairing({
         </ul>
       ) : (
         <p className="text-[13px] text-muted-foreground">
-          Este caballo aún no tiene chip vinculado. Sin chip no se puede escanear
-          desde el móvil.
+          El buscador ya encuentra a este caballo por el microchip de su ficha.
+          Vincula un código aparte solo si usáis una numeración propia de la
+          cuadra.
         </p>
       )}
 

@@ -10,7 +10,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 import {
   Horse as HorseIcon,
-  ScanSmiley,
+  MagnifyingGlass,
   CalendarCheck,
   Warning,
 } from "@phosphor-icons/react/dist/ssr";
@@ -53,8 +53,8 @@ export default async function RendimientoPage({ params }: PageProps) {
         actions={
           <Button asChild variant="outline">
             <Link href={`/${tenantSlug}/escaner`}>
-              <ScanSmiley weight="bold" />
-              Escanear chip
+              <MagnifyingGlass weight="bold" />
+              Buscar por chip
             </Link>
           </Button>
         }

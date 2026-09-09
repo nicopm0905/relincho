@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ScanSmiley, SpinnerGap, Warning, Bandaids } from "@phosphor-icons/react";
+import { MagnifyingGlass, SpinnerGap, Warning, Bandaids } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,22 +18,18 @@ import {
   workTypeLabels,
 } from "./labels";
 
-/** Web NFC solo existe en Chrome para Android; el resto teclea el codigo. */
-type NDEFReaderCtor = new () => {
-  scan: () => Promise<void>;
-  onreading: ((event: { serialNumber?: string }) => void) | null;
-};
-
-function getNdefReader(): NDEFReaderCtor | null {
-  if (typeof window === "undefined") return null;
-  const candidate = (window as unknown as { NDEFReader?: NDEFReaderCtor }).NDEFReader;
-  return candidate ?? null;
-}
-
+/**
+ * Busqueda de un caballo por el numero de su chip.
+ *
+ * No hay lectura sin contacto a proposito: el microchip implantado en el
+ * caballo emite a 134,2 kHz (ISO 11784/11785) y la antena NFC de un movil
+ * trabaja a 13,56 MHz, asi que ningun telefono puede leerlo. Se teclea el
+ * numero, que es lo que el veterinario ya lleva apuntado en el pasaporte.
+ */
 export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
   const [chipId, setChipId] = useState("");
   const [loading, setLoading] = useState(false);
-  const [nfcActive, setNfcActive] = useState(false);
+  const [notFound, setNotFound] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResponse | null>(null);
 
   const lookup = async (value: string) => {
@@ -41,11 +37,12 @@ export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
     if (!code) return;
     setLoading(true);
     setResult(null);
+    setNotFound(null);
     try {
       const res = await fetch(`/api/horses/scan?chip_id=${encodeURIComponent(code)}`);
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "No se pudo leer el chip");
+        setNotFound(data.error ?? "No se pudo consultar el chip");
         return;
       }
       setResult(data as ScanResponse);
@@ -53,30 +50,6 @@ export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
       toast.error("Error de red al consultar el chip");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const startNfc = async () => {
-    const Reader = getNdefReader();
-    if (!Reader) {
-      toast.error("Este dispositivo o navegador no permite leer NFC. Teclea el código.");
-      return;
-    }
-    try {
-      const reader = new Reader();
-      await reader.scan();
-      setNfcActive(true);
-      reader.onreading = (event) => {
-        const serial = event.serialNumber;
-        if (serial) {
-          setChipId(serial);
-          void lookup(serial);
-        }
-      };
-      toast.success("Acerca el chip al teléfono");
-    } catch {
-      setNfcActive(false);
-      toast.error("No se pudo activar la lectura NFC");
     }
   };
 
@@ -88,10 +61,10 @@ export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
   return (
     <div className="space-y-4">
       <Card>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor="chip">Código del chip</Label>
+              <Label htmlFor="chip">Número de chip</Label>
               <Input
                 id="chip"
                 value={chipId}
@@ -99,8 +72,10 @@ export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void lookup(chipId);
                 }}
-                placeholder="NFC-123456"
+                placeholder="724011900001234"
                 autoFocus
+                inputMode="numeric"
+                autoComplete="off"
                 className="font-mono"
               />
             </div>
@@ -108,34 +83,28 @@ export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
               {loading ? (
                 <SpinnerGap className="animate-spin" />
               ) : (
-                <ScanSmiley weight="fill" />
+                <MagnifyingGlass weight="bold" />
               )}
-              Consultar
+              Buscar
             </Button>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={startNfc}
-              disabled={nfcActive}
-            >
-              <span
-                className={cn(
-                  "mr-1.5 h-1.5 w-1.5 rounded-full",
-                  nfcActive ? "animate-pulse bg-emerald-500" : "bg-border",
-                )}
-                aria-hidden
-              />
-              {nfcActive ? "Esperando chip" : "Leer por NFC"}
-            </Button>
-            <p className="text-[12px] text-muted-foreground">
-              La lectura sin contacto necesita Chrome en Android.
-            </p>
-          </div>
+          <p className="text-[12px] text-muted-foreground">
+            Vale el microchip del pasaporte o cualquier código que hayas
+            vinculado al caballo desde su ficha.
+          </p>
         </CardContent>
       </Card>
+
+      {notFound && (
+        <Card>
+          <CardContent>
+            <p className="text-[13px] text-muted-foreground">{notFound}</p>
+            <Button asChild variant="outline" size="sm" className="mt-3">
+              <Link href={`/${tenantSlug}/caballos`}>Ver todos los caballos</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {result && (
         <Card>
@@ -178,9 +147,9 @@ export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
                   </div>
                   <div className="mt-1.5 text-[12.5px] tabular-nums text-muted-foreground">
                     {target.duration_minutes} min · RPE {target.rpe_target}
-                    {result.periodization_plan?.current_mesocycle &&
-                      ` · ${phaseLabels[result.periodization_plan.current_mesocycle]}, semana ${
-                        result.periodization_plan.microcycle_week
+                    {phase &&
+                      ` · ${phaseLabels[phase]}, semana ${
+                        result.periodization_plan?.microcycle_week
                       }`}
                   </div>
                 </>
