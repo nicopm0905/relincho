@@ -1,6 +1,7 @@
 "use client";
 
-import { Users, Target, Heart } from "lucide-react";
+import Link from "next/link";
+import { Users, Target, Heart, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
@@ -36,6 +37,13 @@ export function About() {
               <p>{t("p1")}</p>
               <p>{t.rich("p2", { strong })}</p>
               <p>{t.rich("p3", { strong })}</p>
+              <Link
+                href="/fundadores"
+                className="inline-flex items-center gap-1.5 text-base font-semibold text-primary-ink transition-colors hover:text-primary"
+              >
+                {t("readMore")}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </motion.div>
 

@@ -8,6 +8,7 @@ import {
   Plus,
   CaretRight,
   Sun,
+  Warning,
 } from "@phosphor-icons/react/dist/ssr";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -16,6 +17,7 @@ import { PageHeader, SectionHeading } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
+import { SessionCheckIn } from "@/components/rendimiento/session-check-in";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -66,12 +68,15 @@ export default async function InicioPage({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
 
-  const [horses, upcomingHealth, cycles, openTasks] = await Promise.all([
-    caller.horses.list(),
-    caller.health.upcoming({ days: 30 }),
-    caller.reproduction.listActiveCycles({}),
-    caller.tasks.list({ done: false }),
-  ]);
+  const [horses, upcomingHealth, cycles, openTasks, performance, pendingCheckIns] =
+    await Promise.all([
+      caller.horses.list(),
+      caller.health.upcoming({ days: 30 }),
+      caller.reproduction.listActiveCycles({}),
+      caller.tasks.list({ done: false }),
+      caller.performance.overview(),
+      caller.performance.pendingCheckIns({}),
+    ]);
 
   const now = new Date();
   const today = new Date().setHours(0, 0, 0, 0);
@@ -82,6 +87,28 @@ export default async function InicioPage({ params }: PageProps) {
   // One prioritised worklist instead of two parallel lists the user has to
   // cross-reference. Everything that has a date lands here, soonest first.
   const attention = [
+    // Las alertas de rendimiento saltan de la ficha del caballo al inicio: un
+    // tendon tocado es mas urgente que la mayoria de vencimientos sanitarios.
+    ...performance
+      .filter(
+        (horse) =>
+          horse.tendonHistoryAlert || horse.bufferStatus === "exhausted",
+      )
+      .map((horse) => ({
+        id: `performance-${horse.horseId}`,
+        due: new Date(today),
+        title: horse.name,
+        subtitle: [
+          horse.tendonHistoryAlert ? "Historial de tendón" : null,
+          horse.bufferStatus === "exhausted"
+            ? "Margen de recuperación agotado"
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        href: `/${tenantSlug}/rendimiento/${horse.horseId}`,
+        icon: <Warning weight="duotone" />,
+      })),
     ...upcomingHealth
       .filter((event) => event.nextDueDate)
       .map((event) => ({
@@ -133,6 +160,8 @@ export default async function InicioPage({ params }: PageProps) {
         }
       />
 
+      <SessionCheckIn sessions={pendingCheckIns} />
+
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatCard
           label="Caballos activos"
@@ -144,10 +173,14 @@ export default async function InicioPage({ params }: PageProps) {
           label="Requiere atención"
           value={overdueCount}
           hint={
-            overdueCount === 0 ? "Nada vencido" : "Vencido o para hoy"
+            overdueCount === 0
+              ? "Nada vencido"
+              : "Vencido, para hoy o alerta de rendimiento"
           }
           emphasis={overdueCount > 0}
-          href={`/${tenantSlug}/sanidad`}
+          // Lleva al motivo mas urgente: puede ser sanidad, una tarea o la
+          // alerta de tendon de un caballo.
+          href={attention[0]?.href}
         />
         <StatCard
           label="Yeguas preñadas"
@@ -166,7 +199,7 @@ export default async function InicioPage({ params }: PageProps) {
       <section className="space-y-3">
         <SectionHeading
           title="Requiere tu atención"
-          description="Vencimientos sanitarios y tareas, lo más urgente primero"
+          description="Vencimientos sanitarios, tareas y alertas de rendimiento, lo más urgente primero"
           action={
             attention.length > 0 && (
               <Button asChild variant="ghost" size="sm">
@@ -182,7 +215,7 @@ export default async function InicioPage({ params }: PageProps) {
           <EmptyState
             icon={<Sun weight="duotone" />}
             title="Todo al día"
-            description="No hay vencimientos sanitarios ni tareas con fecha pendientes."
+            description="No hay vencimientos sanitarios, tareas ni alertas de rendimiento pendientes."
           />
         ) : (
           <ListRows>

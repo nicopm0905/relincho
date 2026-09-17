@@ -1,8 +1,8 @@
+import { headers } from "next/headers";
 import { auth } from "@/server/auth";
 import { redirect } from "next/navigation";
 import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
-
-import { Toaster } from "@/components/ui/sonner";
+import { isDemoTenant, tenantSlugFromPath } from "@/lib/demo";
 
 export default async function AppLayout({
   children,
@@ -11,7 +11,12 @@ export default async function AppLayout({
 }) {
   const session = await auth();
   if (!session?.user) {
-    redirect(await loginUrlForCurrentPage());
+    // La yeguada de demostracion se abre a quien llega sin cuenta; el resto de
+    // la app sigue pidiendo sesion.
+    const path = (await headers()).get("x-requested-path");
+    if (!isDemoTenant(tenantSlugFromPath(path))) {
+      redirect(await loginUrlForCurrentPage());
+    }
   }
   return <>{children}</>;
 }

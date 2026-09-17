@@ -125,7 +125,7 @@ export default async function PlanCaballoPage({ params }: PageProps) {
           />
           <p className="text-[13px] leading-relaxed text-amber-900">
             <span className="font-semibold">Historial de tendón.</span> La
-            intensidad queda limitada a RPE {vetProfile.maxRpe ?? 8}
+            intensidad queda limitada a {vetProfile.maxRpe ?? 8}/10
             {vetProfile.maxImpactSurfaceMinutes
               ? ` y el trabajo sobre superficie de impacto a ${vetProfile.maxImpactSurfaceMinutes} minutos por sesión.`
               : "."}

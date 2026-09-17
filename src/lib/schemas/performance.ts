@@ -104,6 +104,8 @@ export const sessionReportSchema = z.object({
   rider_name: z.string().max(120).optional(),
   rider_notes: z.string().max(2000).optional(),
   sweat_loss: sweatLossSchema.optional(),
+  /** Frecuencia cardiaca media de la sesion. Opcional: dato medido, no la base. */
+  heart_rate_bpm: z.number().int().min(20).max(260).optional(),
   /** El jinete reporta fatiga o menor rendimiento aunque la carga no se dispare. */
   rider_reported_fatigue: z.boolean().optional(),
   /** Sesion de fuerza/potencia, para el ajuste proteico nocturno. */

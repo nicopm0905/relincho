@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Flyer Relincho — Vista previa A5</title>
+<style>
+  /* Réplica HTML del flyer PDF (public/flyer/generar-flyer.js).
+     Lienzo: A5 a 96 dpi = 559 × 794 px (factor ×1.334 sobre puntos PDF). */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #3a3a38;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 14px; padding: 24px;
+    font-family: "Segoe UI", system-ui, sans-serif;
+  }
+  .hint { color: #cfcfc9; font-size: 12px; letter-spacing: .4px; }
+  .page-wrap { width: 559px; }
+  .page {
+    width: 559px; height: 794px; position: relative; overflow: hidden;
+    background: #f9f9f6; box-shadow: 0 12px 40px rgba(0,0,0,.45);
+  }
+  .header {
+    position: absolute; top: 0; left: 0; right: 0; height: 283px;
+    background: #a3b846;
+  }
+  .kicker {
+    position: absolute; top: 53px; left: 48px;
+    color: #ffffff; opacity: .9; font-weight: 700;
+    font-size: 11.3px; letter-spacing: 3.5px;
+  }
+  .slogan {
+    position: absolute; top: 96px; left: 45px; line-height: 1.24;
+    font-family: Georgia, "Times New Roman", serif; font-weight: 700;
+    font-size: 54.7px; letter-spacing: -1px;
+  }
+  .slogan .l1 { color: #111111; display: block; }
+  .slogan .l2 { color: #ffffff; display: block; }
+  .subtitle {
+    position: absolute; top: 229px; left: 48px; width: 400px;
+    color: #ffffff; opacity: .95; font-size: 14px; line-height: 1.4;
+  }
+  /* Herradura cabecera (SVG) */
+  .hs-header {
+    position: absolute; top: 70px; right: 45px; width: 128px; height: 128px; opacity: .9;
+  }
+  /* Herradura marca de agua */
+  .hs-watermark {
+    position: absolute; top: 319px; right: -8px; width: 388px; height: 388px; opacity: .08;
+  }
+  .pill {
+    position: absolute; top: 299px; left: 50%; transform: translateX(-50%);
+    display: block; background: #ffffff; border: 1.3px solid #a3b846;
+    border-radius: 999px; padding: 7px 20px;
+    font-weight: 700; font-size: 11.3px; letter-spacing: 2px; color: #111111;
+    white-space: nowrap;
+  }
+  .section-label {
+    position: absolute; top: 346px; left: 48px;
+    color: #55651c; font-weight: 700; font-size: 10.7px; letter-spacing: 4px;
+  }
+  .grid {
+    position: absolute; top: 378px; left: 48px; right: 48px;
+    display: grid; grid-template-columns: 1fr 1fr; row-gap: 28px; column-gap: 44px;
+  }
+  .item { display: flex; gap: 12px; align-items: flex-start; }
+  .badge {
+    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%;
+    background: #a3b846; color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .item h3 { font-size: 15.3px; color: #111111; font-weight: 700; margin-bottom: 3px; }
+  .item p { font-size: 11.3px; color: #5f5f5c; line-height: 1.35; }
+  .divider {
+    position: absolute; top: 544px; left: 48px; right: 48px;
+    border-top: 1.3px solid rgba(163,184,70,.35);
+  }
+  .local {
+    position: absolute; top: 564px; left: 48px;
+    font-family: Georgia, serif; font-style: italic;
+    color: #55651c; font-size: 14.7px;
+  }
+  .qr-card {
+    position: absolute; left: 37px; right: 37px; bottom: 39px; height: 157px;
+    background: #111111; border-radius: 21px;
+    display: flex; align-items: center; gap: 26px; padding: 0 26px;
+  }
+  .qr-frame {
+    flex: 0 0 auto; width: 145px; height: 145px; background: #fff; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qr-frame img { width: 123px; height: 123px; image-rendering: pixelated; }
+  .qr-card .label {
+    color: #a3b846; font-weight: 700; font-size: 10.7px; letter-spacing: 2.7px; margin-bottom: 8px;
+  }
+  .qr-card .url { color: #ffffff; font-weight: 700; font-size: 22.7px; }
+  .qr-card .note { color: #ffffff; opacity: .75; font-size: 12px; margin-top: 9px; }
+  .footer {
+    position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
+    color: #5f5f5c; opacity: .8; font-size: 10px; letter-spacing: 1.3px;
+  }
+</style>
+</head>
+<body>
+  <div class="hint">Vista previa A5 · el PDF imprimible es public/flyer/flyer-relincho-a5.pdf</div>
+  <div class="page">
+    <div class="header"></div>
+
+    <!-- Herradura cabecera -->
+    <svg class="hs-header" viewBox="0 0 100 100">
+      <path d="M 7 38 A 43 43 0 1 0 93 38" fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round"/>
+    </svg>
+
+    <!-- Herradura marca de agua -->
+    <svg class="hs-watermark" viewBox="0 0 100 100">
+      <path d="M 7 38 A 43 43 0 1 0 93 38" fill="none" stroke="#a3b846" stroke-width="11" stroke-linecap="round"/>
+    </svg>
+
+    <div class="kicker">JEREZ DE LA FRONTERA · GESTIÓN EQUINA</div>
+    <div class="slogan"><span class="l1">Del corral</span><span class="l2">a la nube.</span></div>
+    <div class="subtitle">Sanidad, reproducción, pupilaje y facturación. Toda tu yeguada en un solo lugar.</div>
+
+    <div class="pill">VIERNES 18 · PARADA HÍPICA · 19:00</div>
+    <div class="section-label">QUÉ HACE RELINCHO</div>
+    <div class="grid">
+      <div class="item"><div class="badge">✓</div><div><h3>Sanidad y alertas</h3><p>Vacunas, tratamientos y recordatorios</p></div></div>
+      <div class="item"><div class="badge">✓</div><div><h3>Reproducción</h3><p>Celos, cubriciones y gestaciones</p></div></div>
+      <div class="item"><div class="badge">✓</div><div><h3>Pupilaje y dietas</h3><p>Boxes, estancias y tarifas de clientes</p></div></div>
+      <div class="item"><div class="badge">✓</div><div><h3>Factura Veri*Factu</h3><p>Facturas legales adaptadas a la AEAT</p></div></div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="local">Creada por dos jerezanos que crecieron entre caballos.</div>
+
+    <div class="qr-card">
+      <div class="qr-frame"><img src="data:image/png;base64,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" alt="QR relincho.vercel.app"></div>
+      <div>
+        <div class="label">ESCANEA Y PRUÉBALO GRATIS</div>
+        <div class="url">relincho.vercel.app</div>
+        <div class="note">Sin tarjeta · Sin compromiso · En español</div>
+      </div>
+    </div>
+
+    <div class="footer">RELINCHO · HOLA@RELINCHO.ES · HECHO EN JEREZ DE LA FRONTERA</div>
+  </div>
+</div>
+<script>
+  function fit() {
+    const s = Math.max(0.35, Math.min(1, (window.innerWidth - 48) / 559, (window.innerHeight - 96) / 794));
+    const page = document.querySelector('.page');
+    page.style.transform = 'scale(' + s + ')';
+    page.style.transformOrigin = 'top center';
+    document.querySelector('.page-wrap').style.height = (794 * s) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+</script>
+</body>
+</html>

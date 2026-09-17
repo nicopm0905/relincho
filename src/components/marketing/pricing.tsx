@@ -4,16 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 
 const plans = [
-  { key: "starter", highlighted: false },
+  { key: "free", highlighted: false },
   { key: "pro", highlighted: true },
+  { key: "enterprise", highlighted: false },
 ] as const;
 
 export async function Pricing() {
   const t = await getTranslations("marketing.pricing");
+  const sales = await getTranslations("legal.contact.sales");
 
   return (
     <section id="pricing" className="py-24 md:py-32 bg-[#f9f9f6]">
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="container max-w-6xl mx-auto px-4 sm:px-6">
 
         <div className="text-center max-w-2xl mx-auto mb-16 md:mb-24">
           <h2 className="font-heading text-4xl md:text-5xl text-foreground mb-6">
@@ -24,15 +26,22 @@ export async function Pricing() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {plans.map((plan) => {
             const features = t.raw(`plans.${plan.key}.features`) as string[];
+            // El plan grande no se compra solo: se cierra hablando con nosotros.
+            const isContact = plan.key === "enterprise";
+            const href = isContact
+              ? `mailto:${sales("email")}?subject=${encodeURIComponent(sales("emailSubject"))}`
+              : "/demo";
+            const hasPrice = t.has(`plans.${plan.key}.price`);
+
             return (
               <div
                 key={plan.key}
-                className={`relative flex flex-col p-8 md:p-10 rounded-[2rem] bg-white transition-all duration-300 hover:shadow-bento ${
+                className={`relative flex flex-col p-8 rounded-[2rem] bg-white transition-all duration-300 hover:shadow-bento ${
                   plan.highlighted
-                    ? "border-2 border-primary shadow-sm"
+                    ? "border-2 border-primary shadow-sm md:scale-[1.03]"
                     : "border border-border/50"
                 }`}
               >
@@ -52,12 +61,20 @@ export async function Pricing() {
                 </div>
 
                 <div className="mb-8">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl md:text-5xl font-bold font-heading text-foreground">
-                      {t(`plans.${plan.key}.price`)}€
+                  {hasPrice ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl md:text-5xl font-bold font-heading text-foreground">
+                        {t(`plans.${plan.key}.price`)}€
+                      </span>
+                      <span className="text-muted-foreground font-medium">
+                        {t("perMonth")}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-3xl md:text-4xl font-bold font-heading text-foreground">
+                      {t(`plans.${plan.key}.priceNote`)}
                     </span>
-                    <span className="text-muted-foreground font-medium">{t("perMonth")}</span>
-                  </div>
+                  )}
                 </div>
 
                 <ul className="space-y-4 mb-10 flex-1">
@@ -74,7 +91,11 @@ export async function Pricing() {
                   variant={plan.highlighted ? "default" : "outline"}
                   className={`w-full rounded-full h-12 text-base ${plan.highlighted ? 'hover:bg-[#8b9e3a]' : 'hover:bg-muted/50'}`}
                 >
-                  <Link href="/login">{t(`plans.${plan.key}.cta`)}</Link>
+                  {isContact ? (
+                    <a href={href}>{t(`plans.${plan.key}.cta`)}</a>
+                  ) : (
+                    <Link href={href}>{t(`plans.${plan.key}.cta`)}</Link>
+                  )}
                 </Button>
               </div>
             );

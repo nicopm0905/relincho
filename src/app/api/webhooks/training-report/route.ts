@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
     riderName: input.rider_name,
     notes: input.rider_notes,
     sweatLoss: input.sweat_loss,
+    heartRateBpm: input.heart_rate_bpm,
     riderReportedFatigue: input.rider_reported_fatigue,
   });
 

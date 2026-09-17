@@ -280,3 +280,19 @@
     }
   }
 }
+
+/* ── Landing V2 (/landing-v2) — animaciones en bucle ───────
+   Prefijadas rlv2- para no colisionar con la landing actual. */
+@keyframes rlv2-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.rlv2-marquee { animation: rlv2-marquee 14s linear infinite; }
+
+@keyframes rlv2-story-1 { 0% { transform: scaleX(0); } 50%, 100% { transform: scaleX(1); } }
+@keyframes rlv2-story-2 { 0%, 50% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+.rlv2-bar-1 .rlv2-fill { animation: rlv2-story-1 6s linear infinite; transform-origin: left center; }
+.rlv2-bar-2 .rlv2-fill { animation: rlv2-story-2 6s linear infinite; transform-origin: left center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rlv2-marquee,
+  .rlv2-bar-1 .rlv2-fill,
+  .rlv2-bar-2 .rlv2-fill { animation: none; }
+}

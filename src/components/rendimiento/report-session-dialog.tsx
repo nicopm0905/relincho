@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { fatigueZoneLabels } from "./labels";
 
-/** Lo que el jinete diria en voz alta para cada nivel de esfuerzo. */
+/** Lo que el jinete diria en voz alta para cada nivel de intensidad. */
 const RPE_HINTS: Record<number, string> = {
   1: "Paseo suelto",
   2: "Muy suave",
@@ -51,9 +51,14 @@ function previewZone(load: number): keyof typeof fatigueZoneLabels {
 interface Props {
   horseId: string;
   horseName: string;
-  /** Minutos y RPE previstos para hoy, usados como valores de partida. */
+  /** Minutos e intensidad previstos, usados como valores de partida. */
   plannedMinutes?: number;
   plannedRpe?: number;
+  /** Dia al que se imputa la sesion. Por defecto, hoy. */
+  sessionDate?: Date;
+  /** Texto del boton que abre el dialogo. */
+  triggerLabel?: string;
+  triggerVariant?: React.ComponentProps<typeof Button>["variant"];
 }
 
 export function ReportSessionDialog({
@@ -61,12 +66,16 @@ export function ReportSessionDialog({
   horseName,
   plannedMinutes = 45,
   plannedRpe = 6,
+  sessionDate,
+  triggerLabel = "Reportar sesión",
+  triggerVariant,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [minutes, setMinutes] = useState(plannedMinutes);
   const [rpe, setRpe] = useState(plannedRpe);
   const [sweatLoss, setSweatLoss] = useState("MEDIA");
+  const [heartRate, setHeartRate] = useState("");
   const [notes, setNotes] = useState("");
   const [fatigue, setFatigue] = useState(false);
   const [strength, setStrength] = useState(false);
@@ -81,6 +90,7 @@ export function ReportSessionDialog({
       );
       setOpen(false);
       setNotes("");
+      setHeartRate("");
       setFatigue(false);
       router.refresh();
     },
@@ -92,9 +102,9 @@ export function ReportSessionDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button />}>
+      <DialogTrigger render={<Button variant={triggerVariant} />}>
         <Microphone weight="fill" className="mr-2 h-4 w-4" />
-        Reportar sesión
+        {triggerLabel}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -131,7 +141,7 @@ export function ReportSessionDialog({
 
           <div className="space-y-2">
             <div className="flex items-baseline justify-between">
-              <Label>Intensidad percibida</Label>
+              <Label>Intensidad (según el jinete)</Label>
               <span className="text-[13px] text-muted-foreground">
                 {RPE_HINTS[rpe] ?? "—"}
               </span>
@@ -142,7 +152,7 @@ export function ReportSessionDialog({
                   key={value}
                   type="button"
                   aria-pressed={rpe === value}
-                  aria-label={`RPE ${value}: ${RPE_HINTS[value]}`}
+                  aria-label={`Intensidad ${value} de 10: ${RPE_HINTS[value]}`}
                   onClick={() => setRpe(value)}
                   className={cn(
                     "rounded-md border py-1.5 text-[12.5px] font-medium tabular-nums transition-colors",
@@ -170,6 +180,31 @@ export function ReportSessionDialog({
               {load}
               <span className="ml-1 text-[12px] font-medium text-muted-foreground">
                 UA
+              </span>
+            </div>
+          </div>
+
+          {/* Dato medido y opcional: la intensidad la pone el jinete, esto solo
+              la matiza cuando hay pulsómetro. */}
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <Label htmlFor="heartRate">Frecuencia cardiaca</Label>
+              <span className="text-[12px] text-muted-foreground">Opcional</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <input
+                id="heartRate"
+                type="number"
+                inputMode="numeric"
+                min={20}
+                max={260}
+                placeholder="—"
+                value={heartRate}
+                onChange={(e) => setHeartRate(e.target.value)}
+                className="h-9 w-24 rounded-md border border-border bg-card px-3 text-[13px] tabular-nums text-foreground outline-none focus-visible:border-foreground/30"
+              />
+              <span className="text-[12.5px] text-muted-foreground">
+                ppm de media, si lo has medido
               </span>
             </div>
           </div>
@@ -235,11 +270,12 @@ export function ReportSessionDialog({
             onClick={() =>
               report.mutate({
                 horseId,
-                date: new Date(),
+                date: sessionDate ?? new Date(),
                 minutes,
                 rpe,
                 notes: notes || undefined,
                 sweatLoss: sweatLoss as "BAJA" | "MEDIA" | "ALTA",
+                heartRateBpm: heartRate ? Number(heartRate) : undefined,
                 riderReportedFatigue: fatigue,
                 strengthSession: strength,
               })

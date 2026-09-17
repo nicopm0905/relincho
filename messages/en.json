@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "Relincho — Equine management for PRE studs",
-    "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding and Veri*Factu invoicing."
+    "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding, Veri*Factu invoicing and training performance."
   },
   "nav": {
     "horses": "Horses",
@@ -17,7 +17,7 @@
   "metadata": {
     "home": {
       "title": "Relincho — Equine management for PRE studs",
-      "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding and Veri*Factu invoicing."
+      "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding, Veri*Factu invoicing and training performance."
     },
     "contact": { "title": "Contact - Relincho" },
     "privacy": { "title": "Privacy Policy - Relincho" },
@@ -26,7 +26,9 @@
     "login": { "title": "Sign in — Relincho" },
     "verify": { "title": "Check your email — Relincho" },
     "authError": { "title": "Sign-in error — Relincho" },
-    "onboarding": { "title": "Create your farm — Relincho" }
+    "onboarding": { "title": "Create your farm — Relincho" },
+    "demo": { "title": "Demo — Relincho" },
+    "founders": { "title": "Founders — Relincho" }
   },
   "common": {
     "back": "Back",
@@ -40,6 +42,8 @@
     "nav": {
       "features": "Features",
       "about": "About",
+      "demo": "Demo",
+      "founders": "Founders",
       "pricing": "Pricing",
       "faq": "FAQ"
     },
@@ -56,7 +60,7 @@
       "titleLead": "The",
       "titleHighlight": "equine management",
       "titleTail": "software for stud farms.",
-      "subtitle": "Health, breeding, boarding and invoicing. All in one place. No hassle.",
+      "subtitle": "Health, breeding, boarding, invoicing and training performance. All in one place. No hassle.",
       "ctaPrimary": "Try it for free",
       "ctaSecondary": "See features",
       "disclaimer": "No credit card · Cancel anytime"
@@ -73,6 +77,10 @@
           "title": "Breeding control",
           "description": "Track heats, inseminations, ultrasounds and foalings with predictive calculations."
         },
+        "performance": {
+          "title": "Performance and injury prevention",
+          "description": "Periodisation towards competition, the actual load of every session and tendon alerts. The rider only confirms how long it lasted and how hard it felt."
+        },
         "boarding": {
           "title": "Boarding and stays",
           "description": "Manage stalls, diets and rates for clients' stabled horses."
@@ -86,6 +94,7 @@
     "about": {
       "title": "Who are we?",
       "subtitle": "Two young people from Jerez bringing together technology and equestrian know-how.",
+      "readMore": "Meet us",
       "p1": "We are two guys from Jerez de la Frontera, a land where the horse is far more than a tradition. Growing up here has let us learn first-hand how stud farms work and what their real day-to-day problems are.",
       "p2": "<strong>Relincho</strong> was born as the perfect combination of our two passions. One of us is a <strong>Software Engineer</strong>, responsible for the entire technical architecture so the platform is modern, fast and secure.",
       "p3": "The other is immersed in studies of <strong>Physiotherapy and Sports Science</strong>. Thanks to this, we bring deep technical knowledge about the horse's musculature, its recovery and the different types of training, carrying all that scientific rigour into the software.",
@@ -112,7 +121,11 @@
       "items": [
         {
           "question": "What is Relincho and who is it for?",
-          "answer": "Relincho is comprehensive management software designed for stud farms, equestrian centres, riding schools and equine professionals who want to digitise and simplify their day to day. From health to invoicing, all on a single platform."
+          "answer": "Relincho is comprehensive management software designed for stud farms, equestrian centres, riding schools and equine professionals who want to digitise and simplify their day to day. From health to invoicing, with each horse's training performance, all on a single platform."
+        },
+        {
+          "question": "What does the performance module include?",
+          "answer": "Plan the season towards a competition (volume and intensity phases), log the actual load of every session and get an alert when a horse with a tendon history goes over its intensity limit. Intensity is rated by the rider, so reporting a session is just two data points: how long it lasted and how hard it felt."
         },
         {
           "question": "Do I need technical knowledge to use the platform?",
@@ -128,50 +141,118 @@
         },
         {
           "question": "Can I try Relincho before subscribing?",
-          "answer": "Of course! We understand you want to make sure Relincho is the perfect tool for you. We offer a trial where you can explore all the key features and discover how we can help you optimise your equestrian centre."
+          "answer": "Of course! The Free plan costs nothing and needs no card: create your account and start adding your horses. When the yard grows, you move up to Pro and unlock performance, boarding and invoicing."
         }
       ]
     },
     "pricing": {
       "title": "Simple pricing. No surprises.",
-      "subtitle": "Choose the plan that best fits your operation. You can change plan or cancel at any time.",
+      "subtitle": "Start for free and move up when your yard grows. You can change plan or cancel at any time.",
       "recommended": "Recommended",
       "perMonth": "/mo",
       "plans": {
-        "starter": {
-          "name": "Starter",
-          "description": "Perfect for small stud farms or riding schools just getting started.",
-          "price": "29",
-          "cta": "Choose Starter",
+        "free": {
+          "name": "Free",
+          "description": "To start digitising your yard without paying a thing.",
+          "price": "0",
+          "cta": "Start for free",
           "features": [
-            "Up to 20 horses",
-            "Health and breeding control",
-            "Basic invoicing",
-            "Email support"
+            "Up to 15 horses",
+            "Health with reminders and breeding",
+            "Horse records, documents and tasks",
+            "No credit card"
           ]
         },
         "pro": {
           "name": "Pro",
-          "description": "For established businesses that need full automation.",
+          "description": "For stud farms and yards that are already working seriously.",
           "price": "79",
-          "cta": "Start free trial",
+          "cta": "See Relincho in action",
+          "features": [
+            "Up to 60 horses",
+            "Performance and injury prevention",
+            "Boarding, diets and contracts",
+            "Veri*Factu invoicing",
+            "Priority support"
+          ]
+        },
+        "enterprise": {
+          "name": "Stud",
+          "description": "For large operations and centres with several staff members.",
+          "priceNote": "Tailored",
+          "cta": "Talk to us",
           "features": [
             "Unlimited horses",
-            "Boarding and contracts",
-            "Advanced invoicing (AEAT Veri*Factu)",
-            "Staff management",
-            "Priority 24/7 support"
+            "Team with role-based permissions",
+            "Assisted onboarding",
+            "Direct phone support"
           ]
         }
       }
     }
+  },
+  "demo": {
+    "badge": "Demo",
+    "title": "This is Relincho from the inside",
+    "subtitle": "These are real screens from the app, using the demo stud farm. No sign-up, no call and no card just to look.",
+    "ctaPrimary": "Create a free account",
+    "ctaSecondary": "Talk to us",
+    "tryNow": "Try it without signing up",
+    "ctaNote": "The Free plan asks for no card: up to 15 horses.",
+    "performance": {
+      "eyebrow": "What you will not find anywhere else",
+      "title": "Performance and injury prevention",
+      "body": "Our signature: bringing the horse's training plan into the same app where its health records and invoicing already live.",
+      "points": [
+        "Periodisation towards competition: the plan spreads volume and intensity across phases up to the target date.",
+        "The rider rates the intensity. Reporting a session is two data points: how long it lasted and how hard it felt.",
+        "Injury prevention: if a horse has a tendon history, the plan never goes past the intensity set by the vet."
+      ],
+      "checkIn": {
+        "title": "Did yesterday's session happen?",
+        "body": "Relincho asks on the home screen. One tap confirms the session and the plan readjusts itself; if it was skipped, the load is spread over the rest of the week instead of dropping to zero."
+      }
+    },
+    "tour": {
+      "title": "The rest of the yard, in the same place",
+      "subtitle": "Screens from the demo stud farm, straight out of the app.",
+      "items": [
+        { "title": "Home", "description": "Health, tasks and performance alerts in a single list, most urgent first." },
+        { "title": "Health", "description": "Vaccinations, deworming and treatments with automatic reminders." },
+        { "title": "Breeding", "description": "Heats, coverings, ultrasounds and foalings with predictive calculations." },
+        { "title": "Boarding and diets", "description": "Stalls, stays and rates for clients' horses." },
+        { "title": "Invoicing", "description": "Legal invoices adapted to the AEAT, with Veri*Factu built in." },
+        { "title": "Horse record", "description": "A horse's whole history: health, documents, movements and training." }
+      ]
+    },
+    "closing": {
+      "title": "Shall we look at it with your horses?",
+      "body": "We can walk you through Relincho in 15 minutes, by video call or in person if you are in Jerez. Bring your questions and your numbers."
+    }
+  },
+  "founders": {
+    "badge": "Who we are",
+    "title": "Two people from Jerez, one piece of software and a lot of horses in between",
+    "subtitle": "Relincho was not born in an office: it comes from growing up among horses and watching yards still being run on notebooks and WhatsApp.",
+    "story1": "We are two guys from Jerez de la Frontera, a land where the horse is far more than a tradition. Growing up here has let us learn first-hand how stud farms work and what their real day-to-day problems are.",
+    "story2": "Relincho was born as the perfect combination of our two passions. One of us is a Software Engineer, responsible for the entire technical architecture so the platform is modern, fast and secure.",
+    "story3": "The other is immersed in studies of Physiotherapy and Sports Science. That is where the performance module comes from: applying real knowledge about musculature, recovery and training types to the software.",
+    "whyTitle": "Why the performance strip exists",
+    "whyBody": "In our competitor research we found nobody putting health, breeding and invoicing together with the horse's training plan. Having studied physiotherapy and sports science, it was too obvious to leave out.",
+    "valuesTitle": "What drives us",
+    "ctaTitle": "Let's talk",
+    "ctaBody": "Tell us how you run your yard and we will tell you whether Relincho fits. We are from Jerez and we answer ourselves, not a form.",
+    "ctaPrimary": "See the demo",
+    "ctaSecondary": "Write to us"
   },
   "footer": {
     "links": {
       "terms": "Terms",
       "privacy": "Privacy",
       "cookies": "Cookies",
-      "contact": "Contact"
+      "contact": "Contact",
+      "demo": "Demo",
+      "founders": "Founders"
     }
   },
   "legal": {
@@ -185,12 +266,14 @@
       "support": {
         "title": "Technical Support",
         "body": "If you are already a customer and have a technical problem or a question about how to use a feature.",
-        "email": "soporte@relincho.com"
+        "email": "relinchoappweb@gmail.com",
+        "emailSubject": "Relincho support"
       },
       "sales": {
         "title": "Sales and Information",
         "body": "Want to know more about how Relincho can help your stud farm? Let's talk.",
-        "email": "info@relincho.com"
+        "email": "relinchoappweb@gmail.com",
+        "emailSubject": "Relincho information"
       }
     },
     "privacy": {
@@ -224,7 +307,7 @@
       },
       "s5": {
         "title": "5. Your rights",
-        "body": "You have the right to access, rectify or delete your personal data at any time. To exercise these rights, contact us at privacidad@relincho.com."
+        "body": "You have the right to access, rectify or delete your personal data at any time. To exercise these rights, contact us at relinchoappweb@gmail.com."
       }
     },
     "terms": {
@@ -249,7 +332,7 @@
         "title": "5. Limitation of Liability",
         "body": "In no event shall Relincho, nor its directors, employees or affiliates, be liable for any indirect, incidental, special or consequential damages arising from your use of the service."
       },
-      "contactNote": "For any questions about these terms, contact us at contacto@relincho.com"
+      "contactNote": "For any questions about these terms, contact us at relinchoappweb@gmail.com"
     },
     "cookies": {
       "title": "Cookie Policy",
@@ -358,5 +441,84 @@
     "close": "Close",
     "logout": "Sign out",
     "account": "Account"
+  },
+  "landingV2": {
+    "nav": {
+      "features": "Features",
+      "about": "About us",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "login": "Log in",
+      "startFree": "Start for free",
+      "goToPanel": "Go to dashboard"
+    },
+    "hero": {
+      "titleLine1": "Running your stud farm,",
+      "titleLine2Lead": "simpler",
+      "titleLine2Accent": "than ever",
+      "cta": "Start your free trial",
+      "trustTitle": "Trusted by",
+      "blurb": "Relincho brings health, breeding, boarding and invoicing for your stud farm together in one place, with AI working in the background.",
+      "learnMore": "Learn more",
+      "posterAlt": "PRE mare walking on the farm in afternoon light"
+    },
+    "story": {
+      "verified": "Verified stud farm",
+      "slide1Lead": "Caring for",
+      "slide1Accent": "your horses",
+      "slide2Lead": "Growing",
+      "slide2Accent": "your stud farm"
+    },
+    "panel": {
+      "eyebrow": "YOUR DASHBOARD",
+      "titleLead": "Your stud farm's numbers,",
+      "titleAccent": "clear at a glance",
+      "subtitle": "Boarding, coverings and invoices adding up on their own, in real time.",
+      "summaryLabel": "MONTHLY SUMMARY",
+      "summaryPeriod": "MONTHLY",
+      "rowInvoiced": "Invoiced",
+      "rowBoarding": "Boarding",
+      "rowExpenses": "Expenses",
+      "card1Title": "Your whole stud farm on one screen.",
+      "card1Body": "Income, boarding costs and invoices reconcile themselves. You see at a glance which horse pays its way and which one costs you, and you decide on data, not on hunches.",
+      "dailyLabel": "DAILY",
+      "collectedToday": "Collected today",
+      "viewMovement": "View entry",
+      "card2Title": "Every payment in its place",
+      "card2Body": "Boarding fees, extras and SEPA direct debits logged as they happen, with no chasing anyone.",
+      "portraitAlt": "Someone from the stud farm standing with their horse"
+    },
+    "ia": {
+      "eyebrow": "ARTIFICIAL INTELLIGENCE",
+      "titleLead": "Your equine ",
+      "titleAccent": "AI assistant",
+      "subtitle": "Ask in your own words, see what is coming, and let the system order the work for you.",
+      "brand": "Relincho",
+      "q1": "Which mares are ready to breed this month?",
+      "a1": "You have 4 mares in heat confirmed by ultrasound and 2 more coming into cycle this week. Lucera and Bordadora have already passed the interval since their last foaling, so they are the clearest candidates.",
+      "q2": "Which horses are due for vaccination or deworming?",
+      "a2": "7 horses have influenza vaccines overdue or expiring within 15 days, and 3 have gone more than 6 months without deworming. I have grouped the appointments by stall so the vet only needs one visit.",
+      "q3": "How much did boarding cost me last month?",
+      "a3": "8,200 € in March: 4,900 € on feed and forage, 1,800 € on vet and farrier, and 1,500 € on staff. That is 12% more than February, almost all of it the rise in forage.",
+      "tryAssistant": "Try the assistant",
+      "askYours": "ASK YOUR OWN",
+      "card1Title": "Questions in plain language",
+      "card1Body": "Ask about your horses the way you would ask your vet, and get the answer straight away, drawn from your own stud farm's data.",
+      "forecastLabelTop": "Forage cost",
+      "forecastLabelBottom": "forecast to rise",
+      "forecastValue": "3%",
+      "forecastTip": "Tip: close your forage contract before June to protect your margin.",
+      "card2Title": "Prediction and forecasting",
+      "card2Body": "The AI cross-checks your history to anticipate foalings, forage costs and busy spells before they arrive.",
+      "treeRoot": "Classification",
+      "treeHealth": "Health",
+      "treeHealthDetail": "Vaccines, deworming, farrier, check-ups",
+      "treeRepro": "Breeding",
+      "treeReproDetail": "Heats, coverings, ultrasounds, foalings",
+      "treeBoarding": "Boarding and costs",
+      "treeBoardingDetail": "Feed, forage, stall, vet, transport",
+      "card3Title": "Automatic classification",
+      "card3Body": "Every expense, treatment and entry files itself under the right category, and the system gets sharper every month."
+    }
   }
 }

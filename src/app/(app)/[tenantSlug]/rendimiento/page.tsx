@@ -179,8 +179,8 @@ export default async function RendimientoPage({ params }: PageProps) {
                               </span>
                               {horse.today.workType !== "DESCANSO" && (
                                 <span className="block text-[12px] tabular-nums text-muted-foreground">
-                                  {horse.today.durationMinutes} min · RPE{" "}
-                                  {horse.today.rpeTarget}
+                                  {horse.today.durationMinutes} min · Intensidad{" "}
+                                  {horse.today.rpeTarget}/10
                                 </span>
                               )}
                             </span>

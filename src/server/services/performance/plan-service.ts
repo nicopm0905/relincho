@@ -292,6 +292,8 @@ export interface ReportSessionInput {
   riderName?: string;
   notes?: string;
   sweatLoss?: "BAJA" | "MEDIA" | "ALTA";
+  /** Frecuencia cardiaca media, si el jinete la ha medido. Opcional siempre. */
+  heartRateBpm?: number;
   /** El jinete ha reportado fatiga o menor rendimiento de forma explicita. */
   riderReportedFatigue?: boolean;
 }
@@ -318,6 +320,7 @@ export async function reportSession(input: ReportSessionInput) {
         internalLoadUa,
         fatigueZone,
         sweatLoss: input.sweatLoss,
+        heartRateBpm: input.heartRateBpm,
       },
     });
 

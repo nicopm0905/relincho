@@ -113,7 +113,7 @@ export function WeekStrip({ horseId, days, phase }: Props) {
             {!isRest && (
               <>
                 <div className="mt-0.5 text-[12px] tabular-nums text-muted-foreground">
-                  {day.durationMinutes} min · RPE {day.rpeTarget}
+                  {day.durationMinutes} min · Intensidad {day.rpeTarget}/10
                 </div>
 
                 <div className="mt-2.5 flex items-end gap-2">

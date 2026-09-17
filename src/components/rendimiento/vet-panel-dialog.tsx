@@ -341,7 +341,7 @@ export function VetPanelDialog({ horseId, horseName, profile, baseline }: Props)
                 <div>
                   <Label htmlFor="tendon">Historial de tendón</Label>
                   <p className="text-[12px] text-muted-foreground">
-                    Limita la intensidad a RPE 8 y recorta el trabajo de impacto.
+                    Limita la intensidad a 8/10 y recorta el trabajo de impacto.
                   </p>
                 </div>
                 <Switch id="tendon" checked={tendon} onCheckedChange={setTendon} />
@@ -361,7 +361,7 @@ export function VetPanelDialog({ horseId, horseName, profile, baseline }: Props)
                 />
                 <NumberField
                   id="maxRpe"
-                  label="RPE máximo"
+                  label="Intensidad máxima"
                   placeholder="Sin límite"
                   value={maxRpe}
                   onChange={setMaxRpe}

@@ -16,7 +16,8 @@ interface HeaderProps {
 
 const navLinks = [
   { href: "#features", key: "features" },
-  { href: "#nosotros", key: "about" },
+  { href: "/demo", key: "demo" },
+  { href: "/fundadores", key: "founders" },
   { href: "#pricing", key: "pricing" },
   { href: "#faq", key: "faq" },
 ] as const;
@@ -85,7 +86,7 @@ export function Header({ session }: HeaderProps) {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden items-center gap-8 md:flex">
+          <nav className="hidden items-center gap-8 lg:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -114,7 +115,9 @@ export function Header({ session }: HeaderProps) {
                   <Link href="/login">{t("actions.login")}</Link>
                 </Button>
                 <Button asChild size="sm" className="rounded-full">
-                  <Link href="/login">{t("actions.startFree")}</Link>
+                  {/* Lleva a la demo, no al login: que vean el producto antes de
+                      tener que crear cuenta. */}
+                  <Link href="/demo">{t("actions.startFree")}</Link>
                 </Button>
               </>
             )}
@@ -125,7 +128,7 @@ export function Header({ session }: HeaderProps) {
               onClick={() => setMenuOpen((open) => !open)}
               aria-label={menuOpen ? t("actions.closeMenu") : t("actions.openMenu")}
               aria-expanded={menuOpen}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-white text-foreground shadow-sm transition-colors hover:bg-muted md:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border/50 bg-white text-foreground shadow-sm transition-colors hover:bg-muted lg:hidden"
             >
               {menuOpen ? (
                 <X className="h-4 w-4" strokeWidth={2.5} />
@@ -138,7 +141,7 @@ export function Header({ session }: HeaderProps) {
 
         {/* Mobile menu panel */}
         {menuOpen && (
-          <nav className="animate-in fade-in-0 slide-in-from-top-2 mt-2 rounded-3xl border border-border/50 bg-white/95 p-2 shadow-lg backdrop-blur-xl duration-200 md:hidden">
+          <nav className="animate-in fade-in-0 slide-in-from-top-2 mt-2 rounded-3xl border border-border/50 bg-white/95 p-2 shadow-lg backdrop-blur-xl duration-200 lg:hidden">
             {navLinks.map((link) => (
               <Link
                 key={link.href}

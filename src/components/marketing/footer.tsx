@@ -16,6 +16,8 @@ export async function Footer() {
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+          <Link href="/demo" className="hover:text-foreground transition-colors">{t("demo")}</Link>
+          <Link href="/fundadores" className="hover:text-foreground transition-colors">{t("founders")}</Link>
           <Link href="/terminos" className="hover:text-foreground transition-colors">{t("terms")}</Link>
           <Link href="/privacidad" className="hover:text-foreground transition-colors">{t("privacy")}</Link>
           <Link href="/cookies" className="hover:text-foreground transition-colors">{t("cookies")}</Link>

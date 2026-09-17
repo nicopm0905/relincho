@@ -12,6 +12,7 @@ import {
 import { syncNutritionForDay } from "@/server/services/nutrition/sync";
 import { projectNutrition } from "@/server/services/nutrition/projection";
 import { stripTime } from "@/server/services/performance/periodization";
+import { listPendingCheckIns } from "@/server/services/performance/check-in";
 import {
   chipIdSchema,
   disciplineSchema,
@@ -259,6 +260,21 @@ export const performanceRouter = createTRPCRouter({
     });
   }),
 
+  /**
+   * Sesiones planificadas de dias anteriores que siguen sin reporte. Alimenta
+   * el aviso "¿Se hizo la sesion?" del inicio: si nadie confirma las sesiones,
+   * la carga semanal se queda a cero y el plan no se reajusta.
+   */
+  pendingCheckIns: tenantProcedure
+    .input(
+      z.object({ days: z.number().int().min(1).max(14).default(4) }).optional(),
+    )
+    .query(({ ctx, input }) =>
+      withTenant(ctx.tenantId, (tx) =>
+        listPendingCheckIns(tx, ctx.tenantId, input?.days ?? 4),
+      ),
+    ),
+
   snapshot: tenantProcedure
     .input(z.object({ horseId: z.string().uuid(), date: z.coerce.date().optional() }))
     .query(async ({ ctx, input }) => {
@@ -276,6 +292,7 @@ export const performanceRouter = createTRPCRouter({
         riderName: z.string().max(120).optional(),
         notes: z.string().max(2000).optional(),
         sweatLoss: sweatLossSchema.optional(),
+        heartRateBpm: z.number().int().min(20).max(260).optional(),
         riderReportedFatigue: z.boolean().optional(),
         strengthSession: z.boolean().optional(),
       }),

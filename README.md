@@ -106,8 +106,28 @@ npm i -g vercel
 vercel
 
 # Configura variables de entorno en vercel.com/[proyecto]/settings/environment-variables
-# El cron de recordatorios (vercel.json) se activa automáticamente en producción
+# Los crons de vercel.json se activan solos en producción:
+#   /api/cron/reminders      cada día a las 08:00 — recordatorios sanitarios
+#   /api/cron/weekly-digest  lunes a las 07:00 — resumen semanal de la yeguada
+# Ambos exigen CRON_SECRET en la cabecera Authorization.
 ```
+
+---
+
+## Demo pública (solo lectura)
+
+El QR del flyer no puede caer en un muro de login. `/demo` ofrece "Probar sin
+registro" y esa entrada abre la yeguada de demostración dentro del panel real:
+
+- El tenant es `DEMO_TENANT_SLUG` (`yeguada-demo-andalucia` por defecto).
+- Quien no es miembro entra con un contexto de solo lectura. La guardia vive en
+  `src/server/trpc/init.ts` y corta **cualquier** mutation de cualquier router
+  con un 403, así que no hay que proteger procedure a procedure.
+- El aviso de que aquello es una demo se pinta desde
+  `src/components/layout/demo-banner.tsx`.
+
+Los datos salen del seed: `npm run db:seed` (yeguada, caballos y sanidad) y
+`npm run seed:rendimiento` (periodización, que es lo que llena rendimiento).
 
 ---
 

@@ -30,7 +30,10 @@ export default async function ContactoPage() {
             <p className="text-muted-foreground mb-6">
               {t("support.body")}
             </p>
-            <a href={`mailto:${t("support.email")}`} className="text-primary font-medium hover:underline">
+            <a
+              href={`mailto:${t("support.email")}?subject=${encodeURIComponent(t("support.emailSubject"))}`}
+              className="text-primary font-medium hover:underline"
+            >
               {t("support.email")}
             </a>
           </div>
@@ -40,7 +43,10 @@ export default async function ContactoPage() {
             <p className="text-muted-foreground mb-6">
               {t("sales.body")}
             </p>
-            <a href={`mailto:${t("sales.email")}`} className="text-primary font-medium hover:underline">
+            <a
+              href={`mailto:${t("sales.email")}?subject=${encodeURIComponent(t("sales.emailSubject"))}`}
+              className="text-primary font-medium hover:underline"
+            >
               {t("sales.email")}
             </a>
           </div>

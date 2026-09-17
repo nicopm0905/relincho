@@ -146,7 +146,7 @@ export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
                     {workTypeLabels[target.work_type] ?? target.work_type}
                   </div>
                   <div className="mt-1.5 text-[12.5px] tabular-nums text-muted-foreground">
-                    {target.duration_minutes} min · RPE {target.rpe_target}
+                    {target.duration_minutes} min · Intensidad {target.rpe_target}/10
                     {phase &&
                       ` · ${phaseLabels[phase]}, semana ${
                         result.periodization_plan?.microcycle_week

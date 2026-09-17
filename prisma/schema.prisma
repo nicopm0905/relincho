@@ -257,6 +257,9 @@ model TrainingSession {
   internalLoadUa Int?
   fatigueZone    FatigueZone?
   sweatLoss      SweatLoss?
+  /// Dato medido, opcional: el caballo no dice la intensidad, por eso la
+  /// fuente principal es el jinete y esto solo la matiza.
+  heartRateBpm   Int?
   horse     Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
   dailyLoad DailyLoad?
 

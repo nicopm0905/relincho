@@ -81,7 +81,9 @@ export function Hero() {
               asChild
               className="h-13 w-full rounded-full px-8 text-base shadow-[0_4px_14px_0_rgba(163,184,70,0.35)] transition-all duration-300 hover:shadow-[0_6px_20px_rgba(163,184,70,0.28)] sm:h-14 sm:w-auto"
             >
-              <Link href="/login">
+              {/* Ver la demo antes de pedir cuenta: el visitante del QR viene a
+                  comprobar que existe lo que le contaron. */}
+              <Link href="/demo">
                 {t("ctaPrimary")} <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>

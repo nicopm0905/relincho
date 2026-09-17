@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "Relincho — Gestión equina para yeguadas PRE",
-    "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje y facturación Veri*Factu."
+    "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje, facturación Veri*Factu y rendimiento deportivo."
   },
   "nav": {
     "horses": "Caballos",
@@ -17,7 +17,7 @@
   "metadata": {
     "home": {
       "title": "Relincho — Gestión equina para yeguadas PRE",
-      "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje y facturación Veri*Factu."
+      "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje, facturación Veri*Factu y rendimiento deportivo."
     },
     "contact": { "title": "Contacto - Relincho" },
     "privacy": { "title": "Política de Privacidad - Relincho" },
@@ -26,7 +26,9 @@
     "login": { "title": "Iniciar sesión — Relincho" },
     "verify": { "title": "Revisa tu correo — Relincho" },
     "authError": { "title": "Error de acceso — Relincho" },
-    "onboarding": { "title": "Crear tu finca — Relincho" }
+    "onboarding": { "title": "Crear tu finca — Relincho" },
+    "demo": { "title": "Demo — Relincho" },
+    "founders": { "title": "Fundadores — Relincho" }
   },
   "common": {
     "back": "Atrás",
@@ -40,6 +42,8 @@
     "nav": {
       "features": "Características",
       "about": "Nosotros",
+      "demo": "Demo",
+      "founders": "Fundadores",
       "pricing": "Precios",
       "faq": "FAQ"
     },
@@ -56,7 +60,7 @@
       "titleLead": "El software de",
       "titleHighlight": "gestión equina",
       "titleTail": "para yeguadas.",
-      "subtitle": "Sanidad, reproducción, pupilaje y facturación. Todo en un solo lugar. Sin complicaciones.",
+      "subtitle": "Sanidad, reproducción, pupilaje, facturación y rendimiento deportivo. Todo en un solo lugar. Sin complicaciones.",
       "ctaPrimary": "Pruébalo gratis",
       "ctaSecondary": "Ver características",
       "disclaimer": "Sin tarjeta de crédito · Cancela cuando quieras"
@@ -73,6 +77,10 @@
           "title": "Control reproductivo",
           "description": "Seguimiento de celos, inseminaciones, ecografías y partos con cálculos predictivos."
         },
+        "performance": {
+          "title": "Rendimiento y prevención de lesiones",
+          "description": "Periodización hasta la competición, carga real de cada sesión y alertas de tendón. El jinete solo confirma cuánto ha durado y cómo de duro ha sido."
+        },
         "boarding": {
           "title": "Pupilaje y estancias",
           "description": "Gestiona los boxes, dietas y tarifas de caballos estabulados de clientes."
@@ -86,6 +94,7 @@
     "about": {
       "title": "¿Quiénes Somos?",
       "subtitle": "Dos jóvenes de Jerez uniendo tecnología y conocimiento ecuestre.",
+      "readMore": "Conócenos mejor",
       "p1": "Somos dos chavales de Jerez de la Frontera, una tierra donde el caballo es mucho más que una tradición. Haber crecido aquí nos ha permitido conocer de buena mano cómo funcionan las yeguadas y cuáles son sus problemas reales en el día a día.",
       "p2": "<strong>Relincho</strong> nace como la combinación perfecta de nuestras dos pasiones. Uno de nosotros es <strong>Ingeniero Informático del Software</strong>, encargado de toda la arquitectura técnica para que la plataforma sea moderna, rápida y segura.",
       "p3": "El otro está inmerso en estudios de <strong>Fisioterapia y Ciencias del Deporte</strong>. Gracias a esto, aportamos un conocimiento técnico profundo sobre la musculatura del caballo, su recuperación y los diferentes tipos de entrenamientos, trasladando todo ese rigor científico al software.",
@@ -112,7 +121,11 @@
       "items": [
         {
           "question": "¿Qué es Relincho y para quién está pensado?",
-          "answer": "Relincho es un software integral de gestión diseñado para yeguadas, centros ecuestres, hípicas y profesionales del sector equino que buscan digitalizar y simplificar su día a día. Desde la sanidad hasta la facturación, todo en una sola plataforma."
+          "answer": "Relincho es un software integral de gestión diseñado para yeguadas, centros ecuestres, hípicas y profesionales del sector equino que buscan digitalizar y simplificar su día a día. Desde la sanidad hasta la facturación, con el rendimiento deportivo de cada caballo, todo en una sola plataforma."
+        },
+        {
+          "question": "¿Qué incluye el módulo de rendimiento?",
+          "answer": "Planifica la temporada hacia la competición (fases de volumen e intensidad), registra la carga real de cada sesión y avisa cuando un caballo con historial de tendón se pasa de intensidad. La intensidad la valora el jinete, así que reportar una sesión son dos datos: cuánto ha durado y cómo de duro ha sido."
         },
         {
           "question": "¿Necesito conocimientos técnicos para usar la plataforma?",
@@ -128,50 +141,118 @@
         },
         {
           "question": "¿Puedo probar Relincho antes de suscribirme?",
-          "answer": "¡Por supuesto! Entendemos que quieres asegurarte de que Relincho es la herramienta perfecta para ti. Ofrecemos una prueba donde podrás explorar todas las funcionalidades clave y descubrir cómo podemos ayudarte a optimizar tu centro ecuestre."
+          "answer": "¡Por supuesto! El plan Gratis no tiene coste ni tarjeta: creas tu cuenta y empiezas a meter tus caballos. Cuando la cuadra crezca, pasas a Pro y desbloqueas rendimiento, pupilaje y facturación."
         }
       ]
     },
     "pricing": {
       "title": "Precios simples. Sin sorpresas.",
-      "subtitle": "Escoge el plan que mejor se adapte a tu ganadería. Puedes cambiar de plan o cancelar en cualquier momento.",
+      "subtitle": "Empieza gratis y sube de plan cuando crezca tu cuadra. Puedes cambiar de plan o cancelar en cualquier momento.",
       "recommended": "Recomendado",
       "perMonth": "/mes",
       "plans": {
-        "starter": {
-          "name": "Starter",
-          "description": "Perfecto para yeguadas pequeñas o picaderos que están empezando.",
-          "price": "29",
-          "cta": "Seleccionar Starter",
+        "free": {
+          "name": "Gratis",
+          "description": "Para empezar a digitalizar la cuadra sin pagar nada.",
+          "price": "0",
+          "cta": "Empezar gratis",
           "features": [
-            "Hasta 20 caballos",
-            "Control de Sanidad y Reproducción",
-            "Facturación básica",
-            "Soporte por email"
+            "Hasta 15 caballos",
+            "Sanidad con recordatorios y reproducción",
+            "Fichas, documentos y tareas",
+            "Sin tarjeta de crédito"
           ]
         },
         "pro": {
           "name": "Pro",
-          "description": "Para negocios establecidos que necesitan automatización total.",
+          "description": "Para yeguadas y picaderos que ya trabajan en serio.",
           "price": "79",
-          "cta": "Empezar prueba gratis",
+          "cta": "Ver Relincho en acción",
+          "features": [
+            "Hasta 60 caballos",
+            "Rendimiento y prevención de lesiones",
+            "Pupilaje, dietas y contratos",
+            "Facturación Veri*Factu",
+            "Soporte prioritario"
+          ]
+        },
+        "enterprise": {
+          "name": "Yeguada",
+          "description": "Para explotaciones grandes y centros con varios empleados.",
+          "priceNote": "A medida",
+          "cta": "Hablar con nosotros",
           "features": [
             "Caballos ilimitados",
-            "Pupilajes y Contratos",
-            "Facturación avanzada (AEAT Veri*Factu)",
-            "Gestión de empleados",
-            "Soporte prioritario 24/7"
+            "Equipo con permisos por rol",
+            "Onboarding asistido",
+            "Soporte directo por teléfono"
           ]
         }
       }
     }
+  },
+  "demo": {
+    "badge": "Demo",
+    "title": "Así trabaja Relincho por dentro",
+    "subtitle": "Estas son pantallas reales de la aplicación, con la yeguada de demostración. Sin registro, sin llamada y sin tarjeta solo para mirar.",
+    "ctaPrimary": "Crear cuenta gratis",
+    "ctaSecondary": "Hablar con nosotros",
+    "tryNow": "Probar sin registro",
+    "ctaNote": "El plan Gratis no pide tarjeta: hasta 15 caballos.",
+    "performance": {
+      "eyebrow": "Lo que no vas a encontrar en otro sitio",
+      "title": "Rendimiento y prevención de lesiones",
+      "body": "Nuestro sello: llevar la planificación deportiva del caballo a la misma app donde ya vives su sanidad y su facturación.",
+      "points": [
+        "Periodización hacia la competición: el plan reparte volumen e intensidad por fases hasta la fecha objetivo.",
+        "La intensidad la valora el jinete. Reportar una sesión son dos datos: cuánto ha durado y cómo de duro ha sido.",
+        "Prevención de lesiones: si un caballo tiene historial de tendón, el plan nunca pasa de la intensidad que marca el veterinario."
+      ],
+      "checkIn": {
+        "title": "¿Se hizo la sesión de ayer?",
+        "body": "Relincho lo pregunta en el inicio. Con un toque confirmas la sesión y el plan se reajusta solo; si se cayó, reparte la carga por el resto de la semana en lugar de dejarla a cero."
+      }
+    },
+    "tour": {
+      "title": "El resto de la cuadra, en el mismo sitio",
+      "subtitle": "Capturas de la yeguada de demostración, tal cual salen de la app.",
+      "items": [
+        { "title": "Inicio", "description": "Sanidad, tareas y alertas de rendimiento en una sola lista, lo más urgente primero." },
+        { "title": "Sanidad", "description": "Vacunas, desparasitaciones y tratamientos con recordatorios automáticos." },
+        { "title": "Reproducción", "description": "Celos, cubriciones, ecografías y partos con cálculos predictivos." },
+        { "title": "Pupilaje y dietas", "description": "Boxes, estancias y tarifas de los caballos de clientes." },
+        { "title": "Facturación", "description": "Facturas legales adaptadas a la AEAT, con Veri*Factu integrado." },
+        { "title": "Ficha del caballo", "description": "Todo el historial de un caballo: sanidad, documentos, movimientos y entrenamiento." }
+      ]
+    },
+    "closing": {
+      "title": "¿Lo vemos con tus caballos?",
+      "body": "Te enseñamos Relincho en 15 minutos, por videollamada o en persona si estás en Jerez. Trae tus dudas y tus números."
+    }
+  },
+  "founders": {
+    "badge": "Quiénes somos",
+    "title": "Dos jerezanos, un software y muchos caballos de por medio",
+    "subtitle": "Relincho no nace en una oficina: nace de crecer entre caballos y de ver cómo se siguen llevando las cuadras con libretas y WhatsApp.",
+    "story1": "Somos dos chavales de Jerez de la Frontera, una tierra donde el caballo es mucho más que una tradición. Haber crecido aquí nos ha permitido conocer de buena mano cómo funcionan las yeguadas y cuáles son sus problemas reales en el día a día.",
+    "story2": "Relincho nace como la combinación perfecta de nuestras dos pasiones. Uno de nosotros es Ingeniero Informático del Software, encargado de toda la arquitectura técnica para que la plataforma sea moderna, rápida y segura.",
+    "story3": "El otro está inmerso en estudios de Fisioterapia y Ciencias del Deporte. De ahí sale el módulo de rendimiento: aplicar conocimiento real sobre musculatura, recuperación y tipos de entrenamiento al software.",
+    "whyTitle": "Por qué existe la franja de rendimiento",
+    "whyBody": "En el estudio de competencia no encontramos a nadie que juntase la sanidad, la reproducción y la facturación con la planificación deportiva del caballo. Habiendo estudiado fisioterapia y ciencias del deporte, era demasiado obvio como para dejarlo fuera.",
+    "valuesTitle": "Lo que nos mueve",
+    "ctaTitle": "Hablemos",
+    "ctaBody": "Cuéntanos cómo llevas tu cuadra y te decimos si Relincho te encaja. Somos de Jerez y respondemos nosotros, no un formulario.",
+    "ctaPrimary": "Ver la demo",
+    "ctaSecondary": "Escribirnos"
   },
   "footer": {
     "links": {
       "terms": "Términos",
       "privacy": "Privacidad",
       "cookies": "Cookies",
-      "contact": "Contacto"
+      "contact": "Contacto",
+      "demo": "Demo",
+      "founders": "Fundadores"
     }
   },
   "legal": {
@@ -185,12 +266,14 @@
       "support": {
         "title": "Soporte Técnico",
         "body": "Si ya eres cliente y tienes algún problema técnico o duda sobre cómo usar una funcionalidad.",
-        "email": "soporte@relincho.com"
+        "email": "relinchoappweb@gmail.com",
+        "emailSubject": "Soporte Relincho"
       },
       "sales": {
         "title": "Ventas e Información",
         "body": "¿Quieres saber más sobre cómo Relincho puede ayudar a tu yeguada? Hablemos.",
-        "email": "info@relincho.com"
+        "email": "relinchoappweb@gmail.com",
+        "emailSubject": "Información sobre Relincho"
       }
     },
     "privacy": {
@@ -224,7 +307,7 @@
       },
       "s5": {
         "title": "5. Tus derechos",
-        "body": "Tienes derecho a acceder, rectificar o eliminar tus datos personales en cualquier momento. Para ejercer estos derechos, contacta con nosotros en privacidad@relincho.com."
+        "body": "Tienes derecho a acceder, rectificar o eliminar tus datos personales en cualquier momento. Para ejercer estos derechos, contacta con nosotros en relinchoappweb@gmail.com."
       }
     },
     "terms": {
@@ -249,7 +332,7 @@
         "title": "5. Limitación de Responsabilidad",
         "body": "En ningún caso Relincho, ni sus directores, empleados o afiliados, serán responsables de ningún daño indirecto, incidental, especial o consecuente derivado de tu uso del servicio."
       },
-      "contactNote": "Para cualquier duda sobre estos términos, contáctanos en contacto@relincho.com"
+      "contactNote": "Para cualquier duda sobre estos términos, contáctanos en relinchoappweb@gmail.com"
     },
     "cookies": {
       "title": "Política de Cookies",
@@ -358,5 +441,84 @@
     "close": "Cerrar",
     "logout": "Cerrar sesión",
     "account": "Cuenta"
+  },
+  "landingV2": {
+    "nav": {
+      "features": "Características",
+      "about": "Nosotros",
+      "pricing": "Precios",
+      "faq": "FAQ",
+      "login": "Iniciar sesión",
+      "startFree": "Empezar gratis",
+      "goToPanel": "Ir al panel"
+    },
+    "hero": {
+      "titleLine1": "La gestión de tu yeguada",
+      "titleLine2Lead": "más",
+      "titleLine2Accent": "simple que nunca",
+      "cta": "Empieza tu prueba gratis",
+      "trustTitle": "Confían en nosotros",
+      "blurb": "Relincho reúne sanidad, reproducción, pupilaje y facturación de tu yeguada en un solo sitio, con la IA trabajando de fondo.",
+      "learnMore": "Saber más",
+      "posterAlt": "Yegua PRE al paso en la finca con luz de tarde"
+    },
+    "story": {
+      "verified": "Yeguada verificada",
+      "slide1Lead": "Cuidando",
+      "slide1Accent": "tus caballos",
+      "slide2Lead": "Creciendo",
+      "slide2Accent": "tu yeguada"
+    },
+    "panel": {
+      "eyebrow": "TU PANEL",
+      "titleLead": "Las cuentas de tu yeguada",
+      "titleAccent": "claras de un vistazo",
+      "subtitle": "Pupilaje, cubriciones y facturas cuadrando solos, en tiempo real.",
+      "summaryLabel": "RESUMEN MENSUAL",
+      "summaryPeriod": "MENSUAL",
+      "rowInvoiced": "Facturado",
+      "rowBoarding": "Pupilaje",
+      "rowExpenses": "Gastos",
+      "card1Title": "Toda tu yeguada en una sola pantalla.",
+      "card1Body": "Ingresos, gastos de pupilaje y facturas cuadran solos. Ves de un vistazo qué caballo aporta y cuál cuesta, y decides con datos, no con intuición.",
+      "dailyLabel": "DIARIO",
+      "collectedToday": "Cobrado hoy",
+      "viewMovement": "Ver movimiento",
+      "card2Title": "Cada cobro, en su sitio",
+      "card2Body": "Cuotas de pupilaje, extras y recibos SEPA registrados al momento, sin perseguir a nadie.",
+      "portraitAlt": "Persona de la yeguada junto a su caballo"
+    },
+    "ia": {
+      "eyebrow": "INTELIGENCIA ARTIFICIAL",
+      "titleLead": "Tu asistente ",
+      "titleAccent": "equino con IA",
+      "subtitle": "Pregunta en tu idioma, anticipa lo que viene y deja que el sistema ordene el trabajo por ti.",
+      "brand": "Relincho",
+      "q1": "¿Qué yeguas tengo listas para cubrir este mes?",
+      "a1": "Tienes 4 yeguas en celo confirmado por ecografía y 2 más entrando en ciclo esta semana. Lucera y Bordadora ya han cumplido el intervalo tras el último parto, así que son las candidatas más claras.",
+      "q2": "¿A qué caballos les toca vacuna o desparasitación?",
+      "a2": "7 caballos tienen la vacuna de influenza vencida o a punto de vencer en 15 días, y 3 llevan más de 6 meses sin desparasitar. Te he agrupado las citas por box para que el veterinario haga una sola visita.",
+      "q3": "¿Cuánto me costó el pupilaje el mes pasado?",
+      "a3": "8.200 € en marzo: 4.900 € de pienso y forraje, 1.800 € de veterinario y herrador, y 1.500 € de personal. Es un 12 % más que en febrero, casi todo por la subida del forraje.",
+      "tryAssistant": "Probar el asistente",
+      "askYours": "PREGUNTA LA TUYA",
+      "card1Title": "Preguntas en lenguaje natural",
+      "card1Body": "Pregunta por tus caballos como se lo dirías a tu veterinario y recibe la respuesta al momento, con los datos de tu yeguada.",
+      "forecastLabelTop": "Coste de forraje",
+      "forecastLabelBottom": "previsto al alza",
+      "forecastValue": "3 %",
+      "forecastTip": "Consejo: cierra el contrato de forraje antes de junio para mantener el margen.",
+      "card2Title": "Predicción y previsión",
+      "card2Body": "La IA cruza tus datos históricos para anticipar partos, costes de forraje y picos de trabajo antes de que lleguen.",
+      "treeRoot": "Clasificación",
+      "treeHealth": "Sanidad",
+      "treeHealthDetail": "Vacunas, desparasitaciones, herrador, revisiones",
+      "treeRepro": "Reproducción",
+      "treeReproDetail": "Celos, cubriciones, ecografías, partos",
+      "treeBoarding": "Pupilaje y gastos",
+      "treeBoardingDetail": "Pienso, forraje, box, veterinario, transporte",
+      "card3Title": "Clasificación automática",
+      "card3Body": "Cada gasto, tratamiento y movimiento se archiva solo en su categoría, y el sistema afina con cada mes que pasa."
+    }
   }
 }

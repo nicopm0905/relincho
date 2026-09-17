@@ -1,6 +1,6 @@
 "use client";
 
-import { Baby, Receipt, Layers, HeartPulse } from "lucide-react";
+import { Baby, Receipt, Layers, HeartPulse, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -8,8 +8,9 @@ import { cn } from "@/lib/utils";
 const features = [
   { key: "health", icon: HeartPulse, span: "md:col-span-2", dark: false },
   { key: "reproduction", icon: Baby, span: "md:col-span-1", dark: false },
+  { key: "performance", icon: Activity, span: "md:col-span-1", dark: true },
   { key: "boarding", icon: Layers, span: "md:col-span-1", dark: false },
-  { key: "invoicing", icon: Receipt, span: "md:col-span-2", dark: true },
+  { key: "invoicing", icon: Receipt, span: "md:col-span-1", dark: false },
 ] as const;
 
 export function Features() {
