@@ -1,5 +1,6 @@
 import { createServerCaller } from "@/lib/trpc/server";
 import { formatDate } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -55,10 +56,14 @@ export default async function PortalDocumentosPage({ params }: PageProps) {
             {documents.map((doc) => (
               <li key={doc.id}>
                 <a
-                  href={doc.fileUrl}
+                  href={doc.url ?? "#"}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/40"
+                  aria-disabled={!doc.url}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/40",
+                    !doc.url && "pointer-events-none opacity-60",
+                  )}
                 >
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                     {iconFor(doc.kind)}

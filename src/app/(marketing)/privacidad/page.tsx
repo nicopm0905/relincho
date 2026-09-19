@@ -53,6 +53,12 @@ export default async function PrivacidadPage() {
 
           <h2 className="text-2xl font-bold mt-12 mb-4">{t("s5.title")}</h2>
           <p className="mb-6">{t("s5.body")}</p>
+
+          {/* Las yeguadas nos confían datos de sus clientes: conviene decir
+              dónde viven, quién los trata por nosotros y cómo pedir el
+              contrato de encargado del tratamiento. */}
+          <h2 className="text-2xl font-bold mt-12 mb-4">{t("s6.title")}</h2>
+          <p className="mb-6">{t("s6.body")}</p>
         </div>
       </main>
 

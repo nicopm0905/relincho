@@ -18,6 +18,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 import { SessionCheckIn } from "@/components/rendimiento/session-check-in";
+import { FirstSteps } from "@/components/onboarding/first-steps";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -159,6 +160,10 @@ export default async function InicioPage({ params }: PageProps) {
           </>
         }
       />
+
+      {/* Una yeguada recién creada no necesita estadísticas: necesita saber
+          por dónde empezar. */}
+      {horses.length === 0 && <FirstSteps tenantSlug={tenantSlug} />}
 
       <SessionCheckIn sessions={pendingCheckIns} />
 

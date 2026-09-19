@@ -5,6 +5,7 @@ import { createTRPCRouter, roleProcedure } from "../init";
 import { prisma, withTenant } from "@/server/db/prisma";
 import { sendTeamInvite } from "@/server/services/notifications/email";
 import { getBaseUrl } from "@/lib/utils";
+import { reportError } from "@/lib/observability";
 
 /** Toda la gestion de equipo esta restringida al propietario. */
 const ownerProcedure = roleProcedure("OWNER");
@@ -66,18 +67,22 @@ export const membersRouter = createTRPCRouter({
         select: { name: true, slug: true },
       });
 
-      try {
-        await sendTeamInvite({
-          to: email,
-          tenantName: tenant?.name ?? "Relincho",
-          inviterName: ctx.user.name ?? ctx.user.email ?? null,
-          url: `${getBaseUrl()}/login?callbackUrl=${encodeURIComponent(
-            `/${tenant?.slug ?? ""}`,
-          )}`,
+      // La invitacion queda creada aunque el email falle; se puede reenviar.
+      // `sendTeamInvite` no lanza, devuelve el resultado, asi que hay que
+      // mirarlo para enterarse de que el aviso no salio.
+      const sent = await sendTeamInvite({
+        to: email,
+        tenantName: tenant?.name ?? "Relincho",
+        inviterName: ctx.user.name ?? ctx.user.email ?? null,
+        url: `${getBaseUrl()}/login?callbackUrl=${encodeURIComponent(
+          `/${tenant?.slug ?? ""}`,
+        )}`,
+      });
+      if (!sent.ok && !sent.skipped) {
+        await reportError(sent.error, {
+          scope: "members.invite",
+          tenantId: ctx.tenantId,
         });
-      } catch (err) {
-        // La invitacion queda creada aunque el email falle; se puede reenviar.
-        console.error("No se pudo enviar el email de invitacion:", err);
       }
 
       return { membershipId: membership.id };

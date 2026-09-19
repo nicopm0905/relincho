@@ -4,7 +4,9 @@ import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BillingButton } from "@/components/settings/billing-button";
-import { CreditCard, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { planHorseLimit, planLabel, isPlanPurchasable } from "@/lib/stripe";
+import { CreditCard, UsersThree, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { formatDate } from "@/lib/formatters";
 
 import { TenantSettingsForm } from "@/components/settings/tenant-settings-form";
 import { TeamManagement } from "@/components/settings/team-management";
@@ -13,11 +15,8 @@ interface PageProps {
   params: Promise<{ tenantSlug: string }>;
 }
 
-const planLabels: Record<string, string> = {
-  starter: "Starter (gratuito)",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
+/** El precio vive en un solo sitio para no repetirlo por idioma. */
+const PRO_PRICE_LABEL = "79 €/mes";
 
 export default async function AjustesPage({ params }: PageProps) {
   const { tenantSlug } = await params;
@@ -34,6 +33,11 @@ export default async function AjustesPage({ params }: PageProps) {
     select: { role: true },
   });
   if (!membership) notFound();
+
+  const isOwner = membership.role === "OWNER";
+  // Un impago deja el plan intacto unos dias: se avisa sin cortar el acceso.
+  const paymentPending =
+    tenant.stripeStatus === "past_due" || tenant.stripeStatus === "unpaid";
 
   return (
     <div className="space-y-8 max-w-2xl">
@@ -52,7 +56,7 @@ export default async function AjustesPage({ params }: PageProps) {
         regaCode: tenant.regaCode,
       }} />
 
-      {membership.role === "OWNER" && (
+      {isOwner && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -78,24 +82,44 @@ export default async function AjustesPage({ params }: PageProps) {
           <CardDescription>Gestiona tu suscripción a Relincho</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
+          {paymentPending && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <WarningCircle weight="fill" className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <div className="text-sm">
+                <p className="font-semibold text-amber-900">
+                  No hemos podido cobrar la suscripción
+                </p>
+                <p className="mt-0.5 text-amber-800">
+                  La yeguada sigue funcionando, pero conviene revisar el método de
+                  pago para no perder el plan de pago.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
             <div>
-              <p className="font-semibold text-foreground">{planLabels[tenant.plan] ?? tenant.plan}</p>
+              <p className="font-semibold text-foreground">{planLabel(tenant.plan)}</p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {tenant.plan === "starter"
-                  ? "Hasta 15 caballos"
-                  : tenant.plan === "pro"
-                  ? "Hasta 60 caballos"
-                  : "Sin límite"}
+                Hasta {planHorseLimit(tenant.plan)} caballos
               </p>
+              {tenant.stripeCurrentPeriodEnd && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Se renueva el {formatDate(tenant.stripeCurrentPeriodEnd)}
+                </p>
+              )}
             </div>
             <Badge variant={tenant.plan === "starter" ? "secondary" : "success"}>
               {tenant.plan.toUpperCase()}
             </Badge>
           </div>
+
           <BillingButton
             tenantId={tenant.id}
             hasSubscription={!!tenant.stripeCustomerId}
+            canManage={isOwner}
+            purchasable={isPlanPurchasable("pro")}
+            priceLabel={PRO_PRICE_LABEL}
           />
         </CardContent>
       </Card>

@@ -15,6 +15,7 @@ import { performanceRouter } from "./routers/performance";
 import { nutritionRouter } from "./routers/nutrition";
 import { membersRouter } from "./routers/members";
 import { portalRouter } from "./routers/portal";
+import { documentsRouter } from "./routers/documents";
 
 export const appRouter = createTRPCRouter({
   horses: horsesRouter,
@@ -33,6 +34,7 @@ export const appRouter = createTRPCRouter({
   nutrition: nutritionRouter,
   members: membersRouter,
   portal: portalRouter,
+  documents: documentsRouter,
 });
 
 export type AppRouter = typeof appRouter;

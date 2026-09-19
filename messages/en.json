@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "Relincho — Equine management for PRE studs",
-    "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding, Veri*Factu invoicing and training performance."
+    "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding, invoicing and training performance."
   },
   "nav": {
     "horses": "Horses",
@@ -17,7 +17,7 @@
   "metadata": {
     "home": {
       "title": "Relincho — Equine management for PRE studs",
-      "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding, Veri*Factu invoicing and training performance."
+      "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding, invoicing and training performance."
     },
     "contact": { "title": "Contact - Relincho" },
     "privacy": { "title": "Privacy Policy - Relincho" },
@@ -56,7 +56,7 @@
     },
     "hero": {
       "badgeNew": "New",
-      "badgeFeature": "Veri*Factu built in",
+      "badgeFeature": "Invoicing with fees and SEPA",
       "titleLead": "The",
       "titleHighlight": "equine management",
       "titleTail": "software for stud farms.",
@@ -86,7 +86,7 @@
           "description": "Manage stalls, diets and rates for clients' stabled horses."
         },
         "invoicing": {
-          "title": "Veri*Factu invoicing",
+          "title": "Invoicing and payments",
           "description": "Issue legal invoices, generate recurring fees and send SEPA direct debits. All adapted to the new AEAT regulation."
         }
       }
@@ -136,8 +136,8 @@
           "answer": "Yes. We use the highest cloud security standards. Your data and your clients' data are encrypted and we run automatic backups constantly so you never lose important information."
         },
         {
-          "question": "Does it comply with invoicing regulations and Veri*Factu?",
-          "answer": "Completely. Our invoicing module is up to date and adapted to the new AEAT regulations (including Veri*Factu). You can issue legal invoices, generate recurring fees and automate SEPA direct debits without worry."
+          "question": "How are you handling Veri*Factu compliance?",
+          "answer": "Invoicing works today: series and numbering per year, per-line taxes, automatic boarding fees and SEPA direct debits. Veri*Factu is an AEAT obligation that was postponed to 2027, and we would rather not advertise it as ready until it is: when it arrives we will tell every stud farm. If you need to invoice under Veri*Factu right now, write to us and we will tell you straight before you sign up."
         },
         {
           "question": "Can I try Relincho before subscribing?",
@@ -172,7 +172,7 @@
             "Up to 60 horses",
             "Performance and injury prevention",
             "Boarding, diets and contracts",
-            "Veri*Factu invoicing",
+            "Invoicing, fees and SEPA",
             "Priority support"
           ]
         },
@@ -221,7 +221,7 @@
         { "title": "Health", "description": "Vaccinations, deworming and treatments with automatic reminders." },
         { "title": "Breeding", "description": "Heats, coverings, ultrasounds and foalings with predictive calculations." },
         { "title": "Boarding and diets", "description": "Stalls, stays and rates for clients' horses." },
-        { "title": "Invoicing", "description": "Legal invoices adapted to the AEAT, with Veri*Factu built in." },
+        { "title": "Invoicing",          "description": "Invoices with series, taxes and PDF, automatic boarding fees and SEPA direct debits." },
         { "title": "Horse record", "description": "A horse's whole history: health, documents, movements and training." }
       ]
     },
@@ -305,6 +305,10 @@
         "title": "4. Data security",
         "body": "Your data is encrypted and stored on secure servers. We run regular backups to guarantee the integrity and availability of your stud farm or equestrian centre's information."
       },
+      "s6": {
+        "title": "6. Who processes data on your behalf",
+        "body": "Relincho acts as the data processor for the personal data you keep in the application (owner records, invoices, your horses' documentation) and only uses it to provide the service. Servers and backups are inside the European Union: the database and storage on Supabase (Frankfurt region) and attachments on Cloudflare R2. Notification emails are sent through Resend and payments are handled by Stripe, which never sees your clients' data. If you are a stud farm and need a signed data processing agreement, write to us and we will send it over."
+      },
       "s5": {
         "title": "5. Your rights",
         "body": "You have the right to access, rectify or delete your personal data at any time. To exercise these rights, contact us at relinchoappweb@gmail.com."
@@ -364,6 +368,30 @@
       }
     }
   },
+  "errors": {
+    "crash": {
+      "title": "Something broke on our side",
+      "body": "This is not your fault and nothing you saved has been lost. Try again and, if it keeps happening, write to us.",
+      "retry": "Try again",
+      "home": "Go to the homepage",
+      "reported": "Report sent to the team"
+    },
+    "notFound": {
+      "title": "Nothing here",
+      "body": "The page you are looking for does not exist or has moved. The link may be mistyped.",
+      "home": "Go to the homepage",
+      "demo": "See the demo"
+    }
+  },
+  "settings": {
+    "billing": {
+      "ownerOnly": "Only the stud farm owner can manage the subscription.",
+      "manage": "Manage subscription",
+      "upgrade": "Upgrade to Pro — {price}",
+      "contactToUpgrade": "I want to change plan",
+      "notConfigured": "Online payment is not active yet. Write to us and we will set it up with you."
+    }
+  },
   "auth": {
     "login": {
       "brandSubtitle": "Equine management for PRE studs",
@@ -372,7 +400,13 @@
       "or": "or",
       "emailLabel": "Email",
       "emailPlaceholder": "name@studfarm.com",
-      "submit": "Send magic link"
+      "submit": "Send magic link",
+      "emailNote": "We will email you a single-use link. It expires in 24 hours.",
+      "emailError": "We could not send the email. Try signing in with Google instead.",
+      "googleError": "We could not open the Google window. Check that your browser is not blocking it.",
+      "unavailableTitle": "Sign-in unavailable",
+      "unavailableBody": "Access to Relincho is not configured right now. Write to us and we will let you in.",
+      "unavailableCta": "Email the team"
     },
     "verify": {
       "title": "Check your email",
@@ -381,8 +415,18 @@
     },
     "error": {
       "title": "Sign-in error",
-      "body": "Something went wrong while signing in. The link may have expired or already been used.",
-      "backToLogin": "Back to sign in"
+      "backToLogin": "Back to sign in",
+      "contactSupport": "Write to us if the problem continues",
+      "codes": {
+        "Configuration": "Sign-in is not configured right now. We are already aware; write to us and we will let you in manually.",
+        "AccessDenied": "You cancelled the sign-in or this account is not allowed to enter.",
+        "Verification": "That link is no longer valid: it may have expired or already been used.",
+        "OAuthAccountNotLinked": "That email is already registered with another sign-in method. Use the one you used the first time.",
+        "OAuthSignin": "We could not reach Google. Please try again in a minute.",
+        "OAuthCallback": "Google sent back a response we did not expect. Please try again.",
+        "Callback": "Something broke while completing the sign-in. Please try again.",
+        "Default": "Something went wrong while signing in. The link may have expired or already been used."
+      }
     }
   },
   "onboarding": {
@@ -392,7 +436,7 @@
       "nameLabel": "Farm name *",
       "namePlaceholder": "Yeguada El Rocío",
       "slugLabel": "URL identifier *",
-      "slugPrefix": "Relincho.es/",
+      "slugPrefix": "relincho.vercel.app/",
       "slugPlaceholder": "yeguada-el-rocio",
       "provinceLabel": "Province",
       "provincePlaceholder": "Sevilla",

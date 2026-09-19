@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, roleProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
+import { withDownloadUrls } from "@/server/services/documents";
 import type { PrismaClient } from "@prisma/client";
 
 /**
@@ -110,12 +111,17 @@ export const portalRouter = createTRPCRouter({
           include: {
             healthEvents: { orderBy: { date: "desc" } },
             trainings: { orderBy: { date: "desc" } },
-            documents: { orderBy: { createdAt: "desc" } },
+            documents: {
+              where: { deletedAt: null },
+              orderBy: { createdAt: "desc" },
+            },
           },
         }),
       );
       if (!horse) throw new TRPCError({ code: "NOT_FOUND" });
-      return horse;
+      // La URL se firma fuera de la transaccion y solo cuando la pide el
+      // propietario que tiene acceso a este caballo.
+      return { ...horse, documents: await withDownloadUrls(horse.documents) };
     }),
 
   /**
@@ -197,14 +203,21 @@ export const portalRouter = createTRPCRouter({
 
   /** Documentos vinculados a sus caballos. */
   myDocuments: portalProcedure.query(async ({ ctx }) => {
-    return withTenant(ctx.tenantId, async (tx) => {
+    const rows = await withTenant(ctx.tenantId, async (tx) => {
       const horseIds = await myHorseIds(tx, ctx.tenantId, ctx.membershipId);
       if (horseIds.length === 0) return [];
       return tx.document.findMany({
-        where: { tenantId: ctx.tenantId, horseId: { in: horseIds } },
+        where: {
+          tenantId: ctx.tenantId,
+          horseId: { in: horseIds },
+          deletedAt: null,
+        },
         include: { horse: { select: { id: true, name: true } } },
         orderBy: { createdAt: "desc" },
       });
     });
+    // Las URLs firmadas se generan fuera de la transaccion: firmar no es una
+    // consulta y no debe alargar el tiempo en que el contexto RLS esta abierto.
+    return withDownloadUrls(rows);
   }),
 });

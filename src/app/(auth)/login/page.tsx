@@ -1,15 +1,22 @@
 import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
 import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
+import { emailAuthEnabled, googleAuthEnabled } from "@/server/auth/config";
 import Image from "next/image";
+import type { Metadata } from "next";
 
-export async function generateMetadata() {
+export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.login");
-  return { title: t("title") };
+  return { title: t("title"), robots: { index: false, follow: false } };
 }
 
 export default async function LoginPage() {
   const t = await getTranslations("auth.login");
+  const support = await getTranslations("legal.contact.support");
+
+  // Las vias de acceso se resuelven en el servidor: el navegador nunca recibe
+  // un boton que no puede funcionar.
+  const googleEnabled = googleAuthEnabled;
 
   return (
     <div className="space-y-8">
@@ -26,7 +33,12 @@ export default async function LoginPage() {
           </p>
         </div>
       </div>
-      <LoginForm />
+      <LoginForm
+        googleEnabled={googleEnabled}
+        emailEnabled={emailAuthEnabled}
+        supportEmail={support("email")}
+        supportSubject={support("emailSubject")}
+      />
       <div className="flex justify-center">
         <LocaleSwitcher />
       </div>

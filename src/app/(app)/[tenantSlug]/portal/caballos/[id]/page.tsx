@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createServerCaller } from "@/lib/trpc/server";
 import { formatDate } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -257,10 +258,14 @@ export default async function PortalHorsePage({ params }: PageProps) {
             {mediaDocs.map((d) => (
               <li key={d.id}>
                 <a
-                  href={d.fileUrl}
+                  href={d.url ?? "#"}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 text-sm transition-colors hover:border-foreground/20"
+                  aria-disabled={!d.url}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 text-sm transition-colors hover:border-foreground/20",
+                    !d.url && "pointer-events-none opacity-60",
+                  )}
                 >
                   {d.kind.toUpperCase() === "VIDEO" ? (
                     <FilmSlate weight="duotone" className="h-4 w-4 text-muted-foreground" />
@@ -294,10 +299,14 @@ export default async function PortalHorsePage({ params }: PageProps) {
               .map((d) => (
                 <li key={d.id}>
                   <a
-                    href={d.fileUrl}
+                    href={d.url ?? "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/40"
+                    aria-disabled={!d.url}
+                    className={cn(
+                      "flex items-center justify-between gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/40",
+                      !d.url && "pointer-events-none opacity-60",
+                    )}
                   >
                     <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                       {d.name}

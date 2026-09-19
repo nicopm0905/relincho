@@ -70,22 +70,47 @@ CREATE POLICY tenant_isolation_horse ON "Horse"
 
 ### Auth.js (Google OAuth)
 
+Google es la vía de entrada principal: sin `GOOGLE_CLIENT_ID` y
+`GOOGLE_CLIENT_SECRET`, la pantalla de acceso lo avisa en vez de ofrecer un
+botón que no funciona.
+
 1. Crea credenciales OAuth en [console.cloud.google.com](https://console.cloud.google.com)
 2. URI autorizado de redirección: `http://localhost:3000/api/auth/callback/google`
-3. Añade `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` al `.env`
+   (y el equivalente `https://tu-dominio/api/auth/callback/google` en producción)
+3. Publica la pantalla de consentimiento y rellena nombre y logo: con los
+   permisos básicos (`openid email profile`) no hace falta verificación, pero en
+   modo prueba solo entran 100 usuarios añadidos a mano
+4. Añade `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` al `.env`
 
 ### Resend (email)
 
+Resend **solo envía desde un dominio verificado**: el único que funciona sin
+verificar es `resend.dev` y sirve únicamente para pruebas. Sin `EMAIL_FROM` con
+dominio propio, los envíos se omiten y queda anotado en el log; no se inventa un
+remitente que rebotaría.
+
 1. Crea cuenta en [resend.com](https://resend.com)
-2. Verifica tu dominio
-3. Añade `RESEND_API_KEY` al `.env`
+2. Verifica tu dominio (registros SPF y DKIM)
+3. Añade `RESEND_API_KEY` y `EMAIL_FROM="Relincho <hola@tudominio.es>"` al `.env`
+
+Mientras no haya dominio verificado, el acceso por enlace mágico se puede
+mantener apagado con `EMAIL_LOGIN_ENABLED` (por defecto se apaga solo en
+producción si Google está configurado).
 
 ### Cloudflare R2
 
+Hace falta para las fotos de los caballos y para el gestor documental. El bucket
+de documentos debe ser **privado**: los pasaportes, radiografías y analíticas se
+sirven con URLs firmadas que caducan, nunca desde una URL pública permanente.
+
 1. Crea un bucket R2 en [dash.cloudflare.com](https://dash.cloudflare.com)
-2. Crea credenciales R2 (API Token)
-3. Habilita acceso público o usa dominio personalizado
-4. Añade las variables `R2_*` al `.env`
+2. Crea credenciales R2 (API Token) con permiso de lectura y escritura
+3. Añade las variables `R2_*` al `.env` (la web pública opcional solo se usa
+   para las fotos, no para documentos)
+
+Sin `R2_*`, en local las subidas van a `public/uploads` (que está ignorado por
+git); en producción esa ruta es de solo lectura y el gestor avisa de que el
+almacenamiento no está configurado.
 
 ### Stripe
 
@@ -106,11 +131,34 @@ npm i -g vercel
 vercel
 
 # Configura variables de entorno en vercel.com/[proyecto]/settings/environment-variables
+# El build aplica las migraciones pendientes antes de compilar:
+#   prisma generate && prisma migrate deploy && next build
+# Ojo: `migrate deploy` también corre en los despliegues de preview, así que
+# ambos apuntan a la base de datos real. Si algún día hace falta una base de
+# datos de preview, hay que separar los entornos.
 # Los crons de vercel.json se activan solos en producción:
-#   /api/cron/reminders      cada día a las 08:00 — recordatorios sanitarios
-#   /api/cron/weekly-digest  lunes a las 07:00 — resumen semanal de la yeguada
+#   /api/cron/reminders      cada día a las 08:00 UTC
+#   /api/cron/weekly-digest  lunes a las 07:00 UTC
+# Vercel programa en UTC: las 08:00 son las 10:00 de España en verano.
 # Ambos exigen CRON_SECRET en la cabecera Authorization.
 ```
+
+### Antes de desplegar
+
+```bash
+npm run check        # tipos + pruebas unitarias
+npm run check:http   # contra un servidor levantado (por defecto localhost:3000)
+npm run check:http -- https://relincho.vercel.app   # contra la instancia real
+```
+
+`check:http` comprueba lo que de verdad rompe la venta si falla: que el panel
+demo abra sin cuenta, que en la demo **no** se pueda escribir, que sin cabecera
+de yeguada no se lea nada, que un panel ajeno siga pidiendo sesión, que los
+crons exijan su secreto y que la pantalla de acceso ofrezca una vía que pueda
+funcionar.
+
+`npm run lint` existe, pero arrastra errores anteriores a este trabajo (en su
+mayoría `no-explicit-any`): no lo uses todavía como puerta de calidad.
 
 ---
 
@@ -131,9 +179,44 @@ Los datos salen del seed: `npm run db:seed` (yeguada, caballos y sanidad) y
 
 ---
 
+## Gestor documental
+
+`/[yeguada]/documentos` guarda pasaportes, radiografías, analíticas, contratos
+y seguros, cada uno ligado a su caballo (el portal del propietario los ve en solo
+lectura). Los detalles que importan:
+
+- El fichero vive en un bucket **privado**: se guarda su clave y se sirve con
+  una URL firmada que caduca en minutos. Un enlace reenviado deja de funcionar.
+- `ownsDocumentKey` comprueba que la clave esté dentro de la carpeta de esa
+  yeguada, para que nadie adjunte a su ficha el fichero de otra.
+- La cuota por yeguada es `DOCUMENTS_QUOTA_MB` (512 MB por defecto) y se
+  comprueba en el servidor, no en el navegador.
+- El tipo de archivo y el tamaño se validan antes de firmar la subida, con
+  extensión deducida del MIME y nunca del nombre del fichero.
+
+---
+
+## Aviso de fallos y de dónde vienen los clientes
+
+- Los fallos se anotan como una línea JSON en los logs de Vercel a través de
+  `reportError` (`src/lib/observability.ts`). Si defines `ERROR_WEBHOOK_URL` con
+  un webhook de Slack o Discord, también llega el aviso allí. No hay servicio
+  externo de monitorización todavía: cambiar a Sentry es sustituir ese fichero.
+- El navegador manda sus propios errores a `/api/report-error`, que los reenvía
+  al mismo canal con un tope por IP.
+- El canal de llegada se guarda en la cookie que deja el middleware: quien entra
+  por `?src=flyer-jerez` se lleva esa marca y el alta la escribe en
+  `Tenant.acquisitionSource`. Se apunta el **primer** toque, así que el QR de una
+  feria sigue contando semanas después. Para leerlo: `npm run db:studio`.
+
+---
+
 ## Comandos útiles
 
 ```bash
+npm run check          # tsc --noEmit + pruebas unitarias
+npm run check:http     # comprobaciones HTTP contra un servidor levantado
+npm run verify:engines # invariantes del motor de rendimiento
 npm run db:generate    # Genera el cliente Prisma
 npm run db:migrate     # Crea y aplica migraciones
 npm run db:push        # Push directo a la BD (dev)
@@ -171,17 +254,23 @@ prisma/
 
 ---
 
-## Roadmap MVP
+## Roadmap
 
-- [x] Auth (magic link + Google)
+- [x] Auth (Google + enlace mágico, este último sujeto a dominio verificado)
 - [x] Multi-tenant (Tenant + Membership + RLS)
 - [x] CRUD Caballos (foto a R2)
 - [x] Sanidad (HealthEvent + cron recordatorios)
 - [x] Tareas
-- [x] Stripe (suscripción SaaS + portal)
-- [ ] Módulo billing-verifactu (Veri*Factu AEAT)
-- [ ] Reproducción (ciclos, cubriciones, gestación)
-- [ ] Portal propietario externo (OWNER_EXTERNAL)
-- [ ] Importador CSV caballos
+- [x] Stripe (suscripción SaaS + portal, con aviso de impago)
+- [x] Reproducción (ciclos, cubriciones, gestación)
+- [x] Portal propietario externo (OWNER_EXTERNAL)
+- [x] Importador Excel de caballos
+- [x] Rendimiento (periodización, carga, alertas de tendón)
+- [x] Gestor documental (bucket privado, URLs firmadas)
+- [x] i18n inglés en escaparate y acceso
+- [ ] Módulo Veri*Factu AEAT (la obligación se aplazó a 2027; hasta entonces
+      la web no lo anuncia como disponible)
 - [ ] Dashboard de costes por caballo
-- [ ] i18n inglés (PRE internacional)
+- [ ] Exportar los datos de una yeguada (CSV o Excel)
+- [ ] Monitorización con servicio externo (Sentry) en lugar del webhook actual
+- [ ] Limpiar los errores de lint heredados (`no-explicit-any` en 20 ficheros)

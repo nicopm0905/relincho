@@ -1,15 +1,42 @@
 import { google } from "@ai-sdk/google";
 import { streamText, tool, convertToModelMessages, isStepCount } from "ai";
+import type { UIMessage } from "ai";
 import { z } from "zod";
 import { prisma } from "@/server/db/prisma";
 import { auth } from "@/server/auth";
+import { HealthEventType, Prisma } from "@prisma/client";
+import { reportError } from "@/lib/observability";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
+/**
+ * Tope diario de consultas por yeguada. El asistente gasta cuota de Gemini y
+ * sin tope una sola persona curiosa puede agotar el presupuesto del mes. Es un
+ * contador en memoria: frena el abuso accidental, no sustituye a un limitador
+ * compartido entre instancias.
+ */
+const DAILY_LIMIT = Number(process.env.CHAT_DAILY_LIMIT ?? 200);
+const chatUsage = new Map<string, { day: string; count: number }>();
+
+function consumeQuota(tenantId: string): { ok: boolean; used: number } {
+  const day = new Date().toISOString().slice(0, 10);
+  const entry = chatUsage.get(tenantId);
+  if (!entry || entry.day !== day) {
+    chatUsage.set(tenantId, { day, count: 1 });
+    return { ok: true, used: 1 };
+  }
+  entry.count += 1;
+  return { ok: entry.count <= DAILY_LIMIT, used: entry.count };
+}
+
 export async function POST(req: Request) {
   try {
-    const { messages, horseId } = await req.json();
+    const { messages, horseId, tenantSlug } = (await req.json()) as {
+      messages: UIMessage[];
+      horseId?: string;
+      tenantSlug?: string;
+    };
     const session = await auth();
 
     if (!session?.user) {
@@ -21,17 +48,32 @@ export async function POST(req: Request) {
       return new Response("Falta la clave de API (GOOGLE_GENERATIVE_AI_API_KEY) en el archivo .env. Añade una API key válida de Google Gemini para usar el asistente.", { status: 400 });
     }
 
-    // Obtenemos los memberships del usuario para saber a qué tenants pertenece
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { memberships: true }
+    const memberships = await prisma.membership.findMany({
+      where: { userId: session.user.id },
+      select: { tenantId: true, tenant: { select: { slug: true } } },
+      orderBy: { id: "asc" },
     });
-    
-    if (!user || user.memberships.length === 0) {
-      return new Response("No tenant found", { status: 400 });
+
+    if (memberships.length === 0) {
+      return new Response("No perteneces a ninguna yeguada.", { status: 400 });
     }
 
-    const tenantId = user.memberships[0].tenantId;
+    // La yeguada se resuelve por slug. Antes se cogia siempre la primera
+    // membresia, asi que quien estaba en dos fincas podia recibir el contexto
+    // de la que no estaba mirando.
+    const membership = tenantSlug
+      ? memberships.find((m) => m.tenant.slug === tenantSlug) ?? memberships[0]
+      : memberships[0];
+    const tenantId = membership.tenantId;
+
+    const quota = consumeQuota(tenantId);
+    if (!quota.ok) {
+      return new Response(
+        "El asistente ha alcanzado su límite diario para esta yeguada. Vuelve mañana.",
+        { status: 429 },
+      );
+    }
+
     const modelMessages = await convertToModelMessages(messages);
 
     // Pre-obtener contexto del caballo para respuesta ultrarrápida sin latencia de herramientas
@@ -108,11 +150,11 @@ Como el chat está dentro de la ficha de un caballo específico, usa el contexto
           execute: async ({ type, name, date, notes }: { type: string, name: string, date: string, notes?: string }) => {
             if (!horseId) return "No se proporcionó ID de caballo.";
             const eventDate = new Date(date);
-            const newEvent = await prisma.healthEvent.create({
+            await prisma.healthEvent.create({
               data: {
                 tenantId,
                 horseId,
-                type: type as any,
+                type: type as HealthEventType,
                 name,
                 date: eventDate,
                 notes: notes || null
@@ -132,7 +174,7 @@ Como el chat está dentro de la ficha de un caballo específico, usa el contexto
           execute: async ({ minutes, type, date, notes }: { minutes: number, type?: string, date?: string, notes?: string }) => {
             if (!horseId) return "No se proporcionó ID de caballo.";
             const eventDate = date ? new Date(date) : new Date();
-            const newTraining = await prisma.trainingSession.create({
+            await prisma.trainingSession.create({
               data: {
                 tenantId,
                 horseId,
@@ -167,10 +209,11 @@ Como el chat está dentro de la ficha de un caballo específico, usa el contexto
           }),
           execute: async ({ items }: { items: Array<{ meal: string; food: string; quantity: string }> }) => {
             if (!horseId) return "No se proporcionó ID de caballo.";
+            const plan = items as unknown as Prisma.InputJsonValue;
             await prisma.feedingPlan.upsert({
               where: { horseId },
-              update: { items: items as any },
-              create: { tenantId, horseId, items: items as any }
+              update: { items: plan },
+              create: { tenantId, horseId, items: plan }
             });
             return `Plan de alimentación / dieta actualizado con éxito en la base de datos (${items.length} raciones configuradas).`;
           }
@@ -179,8 +222,10 @@ Como el chat está dentro de la ficha de un caballo específico, usa el contexto
     });
 
     return result.toUIMessageStreamResponse();
-  } catch (error: any) {
-    console.error("Error in /api/chat route:", error);
-    return new Response(error?.message || "Error al procesar la consulta con la IA.", { status: 400 });
+  } catch (error: unknown) {
+    await reportError(error, { scope: "api.chat" });
+    const message =
+      error instanceof Error ? error.message : "Error al procesar la consulta con la IA.";
+    return new Response(message, { status: 400 });
   }
 }

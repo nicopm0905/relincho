@@ -2,11 +2,63 @@ import "server-only";
 import { Resend } from "resend";
 
 import { getBaseUrl } from "@/lib/utils";
+import { reportError } from "@/lib/observability";
 import type { WeeklyDigest } from "@/server/services/performance/digest";
 import { workTypeLabels } from "@/components/rendimiento/labels";
 
-const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
-const FROM = process.env.EMAIL_FROM ?? "Relincho <hola@Relincho.es>";
+/**
+ * Sin RESEND_API_KEY no hay cliente, y sin EMAIL_FROM no hay remitente valido:
+ * Resend rechaza cualquier `from` de un dominio no verificado. En vez de
+ * inventarse un remitente y tragarse el rechazo, los envios se saltan y se
+ * dejan anotados, para que quien lea el log sepa que no salio nada.
+ */
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
+const FROM = process.env.EMAIL_FROM ?? null;
+
+export type SendResult = {
+  ok: boolean;
+  /** true cuando faltaba configuracion: no es un fallo, es un envio omitido. */
+  skipped?: boolean;
+  error?: string;
+};
+
+/** Si es false, ningun aviso por email de la app llegara a su destino. */
+export function isEmailConfigured(): boolean {
+  return Boolean(resend && FROM);
+}
+
+async function sendEmail(opts: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<SendResult> {
+  if (!resend || !FROM) {
+    console.warn(
+      `[relincho] email omitido (falta RESEND_API_KEY o EMAIL_FROM): "${opts.subject}" para ${opts.to}`,
+    );
+    return { ok: false, skipped: true, error: "email-not-configured" };
+  }
+
+  try {
+    // Resend devuelve el error en el cuerpo, no lanzando: hay que mirarlo.
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+    });
+    if (error) {
+      await reportError(error, { scope: "email", subject: opts.subject });
+      return { ok: false, error: error.message };
+    }
+    return { ok: true };
+  } catch (err) {
+    await reportError(err, { scope: "email", subject: opts.subject });
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
 
 export async function sendHealthReminder(opts: {
   to: string;
@@ -17,29 +69,29 @@ export async function sendHealthReminder(opts: {
   dueDate: Date;
   tenantName: string;
   tenantSlug: string;
-}) {
-  const { to, ownerName, horseName, eventName, dueDate, tenantName, tenantSlug } = opts;
+}): Promise<SendResult> {
+  const { to, ownerName, horseName, eventName, dueDate, tenantName, tenantSlug } =
+    opts;
   const formattedDate = dueDate.toLocaleDateString("es-ES", {
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
 
-  await resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to,
     subject: `Recordatorio: ${eventName} de ${horseName} en 7 días`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #171717;">Recordatorio sanitario — ${tenantName}</h2>
-        <p>Hola ${ownerName},</p>
-        <p>Te recordamos que <strong>${horseName}</strong> tiene pendiente:</p>
+        <h2 style="color: #171717;">Recordatorio sanitario — ${esc(tenantName)}</h2>
+        <p>Hola ${esc(ownerName)},</p>
+        <p>Te recordamos que <strong>${esc(horseName)}</strong> tiene pendiente:</p>
         <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0;">
-          <strong>${eventName}</strong><br>
-          Fecha prevista: <strong>${formattedDate}</strong>
+          <strong>${esc(eventName)}</strong><br>
+          Fecha prevista: <strong>${esc(formattedDate)}</strong>
         </div>
         <p>
-          <a href="${getBaseUrl()}/${tenantSlug}/sanidad"
+          <a href="${getBaseUrl()}/${encodeURIComponent(tenantSlug)}/sanidad"
              style="background:#171717;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
             Ver en Relincho
           </a>
@@ -55,18 +107,17 @@ export async function sendTeamInvite(opts: {
   tenantName: string;
   inviterName?: string | null;
   url: string;
-}) {
+}): Promise<SendResult> {
   const { to, tenantName, inviterName, url } = opts;
-  await resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to,
     subject: `Te han invitado a ${tenantName} en Relincho`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #171717;">Te han invitado a ${tenantName}</h2>
+        <h2 style="color: #171717;">Te han invitado a ${esc(tenantName)}</h2>
         <p>
-          ${inviterName ? `${inviterName} te ha` : "Te han"} dado acceso al equipo
-          de <strong>${tenantName}</strong> en Relincho.
+          ${inviterName ? `${esc(inviterName)} te ha` : "Te han"} dado acceso al equipo
+          de <strong>${esc(tenantName)}</strong> en Relincho.
         </p>
         <p>Haz clic en el botón para acceder. Te pediremos tu email para iniciar sesión.</p>
         <p>
@@ -81,31 +132,43 @@ export async function sendTeamInvite(opts: {
   });
 }
 
-export async function sendMagicLink(opts: {
+/**
+ * Aviso de suscripcion con el pago pendiente. Es el unico correo que se manda
+ * al responsable de la yeguada cuando Stripe no puede cobrar.
+ */
+export async function sendPaymentFailed(opts: {
   to: string;
-  url: string;
-}) {
-  await resend.emails.send({
-    from: FROM,
-    to: opts.to,
-    subject: "Tu enlace de acceso a Relincho",
+  tenantName: string;
+  tenantSlug: string;
+  amountDue?: string | null;
+}): Promise<SendResult> {
+  const { to, tenantName, tenantSlug, amountDue } = opts;
+  return sendEmail({
+    to,
+    subject: `No hemos podido cobrar la suscripción de ${tenantName}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #171717;">Accede a Relincho</h2>
-        <p>Haz clic en el botón para iniciar sesión. El enlace caduca en 24 horas.</p>
+        <h2 style="color: #171717;">Pago pendiente</h2>
+        <p>No hemos podido cobrar la suscripción de <strong>${esc(tenantName)}</strong>${
+          amountDue ? ` (${esc(amountDue)})` : ""
+        }.</p>
         <p>
-          <a href="${opts.url}"
+          La yeguada sigue funcionando, pero conviene revisar el método de pago
+          para no perder el acceso al plan de pago.
+        </p>
+        <p>
+          <a href="${getBaseUrl()}/${encodeURIComponent(tenantSlug)}/ajustes"
              style="background:#171717;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
-            Iniciar sesión
+            Revisar la suscripción
           </a>
         </p>
-        <p style="color:#888;font-size:12px;">Si no solicitaste este enlace, ignora este email.</p>
+        <p style="color:#888;font-size:12px;">Relincho · Gestión equina profesional</p>
       </div>
     `,
   });
 }
 
-/** Nombres y titulos vienen de la base de datos: al HTML no entra nada crudo. */
+/** Los nombres vienen de la base de datos: al HTML no entra nada crudo. */
 function esc(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -140,7 +203,7 @@ export async function sendWeeklyDigest(opts: {
   to: string;
   ownerName: string;
   digest: WeeklyDigest;
-}) {
+}): Promise<SendResult> {
   const { to, ownerName, digest } = opts;
   const { plannedLoadUa, actualLoadUa, pendingCheckIns } = digest;
   const pct = plannedLoadUa > 0 ? Math.round((actualLoadUa / plannedLoadUa) * 100) : 0;
@@ -214,8 +277,7 @@ export async function sendWeeklyDigest(opts: {
     );
   }
 
-  await resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to,
     subject: `Tu semana en Relincho — ${digest.tenantName}`,
     html: `
@@ -227,7 +289,7 @@ export async function sendWeeklyDigest(opts: {
         <p>Hola ${esc(ownerName)},</p>
         ${blocks.join("")}
         <p>
-          <a href="${base}/${digest.tenantSlug}/rendimiento"
+          <a href="${base}/${encodeURIComponent(digest.tenantSlug)}/rendimiento"
              style="background:#171717;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
             Abrir el panel de rendimiento
           </a>

@@ -83,17 +83,23 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
         tenantId,
         filename: file.name,
         contentType: file.type,
+        sizeBytes: file.size,
+        kind: "image",
         folder: "horses",
       });
       if (result.error || !result.uploadUrl) {
-        toast.error("Error al obtener URL de subida");
+        toast.error(result.error ?? "Error al obtener URL de subida");
         return;
       }
-      await fetch(result.uploadUrl, {
+      const upload = await fetch(result.uploadUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
       });
+      if (!upload.ok) {
+        toast.error("No se ha podido subir la foto");
+        return;
+      }
       setPhotoUrl(result.publicUrl);
       toast.success("Foto subida correctamente");
     } finally {

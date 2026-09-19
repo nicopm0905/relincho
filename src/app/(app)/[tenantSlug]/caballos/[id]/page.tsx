@@ -1,9 +1,11 @@
 import { createServerCaller } from "@/lib/trpc/server";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "@/server/trpc/router";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/formatters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +14,7 @@ import { HorseTimeline } from "@/components/horses/timeline";
 import { DailyJournalForm } from "@/components/horses/daily-journal-form";
 import { JournalFeed } from "@/components/horses/journal-feed";
 import { HorseChat } from "@/components/horses/horse-chat";
+import { DocumentsManager } from "@/components/documentos/documents-manager";
 import { FeedingPlanCard } from "@/components/horses/feeding-plan-card";
 import {
   Horse,
@@ -25,7 +28,6 @@ import {
   PencilSimple,
   TreeStructure,
   MapPin,
-  Barcode,
   Files,
   Baby,
   WarningCircle,
@@ -36,6 +38,10 @@ import {
 interface PageProps {
   params: Promise<{ tenantSlug: string; id: string }>;
 }
+
+/** Los tipos salen del propio router: si cambia la consulta, esto se entera. */
+type HorseDetail = inferRouterOutputs<AppRouter>["horses"]["byId"];
+type ReproCycle = HorseDetail["reproCycles"][number];
 
 const statusLabels: Record<string, string> = {
   ACTIVE: "Activo",
@@ -51,17 +57,6 @@ const statusBadgeVariant: Record<string, "success" | "secondary" | "destructive"
   DEAD: "destructive",
   RETIRED: "outline",
   IN_TRAINING: "info",
-};
-
-const healthTypeLabels: Record<string, string> = {
-  VACCINE: "Vacuna",
-  DEWORMING: "Desparasitación",
-  DENTAL: "Dental",
-  FARRIER: "Herrador",
-  VET_CHECKUP: "Revisión veterinaria",
-  TREATMENT: "Tratamiento",
-  INJURY: "Lesión",
-  OTHER: "Otro",
 };
 
 /* One shared look for every tab so the strip stays even as tabs are added. */
@@ -84,6 +79,10 @@ export default async function CaballoDetailPage({ params }: PageProps) {
   } catch {
     notFound();
   }
+
+  // Los documentos viven en su propio router porque la ficha grande no trae
+  // las URLs firmadas: aqui se piden ya con enlace temporal resuelto.
+  const horseDocuments = await caller.documents.list({ horseId: id });
 
   const age = horse.birthDate ? calculateAge(horse.birthDate) : null;
 
@@ -358,7 +357,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                   </div>
                 ) : (
                   <ul className="divide-y divide-border/40">
-                    {horse.reproCycles.map((cycle: any) => {
+                    {horse.reproCycles.map((cycle: ReproCycle) => {
                       const latestCovering = cycle.coverings?.[0];
                       const latestCheck = latestCovering?.pregnancyChecks?.[0];
                       
@@ -479,15 +478,14 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
         {/* DOCUMENTOS TAB */}
         <TabsContent value="documentos" className="pt-6 outline-none">
-          <Card className="p-12 border-border bg-card flex flex-col items-center text-center">
-            <div className="h-16 w-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 border border-blue-100">
-              <Files weight="duotone" className="h-8 w-8" />
-            </div>
-            <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Documentación</h3>
-            <p className="text-sm text-muted-foreground max-w-sm mt-2 mb-6">
-              Guarda pasaportes, cartas de titularidad y análisis. Módulo en desarrollo.
-            </p>
-          </Card>
+          <DocumentsManager
+            tenantId={horseDocuments.tenantId}
+            documents={horseDocuments.documents}
+            usage={horseDocuments.usage}
+            horses={[{ id: horse.id, name: horse.name }]}
+            lockedHorseId={horse.id}
+            compact
+          />
         </TabsContent>
 
         {/* DIARIO TAB */}
@@ -504,7 +502,11 @@ export default async function CaballoDetailPage({ params }: PageProps) {
             
             {/* Derecha: Chat interactivo */}
             <div className="h-full">
-              <HorseChat horseId={horse.id} horseName={horse.name} />
+              <HorseChat
+                horseId={horse.id}
+                horseName={horse.name}
+                tenantSlug={tenantSlug}
+              />
             </div>
           </div>
         </TabsContent>

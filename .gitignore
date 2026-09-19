@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...salvo la plantilla, que debe viajar con el repositorio.
+!.env.example
 
 # vercel
 .vercel
@@ -39,6 +41,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# subidas locales de desarrollo (en produccion van al bucket R2)
+/public/uploads
 
 /src/generated/prisma
 

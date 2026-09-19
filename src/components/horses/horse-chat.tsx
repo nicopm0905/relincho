@@ -9,7 +9,16 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { MessageCircle, BrainCircuit, Trash2, AlertTriangle, CheckCircle2, Info } from "lucide-react"
 
-export function HorseChat({ horseId, horseName }: { horseId: string, horseName: string }) {
+export function HorseChat({
+  horseId,
+  horseName,
+  tenantSlug,
+}: {
+  horseId: string;
+  horseName: string;
+  /** La yeguada va en cada consulta: un usuario puede estar en varias. */
+  tenantSlug: string;
+}) {
   const [input, setInput] = useState("")
   const storageKey = `equigest_chat_${horseId}`
 
@@ -59,6 +68,7 @@ export function HorseChat({ horseId, horseName }: { horseId: string, horseName: 
       api: "/api/chat",
       body: {
         horseId,
+        tenantSlug,
       },
     }),
   })

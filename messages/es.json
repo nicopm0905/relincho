@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "Relincho — Gestión equina para yeguadas PRE",
-    "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje, facturación Veri*Factu y rendimiento deportivo."
+    "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje, facturación y rendimiento deportivo."
   },
   "nav": {
     "horses": "Caballos",
@@ -17,7 +17,7 @@
   "metadata": {
     "home": {
       "title": "Relincho — Gestión equina para yeguadas PRE",
-      "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje, facturación Veri*Factu y rendimiento deportivo."
+      "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje, facturación y rendimiento deportivo."
     },
     "contact": { "title": "Contacto - Relincho" },
     "privacy": { "title": "Política de Privacidad - Relincho" },
@@ -56,7 +56,7 @@
     },
     "hero": {
       "badgeNew": "Nuevo",
-      "badgeFeature": "Veri*Factu integrado",
+      "badgeFeature": "Facturación con cuotas y SEPA",
       "titleLead": "El software de",
       "titleHighlight": "gestión equina",
       "titleTail": "para yeguadas.",
@@ -86,7 +86,7 @@
           "description": "Gestiona los boxes, dietas y tarifas de caballos estabulados de clientes."
         },
         "invoicing": {
-          "title": "Facturación Veri*Factu",
+          "title": "Facturación y cobros",
           "description": "Emite facturas legales, genera cuotas automáticas y envía recibos SEPA. Todo adaptado a la nueva normativa de la AEAT."
         }
       }
@@ -136,8 +136,8 @@
           "answer": "Sí. Utilizamos los más altos estándares de seguridad en la nube. Tus datos y los de tus clientes están encriptados y realizamos copias de seguridad automáticas de forma constante para que nunca pierdas información importante."
         },
         {
-          "question": "¿Cumple con la normativa de facturación y Veri*Factu?",
-          "answer": "Totalmente. Nuestro módulo de facturación está actualizado y adaptado a las nuevas normativas de la AEAT (incluyendo Veri*Factu). Puedes emitir facturas legales, generar cuotas automáticas y automatizar el envío de recibos SEPA sin preocupaciones."
+          "question": "¿Cómo va el cumplimiento de Veri*Factu?",
+          "answer": "Con la facturación ya trabajas hoy: series y numeración por ejercicio, impuestos por línea, cuotas de pupilaje automáticas y recibos SEPA. Veri*Factu es una obligación de la AEAT que se aplazó a 2027, y preferimos no anunciarla como lista hasta que lo esté: cuando llegue, avisaremos a todas las yeguadas. Si necesitas facturar con Veri*Factu ahora mismo, escríbenos y te lo decimos claro antes de que te des de alta."
         },
         {
           "question": "¿Puedo probar Relincho antes de suscribirme?",
@@ -172,7 +172,7 @@
             "Hasta 60 caballos",
             "Rendimiento y prevención de lesiones",
             "Pupilaje, dietas y contratos",
-            "Facturación Veri*Factu",
+            "Facturación, cuotas y SEPA",
             "Soporte prioritario"
           ]
         },
@@ -221,7 +221,7 @@
         { "title": "Sanidad", "description": "Vacunas, desparasitaciones y tratamientos con recordatorios automáticos." },
         { "title": "Reproducción", "description": "Celos, cubriciones, ecografías y partos con cálculos predictivos." },
         { "title": "Pupilaje y dietas", "description": "Boxes, estancias y tarifas de los caballos de clientes." },
-        { "title": "Facturación", "description": "Facturas legales adaptadas a la AEAT, con Veri*Factu integrado." },
+        { "title": "Facturación",          "description": "Facturas con series, impuestos y PDF, cuotas de pupilaje automáticas y recibos SEPA." },
         { "title": "Ficha del caballo", "description": "Todo el historial de un caballo: sanidad, documentos, movimientos y entrenamiento." }
       ]
     },
@@ -305,6 +305,10 @@
         "title": "4. Seguridad de los datos",
         "body": "Tus datos están encriptados y almacenados en servidores seguros. Realizamos copias de seguridad regulares para garantizar la integridad y disponibilidad de la información de tu yeguada o centro ecuestre."
       },
+      "s6": {
+        "title": "6. Quién trata los datos por ti",
+        "body": "Relincho actúa como encargado del tratamiento de los datos personales que tú guardas en la aplicación (fichas de propietarios, facturas, documentación de tus caballos) y solo los usa para prestarte el servicio. Los servidores y las copias de seguridad están en la Unión Europea: la base de datos y el almacenamiento en Supabase (región de Fráncfort) y los ficheros adjuntos en Cloudflare R2. Los correos de aviso se envían con Resend y los pagos se gestionan con Stripe, que nunca ve los datos de tus clientes. Si eres una yeguada y necesitas un contrato de encargado del tratamiento firmado, escríbenos y te lo enviamos."
+      },
       "s5": {
         "title": "5. Tus derechos",
         "body": "Tienes derecho a acceder, rectificar o eliminar tus datos personales en cualquier momento. Para ejercer estos derechos, contacta con nosotros en relinchoappweb@gmail.com."
@@ -364,6 +368,30 @@
       }
     }
   },
+  "errors": {
+    "crash": {
+      "title": "Algo se ha roto por nuestra parte",
+      "body": "No es culpa tuya y no se ha perdido nada de lo que tenías guardado. Vuelve a intentarlo y, si sigue pasando, escríbenos.",
+      "retry": "Volver a intentarlo",
+      "home": "Ir al inicio",
+      "reported": "Aviso enviado al equipo"
+    },
+    "notFound": {
+      "title": "Aquí no hay nada",
+      "body": "La página que buscas no existe o ha cambiado de sitio. Puede que el enlace esté mal escrito.",
+      "home": "Volver al inicio",
+      "demo": "Ver la demo"
+    }
+  },
+  "settings": {
+    "billing": {
+      "ownerOnly": "Solo el propietario de la yeguada puede gestionar la suscripción.",
+      "manage": "Gestionar suscripción",
+      "upgrade": "Actualizar a Pro — {price}",
+      "contactToUpgrade": "Quiero cambiar de plan",
+      "notConfigured": "El pago en línea todavía no está activo. Escríbenos y lo activamos contigo."
+    }
+  },
   "auth": {
     "login": {
       "brandSubtitle": "Gestión equina para yeguadas PRE",
@@ -372,7 +400,13 @@
       "or": "o",
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "nombre@yeguada.es",
-      "submit": "Enviar enlace mágico"
+      "submit": "Enviar enlace mágico",
+      "emailNote": "Te enviaremos un enlace de un solo uso. Caduca en 24 horas.",
+      "emailError": "No hemos podido enviarte el correo. Prueba a entrar con Google.",
+      "googleError": "No hemos podido abrir la ventana de Google. Revisa que el navegador no la esté bloqueando.",
+      "unavailableTitle": "Acceso no disponible",
+      "unavailableBody": "El acceso a Relincho no está configurado ahora mismo. Escríbenos y te damos entrada.",
+      "unavailableCta": "Escribir al equipo"
     },
     "verify": {
       "title": "Revisa tu correo",
@@ -381,8 +415,18 @@
     },
     "error": {
       "title": "Error de acceso",
-      "body": "Ha ocurrido un error al iniciar sesión. El enlace puede haber expirado o ya ha sido usado.",
-      "backToLogin": "Volver al inicio de sesión"
+      "backToLogin": "Volver al inicio de sesión",
+      "contactSupport": "Escríbenos si el problema continúa",
+      "codes": {
+        "Configuration": "El acceso no está configurado ahora mismo. Ya estamos avisados; escríbenos y te damos entrada a mano.",
+        "AccessDenied": "Has cancelado el acceso o la cuenta no tiene permiso para entrar.",
+        "Verification": "El enlace ya no es válido: puede haber caducado o haberse usado antes.",
+        "OAuthAccountNotLinked": "Ese correo ya está registrado con otro método de acceso. Entra con el que usaste la primera vez.",
+        "OAuthSignin": "No hemos podido conectar con Google. Inténtalo de nuevo en un minuto.",
+        "OAuthCallback": "Google nos ha devuelto una respuesta que no esperábamos. Vuelve a intentarlo.",
+        "Callback": "Algo se ha roto al completar el acceso. Vuelve a intentarlo.",
+        "Default": "Ha ocurrido un error al iniciar sesión. El enlace puede haber expirado o ya ha sido usado."
+      }
     }
   },
   "onboarding": {
@@ -392,7 +436,7 @@
       "nameLabel": "Nombre de la finca *",
       "namePlaceholder": "Yeguada El Rocío",
       "slugLabel": "Identificador URL *",
-      "slugPrefix": "Relincho.es/",
+      "slugPrefix": "relincho.vercel.app/",
       "slugPlaceholder": "yeguada-el-rocio",
       "provinceLabel": "Provincia",
       "provincePlaceholder": "Sevilla",

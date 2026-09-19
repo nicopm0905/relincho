@@ -76,7 +76,15 @@ model Tenant {
   plan              String             @default("starter")
   stripeCustomerId  String?
   stripePriceId     String?
+  /// Estado de la suscripcion en Stripe (active, past_due, canceled...). Sirve
+  /// para avisar de un pago pendiente sin depender de una llamada a la API.
+  stripeStatus      String?
+  stripeCurrentPeriodEnd DateTime?
   verifactuMode     VerifactuMode      @default(NO_VERIFACTU)
+  /// De donde vino esta yeguada (flyer, feria, boca a boca). Se rellena en el
+  /// alta a partir del primer toque con `?src=`.
+  acquisitionSource   String?
+  acquisitionReferrer String?
   createdAt         DateTime           @default(now())
   memberships       Membership[]
   horses            Horse[]
@@ -87,6 +95,7 @@ model Tenant {
   boardingContracts BoardingContract[]
   events            Event[]
   tasks             Task[]
+  documents         Document[]
 }
 
 model User {
@@ -99,6 +108,7 @@ model User {
   memberships Membership[]
   accounts    Account[]
   sessions    Session[]
+  uploadedDocuments Document[] @relation("DocumentUploadedBy")
 }
 
 model Account {
@@ -303,17 +313,34 @@ model Product {
   @@index([tenantId])
 }
 
+/// Documento de una yeguada: pasaporte, radiografia, analitica, contrato...
+///
+/// El fichero vive en un bucket privado y se sirve con una URL firmada que
+/// caduca: son datos personales y clinicos, asi que no pueden colgar de una
+/// URL publica permanente que se pueda reenviar y quede viva para siempre.
 model Document {
-  id        String   @id @default(uuid())
-  tenantId  String
-  horseId   String?
-  kind      String
-  name      String
-  fileUrl   String
-  createdAt DateTime @default(now())
-  horse     Horse?   @relation(fields: [horseId], references: [id], onDelete: SetNull)
+  id           String    @id @default(uuid())
+  tenantId     String
+  horseId      String?
+  kind         String
+  name         String
+  /// Solo se rellena con el almacenamiento local de desarrollo.
+  fileUrl      String?
+  /// Clave dentro del bucket: <tenantId>/documents/<uuid>.<ext>.
+  storageKey   String?
+  mimeType     String?
+  sizeBytes    Int?
+  uploadedById String?
+  /// Caducidad del propio documento (vacunacion, coggins, seguro).
+  expiresAt    DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  horse        Horse?    @relation(fields: [horseId], references: [id], onDelete: SetNull)
+  uploadedBy   User?     @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([tenantId, horseId])
+  @@index([tenantId, deletedAt])
 }
 
 model Movement {
