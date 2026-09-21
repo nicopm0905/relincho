@@ -39,6 +39,11 @@ export async function createCheckoutSession(tenantId: string, planKey: string) {
 
   const stripeSession = await stripe.checkout.sessions.create({
     mode: "subscription",
+    // Managed Payments (activo por defecto en la cuenta) exige un tax_code
+    // por producto para calcular el IVA solo; sin eso rechaza la sesion
+    // entera. Se desactiva aqui y se vuelve al flujo clasico de Stripe hasta
+    // que se configure Stripe Tax con calma.
+    managed_payments: { enabled: false },
     payment_method_types: ["card", "sepa_debit"],
     line_items: [{ price: plan.priceId, quantity: 1 }],
     customer: tenant.stripeCustomerId ?? undefined,
