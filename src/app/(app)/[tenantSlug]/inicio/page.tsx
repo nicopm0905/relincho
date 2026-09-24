@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { createServerCaller } from "@/lib/trpc/server";
@@ -9,7 +10,10 @@ import {
   CaretRight,
   Sun,
   Warning,
+  Baby,
+  Receipt,
 } from "@phosphor-icons/react/dist/ssr";
+import { gestation, mareState, nextCheckpoint } from "@/lib/reproduction";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -18,6 +22,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 import { SessionCheckIn } from "@/components/rendimiento/session-check-in";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { FirstSteps } from "@/components/onboarding/first-steps";
 
 interface PageProps {
@@ -40,17 +45,10 @@ const healthTypeLabels: Record<string, string> = {
   OTHER: "Otro",
 };
 
-/** A cycle counts as an active pregnancy when the last check came back
- *  positive and the foal has not been born yet. */
-function isPregnant(cycle: {
-  coverings?: { pregnancyChecks?: { result: string }[]; foaling?: unknown }[];
-}) {
-  const latestCovering = cycle.coverings?.[0];
-  if (!latestCovering || latestCovering.foaling) return false;
-  return latestCovering.pregnancyChecks?.[0]?.result === "POSITIVE";
-}
-
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+const euros = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
+const formatEuros = (value: number) => euros.format(value);
 
 /** "Vencía hace 3 días" / "Hoy" / "En 12 días" — relative beats a raw date
  *  when the whole point of the row is urgency. */
@@ -65,11 +63,19 @@ function dueLabel(due: Date, today: number) {
   return { text: `En ${days} días`, overdue: false };
 }
 
-export default async function InicioPage({ params }: PageProps) {
+export default function InicioPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<PageSkeleton rows={6} />}>
+      <InicioContent params={params} />
+    </Suspense>
+  );
+}
+
+async function InicioContent({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
 
-  const [horses, upcomingHealth, cycles, openTasks, performance, pendingCheckIns] =
+  const [horses, upcomingHealth, cycles, openTasks, performance, pendingCheckIns, receivables] =
     await Promise.all([
       caller.horses.list(),
       caller.health.upcoming({ days: 30 }),
@@ -77,13 +83,43 @@ export default async function InicioPage({ params }: PageProps) {
       caller.tasks.list({ done: false }),
       caller.performance.overview(),
       caller.performance.pendingCheckIns({}),
+      // Facturacion es solo del personal: un veterinario externo ve el Inicio
+      // sin cobros.
+      caller.invoices.receivables().catch(() => null),
     ]);
 
   const now = new Date();
   const today = new Date().setHours(0, 0, 0, 0);
 
   const activeHorses = horses.filter((h) => h.status === "ACTIVE").length;
-  const pregnantMares = cycles.filter(isPregnant).length;
+  const DAYS = (n: number) => n * DAY_MS;
+
+  // Lo propio de una yeguada de cria: ecografias que tocan y partos cerca.
+  const breeding = cycles.flatMap((cycle) => {
+    const covering = cycle.coverings[0];
+    if (!covering) return [];
+    const state = mareState(covering);
+    return [{ cycle, covering, state }];
+  });
+  const pregnant = breeding.filter((b) => b.state === "PREGNANT" || b.state === "TWINS");
+  const pregnantMares = pregnant.length;
+
+  const checksDue = breeding.flatMap(({ cycle, covering, state }) => {
+    if (state !== "COVERED" && state !== "PREGNANT" && state !== "TWINS") return [];
+    const next = nextCheckpoint(covering.date, covering._count.pregnancyChecks, now);
+    // Solo lo que toca esta semana o ya va tarde.
+    if (!next || next.due.getTime() > today + DAYS(7)) return [];
+    return [{ cycle, next }];
+  });
+
+  const foalingsSoon = pregnant.flatMap(({ cycle, covering }) => {
+    const g = gestation(covering.date, now);
+    if (g.windowFrom.getTime() > today + DAYS(30)) return [];
+    return [{ cycle, g }];
+  });
+  const foalingsIn60 = pregnant.filter(
+    ({ covering }) => gestation(covering.date, now).windowFrom.getTime() <= today + DAYS(60),
+  ).length;
 
   // One prioritised worklist instead of two parallel lists the user has to
   // cross-reference. Everything that has a date lands here, soonest first.
@@ -120,13 +156,37 @@ export default async function InicioPage({ params }: PageProps) {
         href: `/${tenantSlug}/sanidad`,
         icon: <Heartbeat weight="duotone" />,
       })),
+    ...foalingsSoon.map(({ cycle, g }) => ({
+      id: `foaling-${cycle.id}`,
+      due: g.windowFrom,
+      title: `Parto previsto · ${cycle.mare.name}`,
+      subtitle: `Hacia el ${format(g.expected, "d 'de' MMMM", { locale: es })} · día ${g.days} de gestación`,
+      href: `/${tenantSlug}/reproduccion/${cycle.id}`,
+      icon: <Baby weight="duotone" />,
+    })),
+    ...checksDue.map(({ cycle, next }) => ({
+      id: `check-${cycle.id}`,
+      due: next.due,
+      title: `${next.label} · ${cycle.mare.name}`,
+      subtitle: `Días ${next.from}-${next.to} tras la cubrición`,
+      href: `/${tenantSlug}/reproduccion/${cycle.id}`,
+      icon: <Baby weight="duotone" />,
+    })),
+    ...(receivables?.overdue ?? []).map((invoice) => ({
+      id: `invoice-${invoice.id}`,
+      due: invoice.dueDate ? new Date(invoice.dueDate) : new Date(today),
+      title: `Cobro vencido · ${invoice.client}`,
+      subtitle: `Factura ${invoice.label} · ${formatEuros(invoice.pending)} pendientes`,
+      href: `/${tenantSlug}/facturacion/${invoice.id}`,
+      icon: <Receipt weight="duotone" />,
+    })),
     ...openTasks
       .filter((task) => task.dueDate)
       .map((task) => ({
         id: `task-${task.id}`,
         due: new Date(task.dueDate),
         title: task.title,
-        subtitle: "Tarea pendiente",
+        subtitle: [task.horseName, task.assigneeName].filter(Boolean).join(" · ") || "Tarea pendiente",
         href: `/${tenantSlug}/tareas`,
         icon: <CheckSquare weight="duotone" />,
       })),
@@ -145,12 +205,14 @@ export default async function InicioPage({ params }: PageProps) {
         description={format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
         actions={
           <>
-            <Button asChild variant="outline">
-              <Link href={`/${tenantSlug}/sanidad/nuevo`}>
-                <Heartbeat weight="bold" />
-                Registrar sanidad
-              </Link>
-            </Button>
+            {horses.length > 0 && (
+              <Button asChild variant="outline">
+                <Link href={`/${tenantSlug}/sanidad/nuevo`}>
+                  <Heartbeat weight="bold" />
+                  Registrar sanidad
+                </Link>
+              </Button>
+            )}
             <Button asChild>
               <Link href={`/${tenantSlug}/caballos/nuevo`}>
                 <Plus weight="bold" />
@@ -163,7 +225,7 @@ export default async function InicioPage({ params }: PageProps) {
 
       {/* Una yeguada recién creada no necesita estadísticas: necesita saber
           por dónde empezar. */}
-      {horses.length === 0 && <FirstSteps tenantSlug={tenantSlug} />}
+      {horses.length < 3 && <FirstSteps tenantSlug={tenantSlug} />}
 
       <SessionCheckIn sessions={pendingCheckIns} />
 
@@ -180,7 +242,7 @@ export default async function InicioPage({ params }: PageProps) {
           hint={
             overdueCount === 0
               ? "Nada vencido"
-              : "Vencido, para hoy o alerta de rendimiento"
+              : "Vencido o para hoy"
           }
           emphasis={overdueCount > 0}
           // Lleva al motivo mas urgente: puede ser sanidad, una tarea o la
@@ -190,26 +252,44 @@ export default async function InicioPage({ params }: PageProps) {
         <StatCard
           label="Yeguas preñadas"
           value={pregnantMares}
-          hint={`${cycles.length} ciclos esta temporada`}
+          hint={
+            foalingsIn60 > 0
+              ? `${foalingsIn60} ${foalingsIn60 === 1 ? "parto" : "partos"} en 60 días`
+              : `${cycles.length} ciclos esta temporada`
+          }
           href={`/${tenantSlug}/reproduccion`}
         />
-        <StatCard
-          label="Tareas abiertas"
-          value={openTasks.length}
-          hint="Sin completar"
-          href={`/${tenantSlug}/tareas`}
-        />
+        {receivables ? (
+          <StatCard
+            label="Pendiente de cobro"
+            value={formatEuros(receivables.pendingTotal)}
+            hint={
+              receivables.overdue.length > 0
+                ? `${receivables.overdue.length} ${receivables.overdue.length === 1 ? "factura vencida" : "facturas vencidas"}`
+                : `${receivables.openCount} ${receivables.openCount === 1 ? "factura emitida" : "facturas emitidas"}`
+            }
+            emphasis={receivables.overdue.length > 0}
+            href={`/${tenantSlug}/facturacion`}
+          />
+        ) : (
+          <StatCard
+            label="Tareas abiertas"
+            value={openTasks.length}
+            hint="Sin completar"
+            href={`/${tenantSlug}/tareas`}
+          />
+        )}
       </div>
 
       <section className="space-y-3">
         <SectionHeading
           title="Requiere tu atención"
-          description="Vencimientos sanitarios, tareas y alertas de rendimiento, lo más urgente primero"
+          description="Sanidad, ecografías, partos, cobros y tareas: lo más urgente primero"
           action={
             attention.length > 0 && (
               <Button asChild variant="ghost" size="sm">
-                <Link href={`/${tenantSlug}/sanidad`}>
-                  Ver sanidad
+                <Link href={attention[0].href}>
+                  Resolver primero
                   <CaretRight weight="bold" />
                 </Link>
               </Button>
@@ -220,7 +300,7 @@ export default async function InicioPage({ params }: PageProps) {
           <EmptyState
             icon={<Sun weight="duotone" />}
             title="Todo al día"
-            description="No hay vencimientos sanitarios, tareas ni alertas de rendimiento pendientes."
+            description="No hay vencimientos, ecografías, partos cercanos ni cobros vencidos."
           />
         ) : (
           <ListRows>

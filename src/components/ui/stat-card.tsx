@@ -25,9 +25,9 @@ export function StatCard({
   const body = (
     <div
       className={cn(
-        "group flex h-full flex-col justify-between gap-4 rounded-xl border bg-card p-4 transition-colors",
+        "group flex h-full flex-col justify-between gap-4 rounded-2xl border bg-card p-4 shadow-bento transition-[border-color,box-shadow,transform] duration-200",
         emphasis ? "border-amber-300/70 bg-amber-50/40" : "border-border",
-        href && "hover:border-foreground/20",
+        href && "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-raised",
       )}
     >
       <div className="flex items-start justify-between gap-2">

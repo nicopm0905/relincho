@@ -96,6 +96,7 @@ model Tenant {
   events            Event[]
   tasks             Task[]
   documents         Document[]
+  verifactuRecords VerifactuRecord[]
 }
 
 model User {
@@ -175,12 +176,17 @@ model Horse {
   sireId           String?
   damId            String?
   currentOwnerId   String?
+  /// Numero de inscripcion en el Libro Genealogico PRE (ANCCE). No es el UELN.
+  lgNumber         String?
+  /// Criador (quien figura como tal en el LG), distinto del propietario actual.
+  breederId        String?
   tenant           Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sire             Horse?              @relation("Sire", fields: [sireId], references: [id])
   dam              Horse?              @relation("Dam", fields: [damId], references: [id])
   sireOf           Horse[]             @relation("Sire")
   damOf            Horse[]             @relation("Dam")
-  owner            Contact?            @relation(fields: [currentOwnerId], references: [id])
+  owner            Contact?            @relation("HorseOwner", fields: [currentOwnerId], references: [id])
+  breeder          Contact?            @relation("HorseBreeder", fields: [breederId], references: [id], onDelete: SetNull)
   healthEvents     HealthEvent[]
   trainings        TrainingSession[]
   documents        Document[]
@@ -199,6 +205,7 @@ model Horse {
   vetProfile       VeterinaryProfile?
   macrocycles      Macrocycle[]
   dailyLoads       DailyLoad[]
+  events           Event[]
   nutritionBaseline NutritionBaseline?
   nutritionPrescriptions NutritionPrescription[]
   createdAt        DateTime            @default(now())
@@ -227,7 +234,8 @@ model Contact {
   phone             String?
   address           String?
   tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  horses            Horse[]
+  horses            Horse[]            @relation("HorseOwner")
+  bredHorses        Horse[]            @relation("HorseBreeder")
   boardingContracts BoardingContract[]
   invoices          Invoice[]
 
@@ -451,6 +459,8 @@ model InvoiceSeries {
   year       Int
   nextNumber Int       @default(1)
   isDefault  Boolean   @default(false)
+  /// La ley exige serie propia para las rectificativas.
+  isRectifying Boolean  @default(false)
   tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   invoices   Invoice[]
 
@@ -463,7 +473,8 @@ model Invoice {
   tenantId           String
   series             String
   seriesId           String?
-  number             Int
+  /// Se asigna al emitir: un borrador no consume numero (ni fecha).
+  number             Int?
   issueDate          DateTime
   dueDate            DateTime?
   clientId           String
@@ -478,7 +489,19 @@ model Invoice {
   verifactuQrUrl     String?
   verifactuSentAt    DateTime?
   pdfUrl             String?
+  /// F1 completa, F2 simplificada, R1-R4 rectificativa (claves de la AEAT).
+  invoiceType        String        @default("F1")
+  /// Factura que esta rectifica, si es rectificativa.
+  rectifiesId        String?
+  /// "S" sustitucion o "I" por diferencias.
+  rectificationKind  String?
+  rectificationReason String?
+  /// Mes de pupilaje facturado ("2026-09"): evita facturar dos veces el mismo mes.
+  periodMonth        String?
   client             Contact       @relation(fields: [clientId], references: [id])
+  rectifies          Invoice?      @relation("Rectification", fields: [rectifiesId], references: [id], onDelete: Restrict)
+  rectifiedBy        Invoice[]     @relation("Rectification")
+  verifactuRecords   VerifactuRecord[]
   boardingContract   BoardingContract? @relation(fields: [boardingContractId], references: [id])
   invoiceSeries      InvoiceSeries? @relation(fields: [seriesId], references: [id])
   lines              InvoiceLine[]
@@ -486,7 +509,35 @@ model Invoice {
   tenant             Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, series, number])
+  @@unique([boardingContractId, periodMonth])
   @@index([tenantId, issueDate])
+}
+
+/**
+ * Registro de facturacion Veri*Factu: cada alta o anulacion encadena su huella
+ * con la del registro anterior del mismo emisor. Inmutable una vez creado.
+ */
+model VerifactuRecord {
+  id          String   @id @default(uuid())
+  tenantId    String
+  invoiceId   String
+  /// "ALTA" o "ANULACION"
+  kind        String
+  hash        String
+  prevHash    String?
+  /// Texto exacto de FechaHoraHusoGenRegistro usado en la huella.
+  generatedAt String
+  /// XML del registro, listo para el envio.
+  payload     String
+  /// "PENDING" hasta que se envie a la AEAT.
+  status      String   @default("PENDING")
+  sentAt      DateTime?
+  error       String?
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, createdAt])
 }
 
 model InvoiceLine {
@@ -534,7 +585,10 @@ model Event {
   endsAt   DateTime?
   location String?
   notes    String?
+  /// Caballo al que se refiere (visita del veterinario, concurso...). Opcional.
+  horseId  String?
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  horse    Horse?    @relation(fields: [horseId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, startsAt])
 }

@@ -7,9 +7,23 @@ import { es } from "date-fns/locale";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CreateCoveringDialog } from "@/components/reproduction/create-covering-dialog";
-import { PregnancyCheckDialog } from "@/components/reproduction/pregnancy-check-dialog";
-import { FoalingDialog } from "@/components/reproduction/foaling-dialog";
+import dynamic from "next/dynamic";
+import {
+  checkResultLabels,
+  coveringResult,
+  gestation,
+  isPregnantResult,
+  nextCheckpoint,
+} from "@/lib/reproduction";
+import {
+  EditCoveringDialog,
+  EditFoalingDialog,
+  EditPregnancyCheckDialog,
+} from "@/components/reproduction/repro-edit-dialogs";
+
+const CreateCoveringDialog = dynamic(() => import("@/components/reproduction/create-covering-dialog").then((module) => module.CreateCoveringDialog), { loading: () => <div className="h-10 w-40 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const PregnancyCheckDialog = dynamic(() => import("@/components/reproduction/pregnancy-check-dialog").then((module) => module.PregnancyCheckDialog), { loading: () => <div className="h-9 w-28 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const FoalingDialog = dynamic(() => import("@/components/reproduction/foaling-dialog").then((module) => module.FoalingDialog), { loading: () => <div className="h-9 w-28 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
 
 interface PageProps {
   params: Promise<{ tenantSlug: string; cycleId: string }>;
@@ -32,22 +46,14 @@ function translateMethod(method: string) {
 }
 
 function translateResult(result: string | null) {
-  if (!result) return "Pendiente";
-  const map: Record<string, string> = {
-    PENDING: "Pendiente",
-    POSITIVE: "Positiva",
-    NEGATIVE: "Negativa",
-    TWINS: "Gemelos",
-    REABSORBED: "Reabsorbida",
-    ABORTION: "Aborto",
-  };
-  return map[result] || result;
+  if (!result) return checkResultLabels.PENDING;
+  return checkResultLabels[result as keyof typeof checkResultLabels] ?? result;
 }
 
 function resultBadgeVariant(result: string | null): "warning" | "success" | "destructive" | "secondary" {
   if (!result) return "warning";
-  if (result === "POSITIVE") return "success";
-  if (result === "NEGATIVE") return "destructive";
+  if (result === "POSITIVE" || result === "TWINS") return "success";
+  if (result === "NEGATIVE" || result === "REABSORBED" || result === "ABORTION") return "destructive";
   if (result === "PENDING") return "warning";
   return "secondary";
 }
@@ -59,7 +65,7 @@ export default async function CycleDetailPage({ params }: PageProps) {
   let cycle;
   try {
     cycle = await caller.reproduction.getCycleDetails({ cycleId });
-  } catch (error) {
+  } catch {
     notFound();
   }
 
@@ -135,9 +141,19 @@ export default async function CycleDetailPage({ params }: PageProps) {
                           {format(new Date(covering.date), "dd MMM yyyy", { locale: es })}
                         </span>
                       </CardTitle>
-                      <Badge variant={resultBadgeVariant(covering.result)}>
-                        {translateResult(covering.result)}
-                      </Badge>
+                      <div className="flex items-center gap-1">
+                        <Badge variant={resultBadgeVariant(coveringResult(covering.pregnancyChecks))}>
+                          {translateResult(coveringResult(covering.pregnancyChecks))}
+                        </Badge>
+                        <EditCoveringDialog
+                          covering={{
+                            id: covering.id,
+                            date: covering.date,
+                            method: covering.method,
+                            stallionId: covering.stallionId,
+                          }}
+                        />
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-5">
@@ -152,6 +168,53 @@ export default async function CycleDetailPage({ params }: PageProps) {
                         <p className="font-medium">{covering.stallion?.name || "—"}</p>
                       </div>
                     </div>
+
+                    {!covering.foaling && (() => {
+                      const pregnant = isPregnantResult(coveringResult(covering.pregnancyChecks));
+                      const g = gestation(covering.date);
+                      const next = nextCheckpoint(covering.date, covering.pregnancyChecks.length);
+                      const stillOpen =
+                        coveringResult(covering.pregnancyChecks) === "PENDING" || coveringResult(covering.pregnancyChecks) === null || pregnant;
+                      if (!pregnant && !(stillOpen && next)) return null;
+                      return (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {pregnant && (
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-sm">
+                              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800/70">
+                                Parto previsto
+                              </p>
+                              <p className="mt-1 font-semibold text-emerald-800">
+                                {format(g.expected, "d 'de' MMMM yyyy", { locale: es })}
+                              </p>
+                              <p className="text-xs text-emerald-800/70">
+                                Entre el {format(g.windowFrom, "d MMM", { locale: es })} y el{" "}
+                                {format(g.windowTo, "d MMM", { locale: es })} · día {g.days} de gestación
+                              </p>
+                            </div>
+                          )}
+                          {stillOpen && next && (
+                            <div
+                              className={`rounded-xl border p-3 text-sm ${
+                                next.overdue
+                                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                                  : "border-border bg-muted/40 text-foreground"
+                              }`}
+                            >
+                              <p className="text-xs font-semibold uppercase tracking-wider opacity-70">
+                                Siguiente control
+                              </p>
+                              <p className="mt-1 font-semibold">{next.label}</p>
+                              <p className="text-xs opacity-80">
+                                {next.overdue ? "Pendiente desde el " : "Toca entre el "}
+                                {format(next.due, "d MMM", { locale: es })}
+                                {next.overdue ? "" : ` y el ${format(next.limit, "d MMM", { locale: es })}`}
+                                {` (días ${next.from}-${next.to})`}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Pregnancy Checks */}
                     {covering.pregnancyChecks.length > 0 && (
@@ -176,6 +239,14 @@ export default async function CycleDetailPage({ params }: PageProps) {
                               <Badge variant={resultBadgeVariant(check.result)}>
                                 {translateResult(check.result)}
                               </Badge>
+                              <EditPregnancyCheckDialog
+                                check={{
+                                  id: check.id,
+                                  date: check.date,
+                                  result: check.result,
+                                  dayOfPregnancy: check.dayOfPregnancy,
+                                }}
+                              />
                             </div>
                           </div>
                         ))}
@@ -186,10 +257,21 @@ export default async function CycleDetailPage({ params }: PageProps) {
                     {covering.foaling && (
                       <div className="border-t border-border/50 pt-4">
                         <div className="bg-primary/5 rounded-xl p-4">
-                          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                            <Baby weight="fill" className="h-4 w-4 text-primary-ink" />
-                            Parto Registrado
-                          </h4>
+                          <div className="mb-3 flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                              <Baby weight="fill" className="h-4 w-4 text-primary-ink" />
+                              Parto Registrado
+                            </h4>
+                            <EditFoalingDialog
+                              foaling={{
+                                id: covering.foaling.id,
+                                date: covering.foaling.date,
+                                sex: covering.foaling.sex,
+                                alive: covering.foaling.alive,
+                                notes: covering.foaling.notes,
+                              }}
+                            />
+                          </div>
                           <div className="grid grid-cols-3 gap-3 text-sm">
                             <div>
                               <p className="text-xs text-muted-foreground">Fecha</p>
@@ -249,7 +331,7 @@ export default async function CycleDetailPage({ params }: PageProps) {
                     {!covering.foaling && (
                       <div className="flex gap-2 pt-2 justify-end">
                         <PregnancyCheckDialog coveringId={covering.id} />
-                        {covering.result === "POSITIVE" && (
+                        {isPregnantResult(coveringResult(covering.pregnancyChecks)) && (
                           <FoalingDialog coveringId={covering.id} />
                         )}
                       </div>

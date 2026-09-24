@@ -55,8 +55,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
+  const [locale, messages, common] = await Promise.all([
+    getLocale(),
+    getMessages(),
+    getTranslations("common"),
+  ]);
 
   return (
     <html lang={locale}>
@@ -64,6 +67,12 @@ export default async function RootLayout({
         className={`${inter.variable} ${newsreader.variable} ${geistMono.variable} antialiased`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
+          <a
+            href="#main-content"
+            className="fixed top-3 left-3 z-[100] -translate-y-20 rounded-lg bg-foreground px-3 py-2 text-sm font-semibold text-background shadow-lg transition-transform focus:translate-y-0"
+          >
+            {common("skipToContent")}
+          </a>
           {children}
           <CookieBanner />
         </NextIntlClientProvider>

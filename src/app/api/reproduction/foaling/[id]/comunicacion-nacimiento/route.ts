@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
+import { allowedHorseIds } from "@/server/trpc/access";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -52,6 +53,14 @@ export async function GET(
     });
 
     if (!membership || !tenant) {
+      return NextResponse.json({ error: "Parto no encontrado" }, { status: 404 });
+    }
+    // Ser miembro no basta: un externo solo accede a sus caballos.
+    const visibleHorses = await allowedHorseIds({
+      role: membership.role,
+      membershipId: membership.id,
+    });
+    if (visibleHorses && !visibleHorses.includes(foaling.covering.mareId)) {
       return NextResponse.json({ error: "Parto no encontrado" }, { status: 404 });
     }
 
@@ -128,8 +137,10 @@ export async function GET(
     section("Progenitores");
     field("Yegua (madre)", mareName);
     field("UELN de la yegua", mareUeln);
+    field("Nº LG de la yegua", foaling.covering.mare.lgNumber ?? "");
     field("Semental (padre)", stallionName);
     field("UELN del semental", stallionUeln);
+    field("Nº LG del semental", foaling.covering.stallion?.lgNumber ?? "");
 
     section("Reseña del potro (a rellenar a mano)");
     field("Capa", "");

@@ -69,18 +69,23 @@ export async function sendHealthReminder(opts: {
   dueDate: Date;
   tenantName: string;
   tenantSlug: string;
+  /** Dias que faltan: 7 para el aviso previo, 0 para el del mismo dia. */
+  daysUntil?: number;
 }): Promise<SendResult> {
   const { to, ownerName, horseName, eventName, dueDate, tenantName, tenantSlug } =
     opts;
+  const daysUntil = opts.daysUntil ?? 7;
+  const when = daysUntil === 0 ? "hoy" : daysUntil === 1 ? "mañana" : `en ${daysUntil} días`;
   const formattedDate = dueDate.toLocaleDateString("es-ES", {
     day: "2-digit",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Madrid",
   });
 
   return sendEmail({
     to,
-    subject: `Recordatorio: ${eventName} de ${horseName} en 7 días`,
+    subject: `Recordatorio: ${eventName} de ${horseName} ${when}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #171717;">Recordatorio sanitario — ${esc(tenantName)}</h2>

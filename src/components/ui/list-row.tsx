@@ -28,8 +28,8 @@ export function ListRow({
   const content = (
     <div
       className={cn(
-        "flex items-center gap-3 py-2.5",
-        href && "-mx-2 rounded-lg px-2 transition-colors hover:bg-muted/70",
+        "flex items-center gap-3 py-3",
+        href && "-mx-2 rounded-xl px-2 transition-[background-color,transform] hover:bg-primary/[0.05] hover:translate-x-0.5",
         className,
       )}
     >
@@ -78,7 +78,7 @@ export function RowIcon({
   return (
     <span
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-lg border [&>svg]:h-4 [&>svg]:w-4",
+        "flex h-9 w-9 items-center justify-center rounded-xl border [&>svg]:h-4 [&>svg]:w-4",
         tone === "alert"
           ? "border-amber-200 bg-amber-50 text-amber-700"
           : "border-border bg-muted text-muted-foreground",

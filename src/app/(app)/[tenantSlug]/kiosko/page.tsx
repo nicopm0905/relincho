@@ -3,7 +3,19 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc/react";
 import { X, CheckCircle, WarningCircle, Clock, SpinnerGap } from "@phosphor-icons/react";
-import { SwipeableCard } from "@/components/kiosko/swipeable-card";
+import dynamic from "next/dynamic";
+
+const SwipeableCard = dynamic(
+  () =>
+    import("@/components/kiosko/swipeable-card").then(
+      (module) => module.SwipeableCard,
+    ),
+  {
+    loading: () => (
+      <div className="h-48 animate-pulse rounded-3xl border border-border/60 bg-card" aria-busy="true" />
+    ),
+  },
+);
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -17,6 +29,7 @@ export default function KioskoPage() {
   let defaultMeal = "MAÑANA";
   if (hour >= 12 && hour < 17) defaultMeal = "MEDIODIA";
   if (hour >= 17) defaultMeal = "TARDE";
+  if (hour >= 21) defaultMeal = "NOCHE";
   
   const [mealType, setMealType] = useState(defaultMeal);
   const dateStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
@@ -89,14 +102,14 @@ export default function KioskoPage() {
     <div className="fixed inset-0 z-[100] bg-muted/20 overflow-y-auto safe-area-bottom pb-20 animate-in slide-in-from-bottom duration-300">
       
       {/* Header Sticky */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-lg border-b border-border/40 px-4 py-3 shadow-sm flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur-lg border-b border-border/70 px-4 py-3 shadow-sm flex items-center justify-between">
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
             <Clock className="h-3 w-3" /> Reparto Activo
           </span>
-          <h1 className="text-2xl font-black font-heading text-foreground tracking-tight">Modo Kiosko</h1>
+          <h1 className="text-2xl font-semibold font-heading text-foreground tracking-tight">Modo Kiosko</h1>
         </div>
-        <Button asChild variant="ghost" size="icon" className="rounded-full bg-muted/50 hover:bg-muted text-foreground h-10 w-10 shrink-0">
+        <Button asChild variant="ghost" size="icon" aria-label="Cerrar modo kiosko" className="rounded-full bg-muted/50 hover:bg-muted text-foreground h-10 w-10 shrink-0">
           <Link href={`/${tenantSlug}/inicio`}>
             <X weight="bold" className="h-5 w-5" />
           </Link>
@@ -104,31 +117,34 @@ export default function KioskoPage() {
       </div>
       
       {/* Selector de Comida */}
-      <div className="p-4 flex gap-2 overflow-x-auto no-scrollbar">
-        {["MAÑANA", "MEDIODIA", "TARDE"].map(meal => (
+      <div className="scroll-fade-x no-scrollbar flex gap-2 overflow-x-auto px-4 py-3">
+        {["MAÑANA", "MEDIODIA", "TARDE", "NOCHE"].map(meal => (
           <button
             key={meal}
+            type="button"
+            aria-pressed={mealType === meal}
             onClick={() => setMealType(meal)}
-            className={`px-5 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all whitespace-nowrap ${
+            className={`min-h-11 shrink-0 rounded-full px-5 py-2.5 text-sm font-bold tracking-wide transition-all whitespace-nowrap ${
               mealType === meal 
                 ? "bg-orange-600 text-white shadow-md scale-105" 
-                : "bg-white text-muted-foreground border border-border/40 hover:bg-muted/50"
+                : "bg-card text-muted-foreground border border-border/70 hover:bg-muted/70"
             }`}
           >
             {meal === "MAÑANA" && "Desayuno"}
             {meal === "MEDIODIA" && "Almuerzo"}
             {meal === "TARDE" && "Cena"}
+            {meal === "NOCHE" && "Noche"}
           </button>
         ))}
       </div>
       
-      <div className="px-4 pb-12 max-w-lg mx-auto">
+      <div className="mx-auto max-w-lg px-4 pb-12 sm:px-5">
         {pendingHorses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center mb-6">
               <CheckCircle weight="fill" className="h-12 w-12 text-emerald-500" />
             </div>
-            <h2 className="text-2xl font-black font-heading text-emerald-700">¡Todo repartido!</h2>
+            <h2 className="text-2xl font-semibold font-heading text-emerald-700">¡Todo repartido!</h2>
             <p className="text-muted-foreground mt-2 font-medium">
               No quedan raciones pendientes para el {mealType.toLowerCase()}.
             </p>
@@ -138,7 +154,7 @@ export default function KioskoPage() {
             {Object.entries(groupedPending).map(([location, horsesInLoc]) => (
               <div key={location} className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground bg-white px-3 py-1 rounded-lg border border-border/40 shadow-sm inline-block">
+                  <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground bg-card px-3 py-1 rounded-xl border border-border/70 shadow-sm inline-block">
                     {location}
                   </h3>
                   <div className="h-px bg-border flex-1" />
@@ -151,8 +167,8 @@ export default function KioskoPage() {
                       horseName={horse.horseName}
                       boxLocation={horse.boxLocation}
                       photoUrl={horse.photoUrl}
-                      diet={horse.diet as string[]}
-                      status={horse.status as any}
+                      diet={horse.diet}
+                      status={horse.status as "PENDING" | "DONE" | "SKIPPED"}
                       dynamic={horse.dynamic}
                       onSwipe={(status) => handleSwipe(horse.horseId, status)}
                     />
@@ -174,8 +190,8 @@ export default function KioskoPage() {
                     horseName={horse.horseName}
                     boxLocation={horse.boxLocation}
                     photoUrl={horse.photoUrl}
-                    diet={horse.diet as string[]}
-                    status={horse.status as any}
+                    diet={horse.diet}
+                    status={horse.status as "PENDING" | "DONE" | "SKIPPED"}
                     onSwipe={() => {}}
                   />
               ))}

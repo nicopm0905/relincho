@@ -18,14 +18,23 @@ import { trpc } from "@/lib/trpc/react";
 import { CircleNotch, UploadSimple, Horse } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import Image from "next/image";
+import { isValidMicrochip, isValidUeln } from "@/lib/identifiers";
 
-const SELECT_TRANSLATIONS: Record<string, string> = {
-  MALE: "Macho", FEMALE: "Hembra", UNKNOWN: "Desconocido", GELDING: "Macho (Castrado)",
-  ACTIVE: "Activo", INACTIVE: "Inactivo", SOLD: "Vendido", DECEASED: "Fallecido",
-  POSITIVE: "Positiva", NEGATIVE: "Negativa", TWINS: "Gemelos", REABSORBED: "Reabsorbida", ABORTION: "Aborto",
-  NATURAL: "Monta Natural", AI_FRESH: "IA Fresco", AI_CHILLED: "IA Refrigerado", AI_FROZEN: "IA Congelado",
-  DEWORMING: "Desparasitación", VACCINATION: "Vacunación", DENTISTRY: "Odontología", FARRIER: "Herrador", VET_CHECK: "Revisión Veterinaria", TREATMENT: "Tratamiento Médico", OTHER: "Otro"
+const SEX_LABELS: Record<string, string> = {
+  MALE: "Semental",
+  FEMALE: "Yegua",
+  GELDING: "Castrado",
 };
+
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Activo",
+  IN_TRAINING: "En doma",
+  SOLD: "Vendido",
+  RETIRED: "Retirado",
+  DEAD: "Fallecido",
+};
+
+const NONE = "__none__";
 
 interface FormState {
   name: string;
@@ -38,6 +47,11 @@ interface FormState {
   microchip: string;
   hierro: string;
   boxLocation: string;
+  sireId: string;
+  damId: string;
+  currentOwnerId: string;
+  breederId: string;
+  lgNumber: string;
 }
 
 interface HorseFormProps {
@@ -68,7 +82,24 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
     microchip: defaultValues?.microchip ?? "",
     hierro: defaultValues?.hierro ?? "",
     boxLocation: defaultValues?.boxLocation ?? "",
+    sireId: defaultValues?.sireId ?? "",
+    damId: defaultValues?.damId ?? "",
+    currentOwnerId: defaultValues?.currentOwnerId ?? "",
+    breederId: defaultValues?.breederId ?? "",
+    lgNumber: defaultValues?.lgNumber ?? "",
   });
+
+  // Padres entre los caballos de la yeguada (sin el propio), propietario
+  // entre los contactos.
+  const { data: horses } = trpc.horses.list.useQuery();
+  const { data: contacts } = trpc.contacts.list.useQuery(undefined, { retry: false });
+  const others = (horses ?? []).filter((h) => h.id !== defaultValues?.id);
+  const sires = others.filter((h) => h.sex === "MALE");
+  const dams = others.filter((h) => h.sex === "FEMALE");
+
+  // Aviso en vivo; el servidor valida igual.
+  const uelnInvalid = form.uelnCode.trim() !== "" && !isValidUeln(form.uelnCode);
+  const chipInvalid = form.microchip.trim() !== "" && !isValidMicrochip(form.microchip);
 
   function set(field: keyof FormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -113,6 +144,10 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
       setError("El nombre es obligatorio");
       return;
     }
+    if (uelnInvalid || chipInvalid) {
+      setError("Revisa el UELN o el microchip");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -126,6 +161,12 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
         hierro: form.hierro || undefined,
         boxLocation: form.boxLocation || undefined,
         photoUrl: photoUrl,
+        // Al editar, vaciar el campo quita el dato (null); al crear, no se envia.
+        sireId: form.sireId || (defaultValues?.id ? null : undefined),
+        damId: form.damId || (defaultValues?.id ? null : undefined),
+        currentOwnerId: form.currentOwnerId || (defaultValues?.id ? null : undefined),
+        breederId: form.breederId || (defaultValues?.id ? null : undefined),
+        lgNumber: form.lgNumber || undefined,
       };
       if (defaultValues?.id) {
         await updateHorse.mutateAsync({ id: defaultValues.id, ...payload });
@@ -136,8 +177,11 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
       }
       router.push(`/${tenantSlug}/caballos`);
       router.refresh();
-    } catch {
-      toast.error("Error al guardar el caballo");
+    } catch (err) {
+      // El servidor explica el motivo (microchip repetido, padre no valido...).
+      const message = err instanceof Error && err.message ? err.message : "Error al guardar el caballo";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -200,7 +244,7 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
               <Label>Sexo *</Label>
               <Select value={form.sex} onValueChange={(v) => set("sex", v ?? "MALE")}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>{(v: string) => SEX_LABELS[v] ?? v}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="MALE">Semental</SelectItem>
@@ -214,7 +258,7 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
               <Label>Estado</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v ?? "ACTIVE")}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>{(v: string) => STATUS_LABELS[v] ?? v}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ACTIVE">Activo</SelectItem>
@@ -257,13 +301,21 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="uelnCode">UELN / LG PRE</Label>
+              <Label htmlFor="uelnCode">UELN</Label>
               <Input
                 id="uelnCode"
                 value={form.uelnCode}
                 onChange={(e) => set("uelnCode", e.target.value)}
-                placeholder="724XXXXXXXXXXXX"
+                placeholder="724015240123456"
+                aria-invalid={uelnInvalid}
+                aria-describedby={uelnInvalid ? "uelnCode-error" : undefined}
+                className="uppercase"
               />
+              {uelnInvalid && (
+                <p id="uelnCode-error" className="text-xs text-destructive">
+                  15 caracteres, como en el pasaporte
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -272,8 +324,16 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
                 id="microchip"
                 value={form.microchip}
                 onChange={(e) => set("microchip", e.target.value)}
-                placeholder="724XXXXXXXXXXXX"
+                placeholder="941000012345678"
+                inputMode="numeric"
+                aria-invalid={chipInvalid}
+                aria-describedby={chipInvalid ? "microchip-error" : undefined}
               />
+              {chipInvalid && (
+                <p id="microchip-error" className="text-xs text-destructive">
+                  15 dígitos
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -297,6 +357,60 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
             </div>
           </div>
 
+          <fieldset className="space-y-4 border-t border-border/60 pt-5">
+            <legend className="text-sm font-semibold text-foreground">Genealogía y propiedad</legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="lgNumber">Nº Libro Genealógico (ANCCE)</Label>
+                <Input
+                  id="lgNumber"
+                  value={form.lgNumber}
+                  onChange={(e) => set("lgNumber", e.target.value)}
+                  placeholder="Como figura en la carta genealógica"
+                  className="uppercase"
+                />
+              </div>
+              <RefSelect
+                id="breederId"
+                label="Criador"
+                value={form.breederId}
+                onChange={(v) => set("breederId", v)}
+                options={(contacts ?? []).map((c) => ({ id: c.id, name: c.name }))}
+                empty="La propia yeguada"
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <RefSelect
+                id="sireId"
+                label="Padre"
+                value={form.sireId}
+                onChange={(v) => set("sireId", v)}
+                options={sires}
+                empty="Sin indicar"
+              />
+              <RefSelect
+                id="damId"
+                label="Madre"
+                value={form.damId}
+                onChange={(v) => set("damId", v)}
+                options={dams}
+                empty="Sin indicar"
+              />
+              <RefSelect
+                id="currentOwnerId"
+                label="Propietario"
+                value={form.currentOwnerId}
+                onChange={(v) => set("currentOwnerId", v)}
+                options={(contacts ?? []).map((c) => ({ id: c.id, name: c.name }))}
+                empty="La propia yeguada"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Si el padre o la madre no están en tu cuadra, añádelos como caballos con estado
+              «Retirado» o «Vendido» para tener la genealogía completa.
+            </p>
+          </fieldset>
+
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <div className="flex gap-3 pt-2">
@@ -314,3 +428,42 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
   );
 }
 
+function RefSelect({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  empty,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { id: string; name: string }[];
+  empty: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Select
+        value={value || NONE}
+        onValueChange={(v) => onChange(!v || v === NONE ? "" : (v as string))}
+      >
+        <SelectTrigger id={id}>
+          <SelectValue>
+            {(v: string) => (v === NONE ? empty : (options.find((o) => o.id === v)?.name ?? "Cargando…"))}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NONE}>{empty}</SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o.id} value={o.id}>
+              {o.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}

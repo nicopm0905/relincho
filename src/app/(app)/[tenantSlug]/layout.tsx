@@ -1,5 +1,5 @@
-import { auth } from "@/server/auth";
-import { prisma } from "@/server/db/prisma";
+import { getSession } from "@/server/auth";
+import { getTenantAccess } from "@/server/tenant-access";
 import { redirect, notFound } from "next/navigation";
 import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
 import { isDemoTenant } from "@/lib/demo";
@@ -19,22 +19,17 @@ export default async function TenantLayout({
   params,
 }: TenantLayoutProps) {
   const { tenantSlug } = await params;
-  const session = await auth();
   const demo = isDemoTenant(tenantSlug);
+  // La sesion es un JWT: se lee sin tocar la base de datos. Tenant y membresia
+  // salen de una sola consulta que el contexto de tRPC reutiliza despues.
+  const session = await getSession();
   if (!session?.user && !demo) redirect(await loginUrlForCurrentPage());
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { slug: tenantSlug },
-  });
+  const { tenant, membership } = await getTenantAccess(
+    tenantSlug,
+    session?.user?.id,
+  );
   if (!tenant) notFound();
-
-  const membership = session?.user
-    ? await prisma.membership.findUnique({
-        where: {
-          userId_tenantId: { userId: session.user.id, tenantId: tenant.id },
-        },
-      })
-    : null;
   if (!membership && !demo) notFound();
 
   // Sin membresia en la yeguada de demostracion: mismo panel, en solo lectura.
@@ -65,7 +60,7 @@ export default async function TenantLayout({
           userEmail={session?.user?.email}
         />
         {/* Top padding on phones clears the fixed bar; bottom clears the tabs. */}
-        <main className="min-w-0 flex-1">
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
           <div className="mx-auto max-w-6xl px-4 pt-20 pb-24 md:px-8 md:pt-8 md:pb-12">
             {readOnlyDemo && <DemoBanner />}
             {children}

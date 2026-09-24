@@ -32,6 +32,7 @@
   },
   "common": {
     "back": "Atrás",
+    "skipToContent": "Saltar al contenido principal",
     "localeSwitcher": {
       "label": "Cambiar idioma",
       "es": "ES",
@@ -47,6 +48,7 @@
       "pricing": "Precios",
       "faq": "FAQ"
     },
+    "navigation": "Navegación principal",
     "actions": {
       "login": "Iniciar sesión",
       "startFree": "Empezar gratis",
@@ -63,7 +65,12 @@
       "subtitle": "Sanidad, reproducción, pupilaje, facturación y rendimiento deportivo. Todo en un solo lugar. Sin complicaciones.",
       "ctaPrimary": "Pruébalo gratis",
       "ctaSecondary": "Ver características",
-      "disclaimer": "Sin tarjeta de crédito · Cancela cuando quieras"
+      "disclaimer": "Sin tarjeta de crédito · Cancela cuando quieras",
+      "trust": [
+        "Sin tarjeta de crédito",
+        "Hecho en Jerez",
+        "Tus datos, en la UE"
+      ]
     },
     "features": {
       "title": "Todo lo que necesitas. Y nada más.",
@@ -89,7 +96,8 @@
           "title": "Facturación y cobros",
           "description": "Emite facturas legales, genera cuotas automáticas y envía recibos SEPA. Todo adaptado a la nueva normativa de la AEAT."
         }
-      }
+      },
+      "eyebrow": "Módulos"
     },
     "about": {
       "title": "¿Quiénes Somos?",
@@ -113,7 +121,8 @@
           "title": "Bienestar Animal",
           "description": "Aplicamos conocimientos de biomecánica y entrenamiento deportivo para asegurar que el seguimiento de los caballos sea el óptimo."
         }
-      }
+      },
+      "eyebrow": "Quiénes somos"
     },
     "faq": {
       "title": "Preguntas Frecuentes",
@@ -189,6 +198,18 @@
           ]
         }
       }
+    },
+    "showcase": {
+      "eyebrow": "Así se ve por dentro",
+      "title": "Lo urgente primero, cada mañana.",
+      "link": "Abrir la demo sin registrarte",
+      "alt": "Pantalla de inicio de Relincho: caballos activos, avisos pendientes, yeguas preñadas y tareas abiertas de una yeguada de demostración."
+    },
+    "cta": {
+      "title": "Tu yeguada, en orden desde hoy.",
+      "subtitle": "Entra en la demo con una yeguada de ejemplo y compruébalo en dos minutos. Sin cuenta y sin tarjeta.",
+      "primary": "Ver la demo",
+      "secondary": "Hablar con nosotros"
     }
   },
   "demo": {
@@ -217,12 +238,30 @@
       "title": "El resto de la cuadra, en el mismo sitio",
       "subtitle": "Capturas de la yeguada de demostración, tal cual salen de la app.",
       "items": [
-        { "title": "Inicio", "description": "Sanidad, tareas y alertas de rendimiento en una sola lista, lo más urgente primero." },
-        { "title": "Sanidad", "description": "Vacunas, desparasitaciones y tratamientos con recordatorios automáticos." },
-        { "title": "Reproducción", "description": "Celos, cubriciones, ecografías y partos con cálculos predictivos." },
-        { "title": "Pupilaje y dietas", "description": "Boxes, estancias y tarifas de los caballos de clientes." },
-        { "title": "Facturación",          "description": "Facturas con series, impuestos y PDF, cuotas de pupilaje automáticas y recibos SEPA." },
-        { "title": "Ficha del caballo", "description": "Todo el historial de un caballo: sanidad, documentos, movimientos y entrenamiento." }
+        {
+          "title": "Inicio",
+          "description": "Sanidad, tareas y alertas de rendimiento en una sola lista, lo más urgente primero."
+        },
+        {
+          "title": "Sanidad",
+          "description": "Vacunas, desparasitaciones y tratamientos con recordatorios automáticos."
+        },
+        {
+          "title": "Reproducción",
+          "description": "Celos, cubriciones, ecografías y partos con cálculos predictivos."
+        },
+        {
+          "title": "Pupilaje y dietas",
+          "description": "Boxes, estancias y tarifas de los caballos de clientes."
+        },
+        {
+          "title": "Facturación",
+          "description": "Facturas con series, impuestos y PDF, cuotas de pupilaje automáticas y recibos SEPA."
+        },
+        {
+          "title": "Ficha del caballo",
+          "description": "Todo el historial de un caballo: sanidad, documentos, movimientos y entrenamiento."
+        }
       ]
     },
     "closing": {
@@ -462,6 +501,7 @@
   },
   "sidebar": {
     "brand": "Relincho",
+    "navigation": "Navegación principal",
     "home": "Inicio",
     "groups": {
       "stable": "Cuadra",
@@ -474,6 +514,7 @@
       "reproduction": "Reproducción",
       "movements": "Movimientos",
       "tasks": "Tareas",
+      "calendar": "Calendario",
       "boarding": "Pupilaje",
       "invoicing": "Facturación",
       "contacts": "Contactos",
@@ -481,6 +522,7 @@
       "settings": "Ajustes"
     },
     "more": "Más",
+    "moreSections": "Más secciones",
     "moreSheet": "Más secciones",
     "close": "Cerrar",
     "logout": "Cerrar sesión",
@@ -488,6 +530,7 @@
   },
   "landingV2": {
     "nav": {
+      "navigation": "Navegación principal",
       "features": "Características",
       "about": "Nosotros",
       "pricing": "Precios",

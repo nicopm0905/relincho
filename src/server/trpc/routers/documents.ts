@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { allowedHorseIds } from "../access";
 import {
   createDocumentRow,
   documentDownloadUrl,
@@ -34,7 +35,12 @@ export const documentsRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const rows = await listDocuments(ctx.tenantId, input ?? {});
+      // Un externo solo ve documentos de sus caballos; los de la yeguada en
+      // general (seguros, contratos...) no.
+      const rows = await listDocuments(ctx.tenantId, {
+        ...input,
+        allowedHorseIds: await allowedHorseIds(ctx),
+      });
       const documents = await withDownloadUrls(rows);
       const usage = await documentUsage(ctx.tenantId);
       return { tenantId: ctx.tenantId, documents, usage };
@@ -126,6 +132,10 @@ export const documentsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const doc = await findDocument(ctx.tenantId, input.id);
       if (!doc) throw new TRPCError({ code: "NOT_FOUND" });
+      const ids = await allowedHorseIds(ctx);
+      if (ids && (!doc.horseId || !ids.includes(doc.horseId))) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
       const url = await documentDownloadUrl(doc);
       if (!url) {
         throw new TRPCError({

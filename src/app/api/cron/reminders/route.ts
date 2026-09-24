@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Role } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
+import { dayWindowUtc } from "@/lib/day-window";
 import {
   sendHealthReminder,
   isEmailConfigured,
@@ -30,36 +32,51 @@ export async function GET(req: NextRequest) {
     data: { status: "OVERDUE" },
   });
 
-  const in7Days = new Date();
-  in7Days.setDate(in7Days.getDate() + 7);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 8);
-
-  // Buscar eventos cuyo nextDueDate sea exactamente en 7 días
-  const events = await prisma.healthEvent.findMany({
-    where: {
-      nextDueDate: {
-        gte: in7Days,
-        lt: tomorrow,
-      },
-    },
-    include: {
-      horse: {
-        include: {
-          tenant: {
-            include: {
-              memberships: {
-                where: { role: { in: ["OWNER", "MANAGER"] } },
-                include: { user: true },
-              },
+  // Dos avisos por vencimiento: una semana antes y el mismo dia. Cada ventana
+  // es un dia natural completo (ver `dayWindowUtc`); antes mezclaba la hora de
+  // ejecucion con una medianoche y cubria solo unas horas.
+  const includeRecipients = {
+    horse: {
+      include: {
+        tenant: {
+          include: {
+            memberships: {
+              where: { role: { in: ["OWNER", "MANAGER"] as Role[] } },
+              include: { user: true },
             },
           },
         },
       },
     },
-  });
+  } as const;
+  const reminderDays = [7, 0];
+  const batches = await Promise.all(
+    reminderDays.map(async (daysUntil) => {
+      const { start, end } = dayWindowUtc(daysUntil);
+      const found = await prisma.healthEvent.findMany({
+        where: { nextDueDate: { gte: start, lt: end } },
+        include: includeRecipients,
+      });
+      return found.map((event) => ({ event, daysUntil }));
+    }),
+  );
+
+  // Si ya se repitio el tratamiento (hay otro del mismo tipo, mas reciente, en
+  // ese caballo), el vencimiento antiguo esta cubierto: no se avisa.
+  const candidates = batches.flat();
+  const superseded = await Promise.all(
+    candidates.map(({ event }) =>
+      prisma.healthEvent.count({
+        where: {
+          horseId: event.horseId,
+          type: event.type,
+          date: { gt: event.date },
+          id: { not: event.id },
+        },
+      }),
+    ),
+  );
+  const events = candidates.filter((_, index) => superseded[index] === 0);
 
   // Sin remitente verificado no se puede enviar nada: se dice en la respuesta
   // en vez de devolver un "ok" con cero envios sin explicar.
@@ -80,7 +97,7 @@ export async function GET(req: NextRequest) {
   let skipped = 0;
   let failed = 0;
 
-  for (const event of events) {
+  for (const { event, daysUntil } of events) {
     const { horse } = event;
     const { tenant } = horse;
 
@@ -95,6 +112,7 @@ export async function GET(req: NextRequest) {
         dueDate: event.nextDueDate!,
         tenantName: tenant.name,
         tenantSlug: tenant.slug,
+        daysUntil,
       });
       if (result.ok) sent++;
       else if (result.skipped) skipped++;

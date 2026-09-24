@@ -1,6 +1,8 @@
 import { HorseForm } from "@/components/horses/horse-form";
+import { DeleteHorseButton } from "@/components/horses/delete-horse-button";
 import { prisma } from "@/server/db/prisma";
-import { auth } from "@/server/auth";
+import { getSession } from "@/server/auth";
+import { getTenantAccess } from "@/server/tenant-access";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -14,11 +16,15 @@ export const metadata = { title: "Editar caballo — Relincho" };
 
 export default async function EditarCaballoPage({ params }: PageProps) {
   const { tenantSlug, id } = await params;
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
-  const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+  const { tenant, membership } = await getTenantAccess(tenantSlug, session.user.id);
   if (!tenant) redirect("/dashboard");
+  // Solo quien puede guardar (horses.update) llega a ver el formulario.
+  if (membership?.role !== "OWNER" && membership?.role !== "MANAGER") {
+    redirect(`/${tenantSlug}/caballos/${id}`);
+  }
 
   const horse = await prisma.horse.findUnique({
     where: { id, tenantId: tenant.id },
@@ -53,8 +59,14 @@ export default async function EditarCaballoPage({ params }: PageProps) {
           hierro: horse.hierro || "",
           boxLocation: horse.boxLocation || "",
           photoUrl: horse.photoUrl || undefined,
+          sireId: horse.sireId || "",
+          damId: horse.damId || "",
+          currentOwnerId: horse.currentOwnerId || "",
+          breederId: horse.breederId || "",
+          lgNumber: horse.lgNumber || "",
         }} 
       />
+      <DeleteHorseButton horseId={horse.id} horseName={horse.name} tenantSlug={tenantSlug} />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EditTrainingDialog } from "./record-edit-dialogs";
 
 interface TimelineProps {
   horseId: string;
@@ -111,9 +112,23 @@ export function HorseTimeline({ horseId }: TimelineProps) {
             <div className="bg-white border border-border/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
                 <h4 className="font-bold text-foreground">{title}</h4>
-                <time className="text-xs font-semibold text-muted-foreground bg-muted/50 px-2 py-1 rounded-md w-fit">
-                  {format(new Date(ev.date), "d MMM yyyy, HH:mm", { locale: es })}
-                </time>
+                <div className="flex items-center gap-1">
+                  <time className="text-xs font-semibold text-muted-foreground bg-muted/50 px-2 py-1 rounded-md w-fit">
+                    {format(new Date(ev.date), "d MMM yyyy, HH:mm", { locale: es })}
+                  </time>
+                  {ev._model === "TrainingSession" && (
+                    <EditTrainingDialog
+                      session={{
+                        id: ev.id,
+                        date: ev.date,
+                        minutes: ev.minutes,
+                        type: ev.type,
+                        riderName: ev.riderName,
+                        notes: ev.notes,
+                      }}
+                    />
+                  )}
+                </div>
               </div>
               <p className="text-sm text-muted-foreground">{description}</p>
             </div>

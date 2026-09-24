@@ -62,8 +62,8 @@
 
 :root {
   /* Granola-inspired Light Palette */
-  --background: #f9f9f6; /* Warm off-white/cream */
-  --foreground: #111111; /* Dark charcoal */
+  --background: #f7f8f4; /* Warm off-white, easier on the eyes than pure white */
+  --foreground: #1c2114; /* Deep olive charcoal */
 
   /* Paleta categorica de fases: cuatro slots validados sobre el blanco de las
      tarjetas (separacion CVD y vision normal por encima del umbral). */
@@ -73,29 +73,29 @@
   --phase-transicion: #eda100;
   
   --card: #ffffff;
-  --card-foreground: #111111;
+  --card-foreground: #1c2114;
   
   --popover: #ffffff;
   --popover-foreground: #111111;
   
-  --primary: #a3b846; /* Olive green */
+  --primary: #71852b; /* Accessible olive green */
   --primary-foreground: #ffffff;
   /* Readable olive for text/icons placed on a translucent primary tint. */
-  --primary-ink: #55651c;
+  --primary-ink: #55691d;
   
   --secondary: #eaeaea; /* Very soft gray */
   --secondary-foreground: #111111;
   
   --muted: #f2f2f0;
-  --muted-foreground: #5f5f5c; /* Muted slate, AA on cream */
+  --muted-foreground: #60675a; /* Muted olive, AA on the warm background */
   
   --accent: #f2f2f0;
   --accent-foreground: #111111;
   
   --destructive: #ef4444;
-  --border: #e6e6e2; /* Subtle cream border */
-  --input: #e6e6e2;
-  --ring: #a3b846; /* Ring matches primary olive */
+  --border: #dfe4d8; /* Quiet green-tinted borders */
+  --input: #d6ddcd;
+  --ring: #8ea644; /* Visible focus ring without shouting */
   
   --success: #6b8e23; 
   --success-foreground: #ffffff;
@@ -111,14 +111,14 @@
   
   --radius: 0.625rem; /* Base radius; cards step up from here */
   
-  --sidebar: #f4f4f0;
-  --sidebar-foreground: #111111;
-  --sidebar-primary: #a3b846;
+  --sidebar: #f1f4ec;
+  --sidebar-foreground: #1c2114;
+  --sidebar-primary: #71852b;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f9f9f6;
-  --sidebar-accent-foreground: #111111;
-  --sidebar-border: #e6e6e2;
-  --sidebar-ring: #a3b846;
+  --sidebar-accent: #e7eddc;
+  --sidebar-accent-foreground: #1c2114;
+  --sidebar-border: #dfe4d8;
+  --sidebar-ring: #8ea644;
 }
 
 .dark {
@@ -182,8 +182,28 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* El header de la web es fijo: sin este margen, /#pricing deja el titulo de
+     la seccion tapado debajo. */
+  html {
+    scroll-padding-top: 6rem;
+  }
   body {
     @apply bg-background text-foreground tracking-tight;
+    /* Sin `background-attachment: fixed`: obliga a repintar la pantalla entera
+       en cada frame de scroll y hace que el scroll vaya a tirones. */
+    background-image:
+      radial-gradient(circle at 100% 0%, rgb(142 166 68 / 0.07), transparent 28rem),
+      radial-gradient(circle at 0% 100%, rgb(113 133 43 / 0.045), transparent 24rem);
+  }
+
+  ::selection {
+    background: rgb(142 166 68 / 0.24);
+    color: var(--foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   h1, h2, h3, h4, h5, h6, .font-heading {
     @apply tracking-tight font-heading;
@@ -194,8 +214,8 @@
 @layer utilities {
   .shadow-bento {
     box-shadow:
-      0 1px 2px rgba(17, 17, 17, 0.04),
-      0 4px 16px rgba(17, 17, 17, 0.03);
+      0 1px 2px rgb(35 49 18 / 0.035),
+      0 8px 24px rgb(35 49 18 / 0.045);
   }
   .shadow-raised {
     box-shadow:
@@ -260,6 +280,43 @@
       0px 8px 30px rgba(0, 0, 0, 0.04),
       0px 2px 4px rgba(0, 0, 0, 0.02);
   }
+
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .skeleton-shimmer::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    content: "";
+    background: linear-gradient(
+      105deg,
+      transparent 20%,
+      rgb(255 255 255 / 0.45) 45%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    animation: relincho-shimmer 1.8s ease-in-out infinite;
+  }
+
+  .dark .skeleton-shimmer::after {
+    background: linear-gradient(
+      105deg,
+      transparent 20%,
+      rgb(255 255 255 / 0.08) 45%,
+      transparent 70%
+    );
+  }
+
+  .cn-toast {
+    border-radius: 0.875rem !important;
+    box-shadow: 0 8px 24px rgb(35 49 18 / 0.12) !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+  }
 }
 
 @layer base {
@@ -291,7 +348,20 @@
 .rlv2-bar-1 .rlv2-fill { animation: rlv2-story-1 6s linear infinite; transform-origin: left center; }
 .rlv2-bar-2 .rlv2-fill { animation: rlv2-story-2 6s linear infinite; transform-origin: left center; }
 
+@keyframes relincho-shimmer {
+  100% { transform: translateX(100%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .rlv2-marquee,
   .rlv2-bar-1 .rlv2-fill,
   .rlv2-bar-2 .rlv2-fill { animation: none; }

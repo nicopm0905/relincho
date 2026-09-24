@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { invoiceLabel } from "@/lib/invoice-label";
 import { Role } from "@prisma/client";
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
@@ -85,7 +86,7 @@ export async function createInvoiceCheckoutSession(formData: FormData) {
   }
 
   const amountCents = Math.round(Number(invoice.total) * 100);
-  const invoiceRef = `${invoice.series}-${String(invoice.number).padStart(4, "0")}`;
+  const invoiceRef = invoiceLabel(invoice);
 
   const checkout = await stripe.checkout.sessions.create({
     mode: "payment",

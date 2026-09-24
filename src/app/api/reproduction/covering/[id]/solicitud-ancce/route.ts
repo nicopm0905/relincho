@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
+import { allowedHorseIds } from "@/server/trpc/access";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -52,6 +53,14 @@ export async function GET(
     });
 
     if (!membership || !tenant) {
+      return NextResponse.json({ error: "Cubrición no encontrada" }, { status: 404 });
+    }
+    // Ser miembro no basta: un externo solo accede a sus caballos.
+    const visibleHorses = await allowedHorseIds({
+      role: membership.role,
+      membershipId: membership.id,
+    });
+    if (visibleHorses && !visibleHorses.includes(covering.mareId)) {
       return NextResponse.json({ error: "Cubrición no encontrada" }, { status: 404 });
     }
 
@@ -120,11 +129,13 @@ export async function GET(
     section("Yegua");
     field("Nombre", covering.mare.name);
     field("UELN", covering.mare.uelnCode ?? "");
+    field("Nº LG", covering.mare.lgNumber ?? "");
     field("Microchip", covering.mare.microchip ?? "");
 
     section("Semental");
     field("Nombre", covering.stallion?.name ?? "");
     field("UELN", covering.stallion?.uelnCode ?? "");
+    field("Nº LG", covering.stallion?.lgNumber ?? "");
 
     section("Datos del servicio");
     field(

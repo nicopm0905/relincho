@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   // locale): cada pagina renderiza dinamico y el boundary de metadata
   // desincroniza servidor/cliente, tirando el arbol entero al hidratar y
   // dejando los botones sin enganchar. Se sirve como los bots: bloqueante.
+  // No quitar mientras el locale salga de una cookie en el layout raiz.
   htmlLimitedBots: /.*/,
   images: {
     remotePatterns: [
@@ -18,6 +19,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    optimizePackageImports: ["@phosphor-icons/react", "lucide-react", "framer-motion"],
     serverActions: {
       bodySizeLimit: "10mb",
     },

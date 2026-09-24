@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/server/auth";
-import { prisma } from "@/server/db/prisma";
+import { getSession } from "@/server/auth";
+import { getTenantAccess } from "@/server/tenant-access";
 import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
 import {
   Horse,
@@ -21,21 +21,14 @@ export default async function PortalLayout({
 }: PortalLayoutProps) {
   const { tenantSlug } = await params;
 
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect(await loginUrlForCurrentPage());
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { slug: tenantSlug },
-    select: { id: true, name: true },
-  });
+  const { tenant, membership } = await getTenantAccess(
+    tenantSlug,
+    session.user.id,
+  );
   if (!tenant) notFound();
-
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_tenantId: { userId: session.user.id, tenantId: tenant.id },
-    },
-    select: { role: true },
-  });
   if (!membership) notFound();
 
   // El portal es exclusivo del propietario externo. Cualquier otro rol vuelve
@@ -69,7 +62,7 @@ export default async function PortalLayout({
             </span>
             <span className="text-xs text-muted-foreground">· Portal del propietario</span>
           </div>
-          <nav className="flex items-center gap-1 text-sm">
+          <nav aria-label="Navegación del portal" className="flex items-center gap-1 text-sm">
             {nav.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -80,18 +73,18 @@ export default async function PortalLayout({
                 {label}
               </Link>
             ))}
-            <a
+            <Link
               href="/api/auth/signout"
               className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <SignOut weight="bold" className="h-4 w-4" />
               Cerrar sesión
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10">
+      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10">
         {children}
       </main>
     </div>

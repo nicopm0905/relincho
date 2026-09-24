@@ -13,6 +13,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
+import {
+  EditHealthEventDialog,
+  type EditableHealthEvent,
+} from "./edit-health-event-dialog";
 
 export const healthTypeLabels: Record<string, string> = {
   VACCINE: "Vacuna",
@@ -25,14 +29,7 @@ export const healthTypeLabels: Record<string, string> = {
   OTHER: "Otro",
 };
 
-type HealthEvent = {
-  id: string;
-  name: string;
-  type: string;
-  date: Date;
-  nextDueDate: Date | null;
-  horse: { name: string };
-};
+type HealthEvent = EditableHealthEvent;
 
 export function HealthEventsList({ events }: { events: HealthEvent[] }) {
   const [query, setQuery] = useState("");
@@ -80,7 +77,7 @@ export function HealthEventsList({ events }: { events: HealthEvent[] }) {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar por caballo o tratamiento…"
             aria-label="Buscar eventos sanitarios"
-            className="h-9 pr-9 pl-9"
+            className="pr-9 pl-9"
           />
           {query && (
             <button
@@ -107,10 +104,10 @@ export function HealthEventsList({ events }: { events: HealthEvent[] }) {
                 aria-pressed={type === value}
                 onClick={() => setType(value)}
                 className={cn(
-                  "shrink-0 rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors duration-150",
+                  "shrink-0 rounded-lg border px-3 py-1.5 text-[12.5px] font-medium transition-[background-color,border-color,color] duration-150",
                   type === value
-                    ? "border-transparent bg-foreground text-background"
-                    : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : "border-border/80 bg-card text-muted-foreground hover:border-primary/30 hover:bg-primary/[0.05] hover:text-foreground",
                 )}
               >
                 {value === "ALL" ? "Todos" : healthTypeLabels[value]}
@@ -157,6 +154,7 @@ export function HealthEventsList({ events }: { events: HealthEvent[] }) {
                       Próx. {formatDate(event.nextDueDate)}
                     </Badge>
                   )}
+                  <EditHealthEventDialog event={event} />
                 </>
               }
             />

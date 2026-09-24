@@ -3,19 +3,23 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@/server/trpc/router";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/formatters";
+import { gestation, mareState, mareStateLabels } from "@/lib/reproduction";
+import { BreedingRationCard } from "@/components/horses/breeding-ration-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import Image from "next/image";
-import { PedigreeTree } from "@/components/horses/pedigree-tree";
-import { HorseTimeline } from "@/components/horses/timeline";
-import { DailyJournalForm } from "@/components/horses/daily-journal-form";
-import { JournalFeed } from "@/components/horses/journal-feed";
-import { HorseChat } from "@/components/horses/horse-chat";
-import { DocumentsManager } from "@/components/documentos/documents-manager";
-import { FeedingPlanCard } from "@/components/horses/feeding-plan-card";
+import dynamic from "next/dynamic";
+
+const PedigreeTree = dynamic(() => import("@/components/horses/pedigree-tree").then((module) => module.PedigreeTree), { loading: () => <div className="h-64 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const HorseTimeline = dynamic(() => import("@/components/horses/timeline").then((module) => module.HorseTimeline), { loading: () => <div className="h-64 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const DailyJournalForm = dynamic(() => import("@/components/horses/daily-journal-form").then((module) => module.DailyJournalForm), { loading: () => <div className="h-48 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const JournalFeed = dynamic(() => import("@/components/horses/journal-feed").then((module) => module.JournalFeed), { loading: () => <div className="h-32 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const HorseChat = dynamic(() => import("@/components/horses/horse-chat").then((module) => module.HorseChat), { loading: () => <div className="h-96 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const DocumentsManager = dynamic(() => import("@/components/documentos/documents-manager").then((module) => module.DocumentsManager), { loading: () => <div className="h-64 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const FeedingPlanCard = dynamic(() => import("@/components/horses/feeding-plan-card").then((module) => module.FeedingPlanCard), { loading: () => <div className="h-48 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
 import {
   Horse,
   GenderMale,
@@ -61,7 +65,7 @@ const statusBadgeVariant: Record<string, "success" | "secondary" | "destructive"
 
 /* One shared look for every tab so the strip stays even as tabs are added. */
 const tabTriggerClass =
-  "flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-semibold text-muted-foreground transition-all hover:text-foreground data-[state=active]:border data-[state=active]:border-border/40 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-4 sm:text-sm";
+  "flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-semibold text-muted-foreground transition-all hover:text-foreground data-[state=active]:border data-[state=active]:border-primary/25 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-4 sm:text-sm";
 
 function calculateAge(birthDate: Date) {
   const diff = Date.now() - birthDate.getTime();
@@ -85,6 +89,28 @@ export default async function CaballoDetailPage({ params }: PageProps) {
   const horseDocuments = await caller.documents.list({ horseId: id });
 
   const age = horse.birthDate ? calculateAge(horse.birthDate) : null;
+
+  // Racion orientativa: el estado de la yegua sale de su ultima cubricion y
+  // su ultimo parto, sin que nadie tenga que configurarlo.
+  const allCoverings = (horse.reproCycles ?? [])
+    .flatMap((cycle) => cycle.coverings ?? [])
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const lastCovering = allCoverings[0];
+  const lastFoaling = allCoverings
+    .map((c) => c.foaling)
+    .filter((f): f is NonNullable<typeof f> => Boolean(f))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const lastState = mareState(lastCovering);
+  const rationInput = {
+    sex: horse.sex,
+    birthDate: horse.birthDate ? new Date(horse.birthDate) : null,
+    weightKg: horse.vetProfile?.baseWeightKg ? Number(horse.vetProfile.baseWeightKg) : null,
+    mare: {
+      pregnant: lastState === "PREGNANT" || lastState === "TWINS",
+      coveringDate: lastCovering ? new Date(lastCovering.date) : null,
+      lastFoalingDate: lastFoaling ? new Date(lastFoaling.date) : null,
+    },
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in-0 duration-500 w-full">
@@ -113,7 +139,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
       </div>
 
       {/* HERO SECTION */}
-      <div className="relative flex h-[260px] flex-col justify-end overflow-hidden rounded-xl border border-border bg-card sm:h-[320px] md:h-[400px]">
+      <div className="relative flex h-[260px] flex-col justify-end overflow-hidden rounded-2xl border border-border/80 bg-card shadow-bento sm:h-[320px] md:h-[400px]">
         {horse.photoUrl ? (
           <Image
             src={horse.photoUrl}
@@ -170,7 +196,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
       {/* TABS SECTION */}
       <Tabs defaultValue="resumen" className="w-full">
         <div className="no-scrollbar -mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 pb-1 sm:mx-0 sm:w-full sm:px-0">
-          <TabsList className="inline-flex min-w-max gap-1 rounded-lg border border-border bg-muted/70 p-1">
+          <TabsList className="inline-flex min-w-max gap-1 rounded-xl border border-border/80 bg-muted/80 p-1">
             <TabsTrigger
               value="resumen"
               className={tabTriggerClass}
@@ -239,6 +265,22 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                     {horse.microchip || "No registrado"}
                   </span>
                 </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Libro Genealógico</span>
+                  <span className="font-mono text-sm font-medium bg-muted/50 px-3 py-2 rounded-lg border border-border/50">
+                    {horse.lgNumber || "No registrado"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Criador</span>
+                    <span className="font-medium text-foreground">{horse.breeder?.name ?? "La yeguada"}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Propietario</span>
+                    <span className="font-medium text-foreground">{horse.owner?.name ?? "La yeguada"}</span>
+                  </div>
+                </div>
               </div>
             </Card>
 
@@ -266,8 +308,9 @@ export default async function CaballoDetailPage({ params }: PageProps) {
             </Card>
           </div>
 
-          <div className="mt-5">
+          <div className="mt-5 grid gap-5 lg:grid-cols-2">
             <FeedingPlanCard horseId={horse.id} horseName={horse.name} />
+            <BreedingRationCard input={rationInput} />
           </div>
         </TabsContent>
 
@@ -305,7 +348,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                 <Button asChild size="sm" variant="outline" className="hidden shadow-sm md:flex">
                   <a href={`/api/horses/${id}/pdf-clinico`} target="_blank" rel="noreferrer">Exportar PDF</a>
                 </Button>
-                <Button asChild size="sm" className="rounded-full shadow-sm">
+                <Button asChild size="sm" className="shadow-sm">
                   <Link href={`/${tenantSlug}/sanidad/nuevo?horseId=${id}`}>+ Salud</Link>
                 </Button>
                 <Button asChild size="sm" variant="secondary" className="rounded-full shadow-sm hidden sm:flex">
@@ -344,7 +387,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                     <p className="text-xs text-muted-foreground">Ciclos reproductivos y ecografías</p>
                   </div>
                 </div>
-                <Button asChild size="sm" className="rounded-full shadow-sm">
+                <Button asChild size="sm" className="shadow-sm">
                   <Link href={`/${tenantSlug}/reproduccion/nuevo-ciclo?mareId=${id}`}>Iniciar Ciclo</Link>
                 </Button>
               </div>
@@ -361,34 +404,22 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                       const latestCovering = cycle.coverings?.[0];
                       const latestCheck = latestCovering?.pregnancyChecks?.[0];
                       
-                      let status = "En Celo / Vacía";
-                      let statusColor = "bg-amber-100 text-amber-700 border-amber-200";
-                      let isPregnant = false;
-                      let daysPregnant = 0;
-                      let expectedFoalingDate: Date | null = null;
-                      let progressPercent = 0;
-                      
-                      if (latestCovering?.foaling) {
-                        status = "Parida";
-                        statusColor = "bg-blue-100 text-blue-700 border-blue-200";
-                      } else if (latestCheck?.result === "POSITIVE") {
-                        status = "Preñada";
-                        statusColor = "bg-emerald-100 text-emerald-700 border-emerald-200";
-                        isPregnant = true;
-                        
-                        // Gestación de ~340 días
-                        const coveringDate = new Date(latestCovering.date);
-                        expectedFoalingDate = new Date(coveringDate);
-                        expectedFoalingDate.setDate(expectedFoalingDate.getDate() + 340);
-                        
-                        const now = new Date();
-                        const diffTime = Math.abs(now.getTime() - coveringDate.getTime());
-                        daysPregnant = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        progressPercent = Math.min(100, Math.max(0, Math.round((daysPregnant / 340) * 100)));
-                      } else if (latestCovering && (!latestCheck || latestCheck.result === "PENDING")) {
-                         status = "Cubierta (Pdte. Eco)";
-                         statusColor = "bg-purple-100 text-purple-700 border-purple-200";
-                      }
+                      // Misma regla que el tablero y el Inicio.
+                      const state = mareState(latestCovering);
+                      const status = mareStateLabels[state];
+                      const statusColor = {
+                        EMPTY: "bg-amber-100 text-amber-700 border-amber-200",
+                        COVERED: "bg-purple-100 text-purple-700 border-purple-200",
+                        PREGNANT: "bg-emerald-100 text-emerald-700 border-emerald-200",
+                        TWINS: "bg-emerald-100 text-emerald-800 border-emerald-300",
+                        LOST: "bg-rose-100 text-rose-700 border-rose-200",
+                        FOALED: "bg-blue-100 text-blue-700 border-blue-200",
+                      }[state];
+                      const isPregnant = state === "PREGNANT" || state === "TWINS";
+                      const g = isPregnant && latestCovering ? gestation(latestCovering.date) : null;
+                      const daysPregnant = g?.days ?? 0;
+                      const expectedFoalingDate = g?.expected ?? null;
+                      const progressPercent = g?.percent ?? 0;
 
                       return (
                         <li key={cycle.id} className="flex flex-col p-4 sm:p-6 hover:bg-muted/10 transition-colors gap-4">
@@ -439,7 +470,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                                 <div>
                                   <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800/70">Progreso de Gestación</span>
                                   <div className="flex items-baseline gap-2 mt-0.5">
-                                    <span className="text-2xl font-black text-emerald-700">{daysPregnant}</span>
+                                    <span className="text-2xl font-semibold text-emerald-700">{daysPregnant}</span>
                                     <span className="text-sm font-medium text-emerald-700/80">días</span>
                                     <span className="text-emerald-300 mx-1">/</span>
                                     <span className="text-sm font-medium text-emerald-700/80">340 aprox.</span>
@@ -447,7 +478,7 @@ export default async function CaballoDetailPage({ params }: PageProps) {
                                 </div>
                                 <div className="text-right">
                                   <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800/70 block">Fecha Prevista Parto (FPP)</span>
-                                  <span className="font-bold text-emerald-800 bg-white/60 px-2 py-0.5 rounded-md mt-1 inline-block">
+                                  <span className="font-bold text-emerald-800 bg-card/70 px-2 py-0.5 rounded-md mt-1 inline-block">
                                     {formatDate(expectedFoalingDate)}
                                   </span>
                                 </div>

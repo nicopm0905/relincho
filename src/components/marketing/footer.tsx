@@ -6,7 +6,7 @@ export async function Footer() {
   const t = await getTranslations("footer.links");
 
   return (
-    <footer className="bg-white border-t border-border/40 py-12 md:py-16">
+    <footer className="border-t border-border/70 bg-background py-12 md:py-16">
       <div className="container max-w-5xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-6">
 
         <div className="flex items-center gap-2 opacity-80">

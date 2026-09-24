@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure, staffProcedure } from "../init";
+import { assertHorseAccess } from "../access";
 import { withTenant } from "@/server/db/prisma";
 import { getGroomList, syncNutritionForDay } from "@/server/services/nutrition/sync";
 import {
@@ -16,6 +17,7 @@ export const nutritionRouter = createTRPCRouter({
   getBaseline: tenantProcedure
     .input(z.object({ horseId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
       return withTenant(ctx.tenantId, (tx) =>
         tx.nutritionBaseline.findUnique({ where: { horseId: input.horseId } }),
       );
@@ -56,6 +58,7 @@ export const nutritionRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
       return withTenant(ctx.tenantId, (tx) =>
         tx.nutritionPrescription.findUnique({
           where: {
@@ -91,6 +94,7 @@ export const nutritionRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
       return getUpcomingRations({ tenantId: ctx.tenantId, ...input });
     }),
 
@@ -114,7 +118,7 @@ export const nutritionRouter = createTRPCRouter({
     }),
 
   /** Vista de fricción cero para el mozo de cuadras. */
-  groomList: tenantProcedure
+  groomList: staffProcedure
     .input(z.object({ date: z.coerce.date().default(() => new Date()) }))
     .query(async ({ ctx, input }) => {
       return getGroomList({ tenantId: ctx.tenantId, date: input.date });

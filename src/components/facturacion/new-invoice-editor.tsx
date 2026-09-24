@@ -145,7 +145,7 @@ export function NewInvoiceEditor({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Fecha de emisión</Label>
+          <Label>Fecha prevista</Label>
           <Input
             type="date"
             value={issueDate}
@@ -155,6 +155,7 @@ export function NewInvoiceEditor({
             }}
             className="rounded-xl bg-muted/20"
           />
+          <p className="text-xs text-muted-foreground">La fecha y el número definitivos se fijan al emitir.</p>
         </div>
         <div className="space-y-2">
           <Label>Fecha de vencimiento</Label>
@@ -285,7 +286,7 @@ export function NewInvoiceEditor({
         <Button
           type="submit"
           disabled={create.isPending}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="h-10 px-5"
         >
           {create.isPending ? "Creando..." : "Crear borrador"}
         </Button>

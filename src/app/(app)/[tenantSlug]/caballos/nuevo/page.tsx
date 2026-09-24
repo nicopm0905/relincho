@@ -1,6 +1,6 @@
 import { HorseForm } from "@/components/horses/horse-form";
-import { prisma } from "@/server/db/prisma";
-import { auth } from "@/server/auth";
+import { getSession } from "@/server/auth";
+import { getTenantAccess } from "@/server/tenant-access";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -14,10 +14,10 @@ export const metadata = { title: "Nuevo caballo — Relincho" };
 
 export default async function NuevoCaballoPage({ params }: PageProps) {
   const { tenantSlug } = await params;
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
-  const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+  const { tenant } = await getTenantAccess(tenantSlug, session.user.id);
   if (!tenant) redirect("/dashboard");
 
   return (

@@ -1,10 +1,6 @@
 import { createServerCaller } from "@/lib/trpc/server";
-import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/formatters";
-import { CheckCircle, Circle, Sun } from "@phosphor-icons/react/dist/ssr";
-import { PageHeader, SectionHeading } from "@/components/layout/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
-import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
+import { PageHeader } from "@/components/layout/page-header";
+import { TasksBoard } from "@/components/tareas/tasks-board";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -18,12 +14,14 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function TareasPage({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
-  const [pending, done] = await Promise.all([
+  const [pending, done, horses, assignees] = await Promise.all([
     caller.tasks.list({ done: false }),
     caller.tasks.list({ done: true }),
+    caller.horses.list(),
+    // Un externo no asigna tareas al personal: sin lista, el selector queda
+    // en "Sin asignar".
+    caller.tasks.assignees().catch(() => []),
   ]);
-
-  const today = new Date().setHours(0, 0, 0, 0);
 
   return (
     <div className="animate-in fade-in-0 space-y-8 duration-300">
@@ -31,71 +29,15 @@ export default async function TareasPage({ params }: PageProps) {
         title="Tareas"
         description="Lo que queda por hacer en la cuadra"
       />
-
-      <section className="space-y-3">
-        <SectionHeading
-          title="Pendientes"
-          description={`${pending.length} sin completar`}
-        />
-        {pending.length === 0 ? (
-          <EmptyState
-            icon={<Sun weight="duotone" />}
-            title="Todo al día"
-            description="No hay tareas pendientes."
-          />
-        ) : (
-          <ListRows>
-            {pending.map((task) => {
-              const overdue =
-                new Date(task.dueDate).setHours(0, 0, 0, 0) < today;
-              return (
-                <ListRow
-                  key={task.id}
-                  leading={
-                    <RowIcon tone={overdue ? "alert" : "neutral"}>
-                      <Circle weight="regular" />
-                    </RowIcon>
-                  }
-                  title={task.title}
-                  subtitle={task.notes || undefined}
-                  meta={
-                    <Badge variant={overdue ? "destructive" : "secondary"}>
-                      {formatDate(task.dueDate)}
-                    </Badge>
-                  }
-                />
-              );
-            })}
-          </ListRows>
+      <TasksBoard
+        pending={pending}
+        // Las completadas, de la mas reciente a la mas antigua.
+        done={[...done].sort(
+          (a, b) => (b.doneAt?.getTime() ?? 0) - (a.doneAt?.getTime() ?? 0),
         )}
-      </section>
-
-      {done.length > 0 && (
-        <section className="space-y-3">
-          <SectionHeading
-            title="Completadas"
-            description={`Últimas ${Math.min(done.length, 10)} de ${done.length}`}
-          />
-          <ListRows>
-            {done.slice(0, 10).map((task) => (
-              <ListRow
-                key={task.id}
-                leading={
-                  <RowIcon>
-                    <CheckCircle weight="fill" />
-                  </RowIcon>
-                }
-                title={
-                  <span className="text-muted-foreground line-through">
-                    {task.title}
-                  </span>
-                }
-                meta={task.doneAt ? formatDate(task.doneAt) : undefined}
-              />
-            ))}
-          </ListRows>
-        </section>
-      )}
+        horses={horses.map((h) => ({ id: h.id, name: h.name }))}
+        assignees={assignees}
+      />
     </div>
   );
 }

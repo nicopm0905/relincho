@@ -215,6 +215,8 @@ lectura). Los detalles que importan:
 
 ```bash
 npm run check          # tsc --noEmit + pruebas unitarias
+npm run check:quality  # puerta local: tipos + pruebas + accesibilidad + diff
+npm run check:a11y     # contratos automatizados de accesibilidad
 npm run check:http     # comprobaciones HTTP contra un servidor levantado
 npm run verify:engines # invariantes del motor de rendimiento
 npm run db:generate    # Genera el cliente Prisma
@@ -223,6 +225,12 @@ npm run db:push        # Push directo a la BD (dev)
 npm run db:studio      # Abre Prisma Studio
 npm run db:seed        # Carga datos demo
 ```
+
+La checklist de regresión visual, responsive y accesibilidad está en
+[`docs/visual-regression-checklist.md`](docs/visual-regression-checklist.md). Debe
+usarse junto con las comprobaciones automáticas antes de publicar cambios de
+interfaz. En GitHub, el workflow `Quality gate` ejecuta automáticamente
+`npm run check:quality` en cada pull request y en cada push a `master`.
 
 ---
 

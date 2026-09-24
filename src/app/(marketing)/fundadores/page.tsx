@@ -30,13 +30,13 @@ export default async function FundadoresPage() {
   )}`;
 
   return (
-    <div className="flex min-h-screen flex-col bg-white selection:bg-primary/20">
+    <div className="flex min-h-screen flex-col bg-background selection:bg-primary/20">
       <Header session={session} />
 
-      <main className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1">
         {/* Portada */}
         <section className="container mx-auto max-w-5xl px-4 pt-32 pb-16 sm:px-6 md:pt-40 md:pb-20">
-          <span className="inline-flex items-center rounded-full border border-border/50 bg-[#f9f9f6] px-3 py-1 text-[11px] font-bold tracking-wider text-primary-ink uppercase">
+          <span className="inline-flex items-center rounded-full border border-border/50 bg-card px-3 py-1 text-[11px] font-bold tracking-wider text-primary-ink uppercase">
             {t("badge")}
           </span>
           <h1 className="mt-6 font-heading text-4xl leading-tight text-foreground text-balance sm:text-5xl md:text-6xl">
@@ -56,24 +56,31 @@ export default async function FundadoresPage() {
               <p>{t("story3")}</p>
             </div>
 
-            <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[2rem] border border-border/50 bg-[#f9f9f6] p-8">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-              <div className="relative z-10 text-center">
-                <span className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-border/50 bg-white shadow-xl">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-raised">
+              <Image
+                src="/hero-bg.jpg"
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 560px, 100vw"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+              <div className="absolute bottom-0 left-0 flex items-center gap-3 p-6 text-white">
+                <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-lg">
                   <Image
                     src="/logo.png"
                     alt="Relincho"
                     fill
-                    sizes="6rem"
-                    className="object-contain p-4"
+                    sizes="3rem"
+                    className="object-contain p-1.5"
                   />
                 </span>
-                <h2 className="font-heading text-2xl text-foreground">
-                  {about("cardTitle")}
-                </h2>
-                <p className="mt-2 text-muted-foreground">
-                  {about("cardSubtitle")}
-                </p>
+                <div>
+                  <h2 className="font-heading text-xl leading-tight">
+                    {about("cardTitle")}
+                  </h2>
+                  <p className="text-sm text-white/80">{about("cardSubtitle")}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -114,7 +121,7 @@ export default async function FundadoresPage() {
             {values.map((value) => (
               <div
                 key={value.key}
-                className="rounded-[2rem] bg-[#f9f9f6] p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-lg"
+                className="rounded-2xl bg-card p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-lg"
               >
                 <span className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-border/50 bg-white text-foreground shadow-sm">
                   <value.icon strokeWidth={2} className="h-7 w-7" />
@@ -133,7 +140,7 @@ export default async function FundadoresPage() {
         {/* Cierre */}
         <section className="pb-24 md:pb-32">
           <div className="container mx-auto max-w-5xl px-4 sm:px-6">
-            <div className="rounded-[2rem] border border-border/50 bg-[#f9f9f6] p-8 sm:p-12">
+            <div className="rounded-2xl border border-border/70 bg-card p-8 shadow-bento sm:p-12">
               <h2 className="font-heading text-3xl text-foreground sm:text-4xl">
                 {t("ctaTitle")}
               </h2>

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, roleProcedure } from "../init";
-import { withTenant } from "@/server/db/prisma";
+import { inSequence, withTenant } from "@/server/db/prisma";
 import { withDownloadUrls } from "@/server/services/documents";
 import type { PrismaClient } from "@prisma/client";
 
@@ -137,8 +137,8 @@ export const portalRouter = createTRPCRouter({
       const until = new Date();
       until.setDate(until.getDate() + 60);
 
-      const [health, trainings] = await Promise.all([
-        tx.healthEvent.findMany({
+      const [health, trainings] = await inSequence([
+        () => tx.healthEvent.findMany({
           where: {
             tenantId: ctx.tenantId,
             horseId: { in: horseIds },
@@ -150,7 +150,7 @@ export const portalRouter = createTRPCRouter({
           include: { horse: { select: { id: true, name: true } } },
           orderBy: { date: "asc" },
         }),
-        tx.trainingSession.findMany({
+        () => tx.trainingSession.findMany({
           where: {
             tenantId: ctx.tenantId,
             horseId: { in: horseIds },

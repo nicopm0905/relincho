@@ -14,7 +14,7 @@ export async function Pricing() {
   const sales = await getTranslations("legal.contact.sales");
 
   return (
-    <section id="pricing" className="py-24 md:py-32 bg-[#f9f9f6]">
+    <section id="pricing" className="bg-background py-24 md:py-32">
       <div className="container max-w-6xl mx-auto px-4 sm:px-6">
 
         <div className="text-center max-w-2xl mx-auto mb-16 md:mb-24">
@@ -39,10 +39,10 @@ export async function Pricing() {
             return (
               <div
                 key={plan.key}
-                className={`relative flex flex-col p-8 rounded-[2rem] bg-white transition-all duration-300 hover:shadow-bento ${
+                className={`relative flex flex-col rounded-2xl border bg-card p-8 shadow-bento transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-raised ${
                   plan.highlighted
-                    ? "border-2 border-primary shadow-sm md:scale-[1.03]"
-                    : "border border-border/50"
+                    ? "border-primary shadow-raised md:scale-[1.03]"
+                    : "border-border/70"
                 }`}
               >
                 {plan.highlighted && (
@@ -89,7 +89,7 @@ export async function Pricing() {
                 <Button
                   asChild
                   variant={plan.highlighted ? "default" : "outline"}
-                  className={`w-full rounded-full h-12 text-base ${plan.highlighted ? 'hover:bg-[#8b9e3a]' : 'hover:bg-muted/50'}`}
+                  className="h-12 w-full text-base"
                 >
                   {isContact ? (
                     <a href={href}>{t(`plans.${plan.key}.cta`)}</a>

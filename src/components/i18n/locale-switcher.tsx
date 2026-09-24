@@ -31,7 +31,7 @@ export function LocaleSwitcher({ className }: LocaleSwitcherProps) {
       role="group"
       aria-label={t("label")}
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-full border border-border/60 bg-white/70 p-0.5 text-[11px] font-semibold",
+        "inline-flex items-center gap-0.5 rounded-full border border-border/60 bg-card/70 p-0.5 text-[11px] font-semibold",
         className,
       )}
     >

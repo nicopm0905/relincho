@@ -16,7 +16,21 @@ function getBaseUrl() {
 }
 
 export function TRPCProvider({ children, tenantSlug }: { children: React.ReactNode, tenantSlug?: string }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Evita repetir la misma consulta al cambiar de foco o al montar
+            // componentes hermanos durante la navegación del panel.
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      }),
+  );
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [

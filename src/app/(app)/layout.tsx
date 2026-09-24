@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { auth } from "@/server/auth";
+import { getSession } from "@/server/auth";
 import { redirect } from "next/navigation";
 import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
 import { isDemoTenant, tenantSlugFromPath } from "@/lib/demo";
@@ -9,7 +9,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) {
     // La yeguada de demostracion se abre a quien llega sin cuenta; el resto de
     // la app sigue pidiendo sesion.

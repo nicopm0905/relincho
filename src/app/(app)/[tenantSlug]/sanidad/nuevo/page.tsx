@@ -27,7 +27,7 @@ export default async function NuevoSanidadPage({ params, searchParams }: PagePro
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-in fade-in-0 duration-500 w-full px-2 sm:px-0">
       <div className="flex items-center justify-between mb-4">
-        <Button variant="ghost" size="sm" asChild className="rounded-full -ml-3">
+        <Button variant="ghost" size="sm" asChild className="-ml-3">
           <Link href={horseId ? `/${tenantSlug}/caballos/${horseId}?tab=timeline` : `/${tenantSlug}/sanidad`}>
             <CaretLeft weight="bold" className="mr-1 h-4 w-4" />
             Cancelar
@@ -35,7 +35,7 @@ export default async function NuevoSanidadPage({ params, searchParams }: PagePro
         </Button>
       </div>
 
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-bento border border-border/40 relative overflow-hidden">
+      <div className="bg-card rounded-2xl p-6 shadow-bento border border-border/80 sm:p-8 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-rose-400 to-rose-600" />
         
         <div className="flex items-center gap-3 mb-8">

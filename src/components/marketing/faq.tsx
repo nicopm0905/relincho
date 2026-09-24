@@ -1,58 +1,59 @@
-"use client";
-
+import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
 
 type FaqItem = { question: string; answer: string };
 
-export function Faq() {
-  const t = useTranslations("marketing.faq");
+/**
+ * Sin animacion de entrada: la seccion se abre desde el enlace /#faq del
+ * header y antes aparecia en blanco hasta que framer-motion se hidrataba.
+ */
+export async function Faq() {
+  const t = await getTranslations("marketing.faq");
   const faqs = t.raw("items") as FaqItem[];
 
   return (
-    <section id="faq" className="py-24 md:py-32 bg-[#f9f9f6] relative overflow-hidden">
-      <div className="container max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16 md:mb-20"
-        >
-          <h2 className="font-heading text-4xl md:text-5xl text-foreground mb-6">
+    <section id="faq" className="bg-background py-20 md:py-28">
+      <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[5fr_7fr] lg:gap-16">
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <h2 className="mb-4 font-heading text-3xl text-foreground sm:text-4xl md:text-5xl">
             {t("title")}
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {t("subtitle")}
-          </p>
-        </motion.div>
+          <p className="text-lg text-muted-foreground">{t("subtitle")}</p>
+          <div className="relative mt-8 hidden aspect-[4/3] overflow-hidden rounded-3xl shadow-bento lg:block">
+            <Image
+              src="/landing/box.jpg"
+              alt=""
+              fill
+              sizes="440px"
+              className="object-cover"
+            />
+          </div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="bg-white rounded-[2rem] p-8 md:p-12 shadow-xl border border-border/50 transition-shadow duration-500 hover:shadow-2xl"
-        >
+        <div className="rounded-2xl border border-border/70 bg-card px-6 py-2 shadow-bento sm:px-8">
           <Accordion className="w-full">
             {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`item-${i}`} className="border-b border-border/50 last:border-0">
-                <AccordionTrigger className="text-left text-lg font-semibold py-6 hover:no-underline hover:text-primary transition-colors group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-300">{faq.question}</span>
+              <AccordionItem
+                key={i}
+                value={`item-${i}`}
+                className="border-b border-border/60 last:border-0"
+              >
+                <AccordionTrigger className="py-5 text-left text-base font-semibold transition-colors hover:text-primary-ink hover:no-underline sm:text-lg">
+                  {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-base leading-relaxed pb-6">
+                <AccordionContent className="pb-5 text-base leading-relaxed text-muted-foreground">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

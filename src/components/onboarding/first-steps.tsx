@@ -2,21 +2,26 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { HorseImportDialog } from "@/components/horses/horse-import-dialog";
-import { Horse, Receipt, UsersThree, CheckCircle } from "@phosphor-icons/react/dist/ssr";
+import {
+  Horse,
+  Heartbeat,
+  UsersThree,
+  CheckCircle,
+} from "@phosphor-icons/react/dist/ssr";
 
 /**
  * Primeros pasos de una yeguada recién creada.
  *
- * Es lo primero que ve alguien que acaba de registrarse y lo único que se
- * muestra cuando todavía no hay caballos: en la primera semana se gana o se
- * pierde la cuenta, y un panel vacío no explica por dónde empezar.
+ * Acompaña las primeras semanas, mientras la yeguada todavía está arrancando:
+ * con menos de tres caballos un panel lleno de estadísticas distrae y no
+ * explica por dónde empezar.
  */
 export function FirstSteps({ tenantSlug }: { tenantSlug: string }) {
   const steps = [
     {
       icon: <Horse weight="duotone" />,
       title: "Registra tus caballos",
-      body: "Uno a uno o importando tu Excel actual. Con el microchip y el UELN ya tienes ficha y QR para el box.",
+      body: "Añádelos uno a uno o importa tu Excel actual. Con el nombre y el microchip basta para empezar; el resto lo completas cuando lo necesites.",
       action: (
         <div className="flex flex-wrap gap-2">
           <Button asChild size="sm">
@@ -27,19 +32,19 @@ export function FirstSteps({ tenantSlug }: { tenantSlug: string }) {
       ),
     },
     {
-      icon: <Receipt weight="duotone" />,
-      title: "Revisa tus datos fiscales",
-      body: "Nombre fiscal, NIF y serie de facturas: es lo que sale impreso en cada factura de pupilaje.",
+      icon: <Heartbeat weight="duotone" />,
+      title: "Apunta el próximo cuidado",
+      body: "Registra una vacuna, una visita del veterinario o una desparasitación. Relincho te avisará antes de que venza.",
       action: (
         <Button asChild size="sm" variant="outline">
-          <Link href={`/${tenantSlug}/ajustes`}>Abrir ajustes</Link>
+          <Link href={`/${tenantSlug}/sanidad/nuevo`}>Registrar sanidad</Link>
         </Button>
       ),
     },
     {
       icon: <UsersThree weight="duotone" />,
       title: "Invita a quien trabaja contigo",
-      body: "Mozos, encargados y veterinarios con permisos distintos, y el propietario de cada caballo con su portal.",
+      body: "Mozos, encargados y veterinarios pueden entrar con los permisos que tú decidas. No tienes que llevarlo todo solo.",
       action: (
         <Button asChild size="sm" variant="outline">
           <Link href={`/${tenantSlug}/ajustes`}>Invitar al equipo</Link>
@@ -52,11 +57,11 @@ export function FirstSteps({ tenantSlug }: { tenantSlug: string }) {
     <Card className="space-y-5 p-5">
       <div className="space-y-1">
         <h2 className="font-heading text-lg font-bold text-foreground">
-          Tu yeguada está creada
+          Tu yeguada está lista para empezar
         </h2>
         <p className="text-[13.5px] text-muted-foreground">
-          Con estos tres pasos queda montada. El resto se va llenando solo
-          conforme trabajas.
+          Empieza por lo que ya haces cada día. El resto se va llenando solo
+          conforme trabajas; no hace falta configurarlo todo hoy.
         </p>
       </div>
 
@@ -82,7 +87,7 @@ export function FirstSteps({ tenantSlug }: { tenantSlug: string }) {
 
       <p className="flex items-center gap-1.5 border-t border-border/60 pt-4 text-[12.5px] text-muted-foreground">
         <CheckCircle weight="fill" className="h-4 w-4 text-emerald-600" />
-        ¿Te atascas? Escríbenos y lo hacemos contigo por teléfono.
+        ¿Te atascas? Escríbenos y lo vemos contigo por teléfono, desde Jerez.
       </p>
     </Card>
   );

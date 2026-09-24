@@ -291,6 +291,8 @@ export interface ReportSessionInput {
   rpe: number;
   riderName?: string;
   notes?: string;
+  /** Tipo de trabajo (doma, cuerda, paseo...), tal como lo elige el jinete. */
+  type?: string;
   sweatLoss?: "BAJA" | "MEDIA" | "ALTA";
   /** Frecuencia cardiaca media, si el jinete la ha medido. Opcional siempre. */
   heartRateBpm?: number;
@@ -316,6 +318,7 @@ export async function reportSession(input: ReportSessionInput) {
         riderName: input.riderName,
         minutes: input.minutes,
         notes: input.notes,
+        type: input.type,
         rpe: input.rpe,
         internalLoadUa,
         fatigueZone,

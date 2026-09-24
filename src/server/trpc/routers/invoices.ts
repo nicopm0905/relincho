@@ -1,10 +1,26 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { invoiceLabel } from "@/lib/invoice-label";
+import { createTRPCRouter, roleProcedure, staffProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
 import { InvoiceStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
+import { issueInvoice, voidInvoice } from "@/server/services/billing/issue";
 
 const managerProcedure = roleProcedure("OWNER", "MANAGER");
+
+/**
+ * Cambios de estado manuales. Emitir (DRAFT -> ISSUED) y anular (-> CANCELLED)
+ * no pasan por aqui: tienen sus procedimientos, porque generan registro
+ * Veri*Factu. Nada vuelve a DRAFT y PAID/CANCELLED son finales: una factura
+ * emitida no se toca, se rectifica.
+ */
+const STATUS_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
+  DRAFT: [],
+  ISSUED: ["PAID", "OVERDUE"],
+  OVERDUE: ["PAID", "ISSUED"],
+  PAID: [],
+  CANCELLED: [],
+};
 
 /** Redondeo a 2 decimales evitando errores de coma flotante. */
 function round2(n: number): number {
@@ -50,7 +66,45 @@ function addDays(date: Date, days: number): Date {
 }
 
 export const invoicesRouter = createTRPCRouter({
-  list: tenantProcedure
+  /**
+   * Lo que queda por cobrar: total pendiente de las emitidas y vencidas, y el
+   * detalle de las vencidas. Para el Inicio, sin cargar lineas.
+   */
+  receivables: staffProcedure.query(async ({ ctx }) => {
+    return withTenant(ctx.tenantId, async (tx) => {
+      const open = await tx.invoice.findMany({
+        where: { tenantId: ctx.tenantId, status: { in: ["ISSUED", "OVERDUE"] } },
+        select: {
+          id: true,
+          series: true,
+          number: true,
+          status: true,
+          dueDate: true,
+          total: true,
+          client: { select: { name: true } },
+          payments: { select: { amount: true } },
+        },
+        orderBy: { dueDate: "asc" },
+      });
+      const rows = open.map((inv) => ({
+        id: inv.id,
+        label: invoiceLabel(inv),
+        client: inv.client?.name ?? "Sin cliente",
+        dueDate: inv.dueDate,
+        overdue: inv.status === "OVERDUE",
+        pending: round2(
+          Number(inv.total) - inv.payments.reduce((sum, p) => sum + Number(p.amount), 0),
+        ),
+      }));
+      return {
+        pendingTotal: round2(rows.reduce((sum, r) => sum + r.pending, 0)),
+        openCount: rows.length,
+        overdue: rows.filter((r) => r.overdue),
+      };
+    });
+  }),
+
+  list: staffProcedure
     .input(
       z
         .object({ status: z.nativeEnum(InvoiceStatus).optional() })
@@ -73,7 +127,7 @@ export const invoicesRouter = createTRPCRouter({
       );
     }),
 
-  byId: tenantProcedure
+  byId: staffProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const inv = await withTenant(ctx.tenantId, (tx) =>
@@ -84,6 +138,12 @@ export const invoicesRouter = createTRPCRouter({
             lines: { include: { horse: { select: { id: true, name: true } } } },
             payments: { orderBy: { date: "asc" } },
             invoiceSeries: true,
+            rectifies: { select: { id: true, series: true, number: true, issueDate: true } },
+            rectifiedBy: { select: { id: true, series: true, number: true, status: true, total: true } },
+            verifactuRecords: {
+              select: { id: true, kind: true, hash: true, status: true, generatedAt: true },
+              orderBy: { createdAt: "asc" },
+            },
           },
         }),
       );
@@ -91,7 +151,7 @@ export const invoicesRouter = createTRPCRouter({
       return inv;
     }),
 
-  nextNumber: tenantProcedure
+  nextNumber: staffProcedure
     .input(z.object({ series: z.string() }))
     .query(async ({ ctx, input }) => {
       const last = await withTenant(ctx.tenantId, (tx) =>
@@ -112,21 +172,44 @@ export const invoicesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return withTenant(ctx.tenantId, (tx) =>
-        tx.invoice.update({
+      return withTenant(ctx.tenantId, async (tx) => {
+        const current = await tx.invoice.findFirst({
+          where: { id: input.id, tenantId: ctx.tenantId },
+          select: { status: true },
+        });
+        if (!current) throw new TRPCError({ code: "NOT_FOUND" });
+        if (current.status === input.status) return tx.invoice.findFirstOrThrow({ where: { id: input.id } });
+
+        if (!STATUS_TRANSITIONS[current.status].includes(input.status)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              current.status === "PAID"
+                ? "Una factura pagada ya no cambia de estado."
+                : current.status === "CANCELLED"
+                  ? "Una factura anulada ya no cambia de estado."
+                  : current.status === "DRAFT"
+                    ? "Un borrador se emite con «Emitir», no cambiando su estado."
+                    : input.status === "CANCELLED"
+                      ? "Para anular una factura emitida usa «Anular» (genera el registro de anulación)."
+                      : "Una factura emitida no vuelve a borrador ni se modifica: para corregirla hay que emitir una rectificativa.",
+          });
+        }
+        return tx.invoice.update({
           where: { id: input.id, tenantId: ctx.tenantId },
           data: { status: input.status },
-        }),
-      );
+        });
+      });
     }),
 
   // ---------------------------------------------------------------------------
   // Series de facturacion
   // ---------------------------------------------------------------------------
-  seriesList: tenantProcedure.query(async ({ ctx }) => {
+  seriesList: staffProcedure.query(async ({ ctx }) => {
     return withTenant(ctx.tenantId, (tx) =>
       tx.invoiceSeries.findMany({
-        where: { tenantId: ctx.tenantId },
+        // Las de rectificativas se usan solo desde «Rectificar».
+        where: { tenantId: ctx.tenantId, isRectifying: false },
         orderBy: [{ isDefault: "desc" }, { year: "desc" }, { code: "asc" }],
       }),
     );
@@ -219,6 +302,12 @@ export const invoicesRouter = createTRPCRouter({
           where: { id: input.seriesId, tenantId: ctx.tenantId },
         });
         if (!series) throw new TRPCError({ code: "NOT_FOUND", message: "Serie no encontrada" });
+        if (series.isRectifying) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Esa serie es de rectificativas: se usa desde «Rectificar» en la factura original.",
+          });
+        }
 
         const client = await tx.contact.findFirst({
           where: { id: input.clientId, tenantId: ctx.tenantId },
@@ -228,7 +317,6 @@ export const invoicesRouter = createTRPCRouter({
 
         const totals = computeTotals(input.lines);
         const label = seriesLabel(series.prefix, series.year);
-        const number = series.nextNumber;
         const dueDate = input.dueDate ?? addDays(input.issueDate, 30);
 
         const invoice = await tx.invoice.create({
@@ -237,7 +325,8 @@ export const invoicesRouter = createTRPCRouter({
             clientId: input.clientId,
             seriesId: series.id,
             series: label,
-            number,
+            // Sin numero: se asigna al emitir (ver issueInvoice).
+            number: null,
             issueDate: input.issueDate,
             dueDate,
             status: "DRAFT",
@@ -254,11 +343,6 @@ export const invoicesRouter = createTRPCRouter({
               })),
             },
           },
-        });
-
-        await tx.invoiceSeries.update({
-          where: { id: series.id },
-          data: { nextNumber: number + 1 },
         });
 
         return invoice;
@@ -320,6 +404,147 @@ export const invoicesRouter = createTRPCRouter({
       });
     }),
 
+  /** Emitir: numero, fecha, huella Veri*Factu y QR. Despues, inalterable. */
+  issue: managerProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, (tx) => issueInvoice(tx, ctx.tenantId, input.id));
+    }),
+
+  /** Anular una factura emitida por error (con registro de anulacion). */
+  void: managerProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, (tx) => voidInvoice(tx, ctx.tenantId, input.id));
+    }),
+
+  /**
+   * Borrar un borrador. Solo si no tiene numero: uno antiguo con numero ya
+   * reservado dejaria un hueco en la serie.
+   */
+  deleteDraft: managerProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const invoice = await tx.invoice.findFirst({
+          where: { id: input.id, tenantId: ctx.tenantId },
+          select: { status: true, number: true },
+        });
+        if (!invoice) throw new TRPCError({ code: "NOT_FOUND" });
+        if (invoice.status !== "DRAFT") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Solo se borran borradores" });
+        }
+        if (invoice.number != null) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Este borrador ya tiene número reservado: emítelo y, si sobra, anúlalo.",
+          });
+        }
+        await tx.invoice.delete({ where: { id: input.id } });
+        return { id: input.id };
+      });
+    }),
+
+  /**
+   * Crear la rectificativa de una factura emitida, como borrador en la serie
+   * de rectificativas. `S` (sustitucion): las lineas son la factura correcta
+   * completa. `I` (diferencias): las lineas son solo la diferencia, en
+   * negativo lo que se descuenta. `cancelAll` rectifica el total a cero.
+   */
+  rectify: managerProcedure
+    .input(
+      z.object({
+        invoiceId: z.string().uuid(),
+        kind: z.enum(["S", "I"]),
+        /** R1 error fundado en derecho/art. 80 uno-dos-seis LIVA, R2 concurso, R3 incobrable, R4 resto. */
+        code: z.enum(["R1", "R2", "R3", "R4"]).default("R4"),
+        reason: z.string().trim().min(3, "Indica el motivo de la rectificación").max(500),
+        cancelAll: z.boolean().default(false),
+        lines: z.array(lineInput).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const original = await tx.invoice.findFirst({
+          where: { id: input.invoiceId, tenantId: ctx.tenantId },
+          include: { lines: true },
+        });
+        if (!original) throw new TRPCError({ code: "NOT_FOUND" });
+        if (!["ISSUED", "PAID", "OVERDUE"].includes(original.status) || original.number == null) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Solo se rectifican facturas emitidas" });
+        }
+        if (original.rectifiesId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Esta ya es una rectificativa: rectifica la factura original.",
+          });
+        }
+
+        let lines: z.infer<typeof lineInput>[];
+        let kind = input.kind;
+        if (input.cancelAll) {
+          // Anulacion economica: por diferencias, todas las lineas en negativo.
+          kind = "I";
+          lines = original.lines.map((l) => ({
+            description: `Anulación: ${l.description}`,
+            quantity: Number(l.quantity),
+            unitPrice: -Number(l.unitPrice),
+            vatRate: Number(l.vatRate),
+            horseId: l.horseId ?? undefined,
+          }));
+        } else if (input.lines && input.lines.length > 0) {
+          lines = input.lines;
+        } else {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Añade las líneas de la rectificativa" });
+        }
+
+        const year = new Date().getFullYear();
+        const series =
+          (await tx.invoiceSeries.findFirst({
+            where: { tenantId: ctx.tenantId, isRectifying: true, year },
+          })) ??
+          (await tx.invoiceSeries.create({
+            data: {
+              tenantId: ctx.tenantId,
+              code: `R-${year}`,
+              prefix: "R",
+              year,
+              isRectifying: true,
+            },
+          }));
+
+        const totals = computeTotals(lines);
+        return tx.invoice.create({
+          data: {
+            tenantId: ctx.tenantId,
+            clientId: original.clientId,
+            seriesId: series.id,
+            series: seriesLabel(series.prefix, series.year),
+            number: null,
+            issueDate: new Date(),
+            dueDate: addDays(new Date(), 30),
+            status: "DRAFT",
+            invoiceType: input.code,
+            rectifiesId: original.id,
+            rectificationKind: kind,
+            rectificationReason: input.reason,
+            subtotal: totals.subtotal.toFixed(2),
+            vatTotal: totals.vatTotal.toFixed(2),
+            total: totals.total.toFixed(2),
+            lines: {
+              create: lines.map((l) => ({
+                description: l.description,
+                quantity: l.quantity.toFixed(2),
+                unitPrice: l.unitPrice.toFixed(2),
+                vatRate: l.vatRate.toFixed(2),
+                horseId: l.horseId,
+              })),
+            },
+          },
+        });
+      });
+    }),
+
   addPayment: managerProcedure
     .input(
       z.object({
@@ -337,6 +562,20 @@ export const invoicesRouter = createTRPCRouter({
           include: { payments: { select: { amount: true } } },
         });
         if (!invoice) throw new TRPCError({ code: "NOT_FOUND" });
+        if (invoice.status === "DRAFT" || invoice.status === "CANCELLED") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Solo se registran cobros de facturas emitidas.",
+          });
+        }
+        const alreadyPaid = invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0);
+        const pending = round2(Number(invoice.total) - alreadyPaid);
+        if (round2(input.amount) > pending) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `El cobro supera lo pendiente (${pending.toFixed(2)} €).`,
+          });
+        }
 
         await tx.payment.create({
           data: {
@@ -418,17 +657,15 @@ export const invoicesRouter = createTRPCRouter({
         if (contracts.length === 0) return { generated: 0 };
 
         const label = seriesLabel(series.prefix, series.year);
-        let nextNumber = series.nextNumber;
-        let generated = 0;
+        const periodMonth = `${year}-${String(month).padStart(2, "0")}`;
+        const drafts: string[] = [];
 
         for (const contract of contracts) {
-          // Evita duplicar la factura del mismo contrato y mes.
+          // Evita duplicar la factura del mismo contrato y mes. Antes se miraba
+          // la fecha de emision dentro del mes, y generar septiembre en octubre
+          // (fecha de octubre) duplicaba al repetir.
           const already = await tx.invoice.findFirst({
-            where: {
-              tenantId: ctx.tenantId,
-              boardingContractId: contract.id,
-              issueDate: { gte: monthStart, lte: monthEnd },
-            },
+            where: { boardingContractId: contract.id, periodMonth },
             select: { id: true },
           });
           if (already) continue;
@@ -505,17 +742,18 @@ export const invoicesRouter = createTRPCRouter({
           const totals = computeTotals(lines);
           const issueDate = new Date();
 
-          await tx.invoice.create({
+          const draft = await tx.invoice.create({
             data: {
               tenantId: ctx.tenantId,
               clientId: contract.clientId,
               boardingContractId: contract.id,
+              periodMonth,
               seriesId: series.id,
               series: label,
-              number: nextNumber++,
+              number: null,
               issueDate,
               dueDate: addDays(issueDate, 30),
-              status: "ISSUED",
+              status: "DRAFT",
               subtotal: totals.subtotal.toFixed(2),
               vatTotal: totals.vatTotal.toFixed(2),
               total: totals.total.toFixed(2),
@@ -529,7 +767,9 @@ export const invoicesRouter = createTRPCRouter({
                 })),
               },
             },
+            select: { id: true },
           });
+          drafts.push(draft.id);
 
           if (oneOffIds.length > 0) {
             await tx.boardingContractExtra.updateMany({
@@ -538,17 +778,31 @@ export const invoicesRouter = createTRPCRouter({
             });
           }
 
-          generated++;
         }
 
-        if (generated > 0) {
-          await tx.invoiceSeries.update({
-            where: { id: series.id },
-            data: { nextNumber },
-          });
+        // Se emiten por el mismo camino que una manual (numero, huella, QR).
+        // La que no se puede emitir (cliente sin NIF por encima del limite de
+        // la simplificada, yeguada sin datos fiscales) se queda en borrador y
+        // se explica.
+        let issued = 0;
+        const pending: string[] = [];
+        for (const id of drafts) {
+          try {
+            await issueInvoice(tx, ctx.tenantId, id);
+            issued++;
+          } catch (err) {
+            if (err instanceof TRPCError && err.code === "PRECONDITION_FAILED") {
+              pending.push(err.message);
+              continue;
+            }
+            throw err;
+          }
         }
-
-        return { generated };
+        return {
+          generated: drafts.length,
+          issued,
+          pendingReasons: [...new Set(pending)],
+        };
       });
     }),
 });

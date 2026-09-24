@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
+import { allowedHorseIds } from "@/server/trpc/access";
 import PDFDocument from "pdfkit";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -54,6 +55,14 @@ export async function GET(
 
     if (!membership) {
       return NextResponse.json({ error: "No tienes acceso a este caballo" }, { status: 403 });
+    }
+    // Ser miembro no basta: un externo solo accede a sus caballos.
+    const visibleHorses = await allowedHorseIds({
+      role: membership.role,
+      membershipId: membership.id,
+    });
+    if (visibleHorses && !visibleHorses.includes(horse.id)) {
+      return NextResponse.json({ error: "Caballo no encontrado" }, { status: 404 });
     }
 
     // Generar PDF

@@ -5,6 +5,7 @@ import { authConfig, emailAuthEnabled } from "./config";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { cache } from "react";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prismaAdapter = new PrismaPg(pool);
@@ -74,3 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(authPrisma),
   session: { strategy: "jwt" },
 });
+
+/** Reutiliza la sesión dentro del mismo render y evita lecturas duplicadas
+ * entre los layouts anidados y la página actual. */
+export const getSession = cache(() => auth());

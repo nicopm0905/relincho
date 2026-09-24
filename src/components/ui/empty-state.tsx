@@ -23,13 +23,13 @@ export function EmptyState({
       className={cn(
         "flex flex-col items-center justify-center px-6 text-center",
         variant === "card"
-          ? "rounded-xl border border-dashed border-border bg-card/50 py-14"
+          ? "rounded-2xl border border-dashed border-border/80 bg-card/70 py-14 shadow-bento"
           : "py-10",
         className,
       )}
     >
       {icon && (
-        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground [&>svg]:h-5 [&>svg]:w-5">
+        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-border/80 bg-muted text-muted-foreground [&>svg]:h-5 [&>svg]:w-5">
           {icon}
         </div>
       )}

@@ -11,7 +11,15 @@ export function GenerateInvoicesButton() {
   const generate = trpc.invoices.generateMonthly.useMutation({
     onSuccess: (data) => {
       if (data.generated > 0) {
-        toast.success(`Se han generado ${data.generated} facturas de pupilaje.`);
+        if ((data.issued ?? 0) === data.generated) {
+          toast.success(`Se han emitido ${data.issued} facturas de pupilaje.`);
+        } else {
+          // Las que no se pueden emitir quedan en borrador, con el motivo.
+          toast.warning(
+            `${data.issued} de ${data.generated} emitidas. El resto queda en borrador: ${(data.pendingReasons ?? []).join(" ")}`,
+            { duration: 10_000 },
+          );
+        }
         router.refresh();
       } else {
         toast.info("No hay contratos de pupilaje activos para facturar.");
@@ -26,7 +34,7 @@ export function GenerateInvoicesButton() {
     <Button 
       onClick={() => generate.mutate()}
       disabled={generate.isPending}
-      className="rounded-full shadow-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+      className="h-10 px-5"
     >
       {generate.isPending ? (
         <><SpinnerGap className="mr-2 h-4 w-4 animate-spin" /> Generando...</>

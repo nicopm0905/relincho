@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { CHECK_RESULTS, mareState } from "@/lib/reproduction";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -42,7 +43,7 @@ function KanbanCard({ cycle, tenantSlug }: { cycle: any, tenantSlug: string }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none cursor-grab active:cursor-grabbing pb-3">
-      <Card className="border-border/40 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200">
+      <Card className="border-border/70 shadow-bento transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-raised">
         <CardContent className="p-4 space-y-3 pointer-events-none">
           <div className="flex justify-between items-start">
             <div className="font-bold text-base text-foreground tracking-tight">
@@ -111,13 +112,13 @@ function KanbanColumn({
   });
 
   return (
-    <div className={`flex flex-col rounded-3xl ${bgClass} border border-border/40 p-4 min-h-[500px] transition-colors ${isOver ? 'ring-2 ring-primary/30 bg-background/50' : ''}`}>
+    <div className={`flex min-h-[500px] flex-col rounded-2xl ${bgClass} border border-border/70 p-4 transition-colors ${isOver ? 'ring-2 ring-primary/30 bg-background/50' : ''}`}>
       <div className="flex items-center justify-between mb-4 px-2">
         <div className="flex items-center gap-2">
           <Icon weight="duotone" className={`h-6 w-6 ${colorClass}`} />
           <h2 className="font-heading font-bold text-lg text-foreground">{title}</h2>
         </div>
-        <Badge variant="secondary" className="font-mono bg-white shadow-sm">{items.length}</Badge>
+        <Badge variant="secondary" className="font-mono shadow-sm">{items.length}</Badge>
       </div>
 
       <div ref={setNodeRef} className="flex-1">
@@ -141,8 +142,13 @@ function KanbanColumn({
 
 const pregnancyFormSchema = z.object({
   date: z.string().min(1, "Debes seleccionar una fecha"),
-  result: z.string().min(1, "Debes seleccionar un resultado"),
-  dayOfPregnancy: z.coerce.number().optional(),
+  result: z.enum(CHECK_RESULTS, { message: "Debes seleccionar un resultado" }),
+  // Vacio = sin dato (se calcula desde la cubricion). `z.coerce.number()` a
+  // secas convertia el campo vacio en 0 y guardaba "dia 0".
+  dayOfPregnancy: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : Number(value)),
+    z.number().int().min(0).max(400).optional(),
+  ),
 });
 
 const foalingFormSchema = z.object({
@@ -195,14 +201,10 @@ export function KanbanBoard({
     const targetColumn = over.id; // 'vacias', 'prenadas', 'paridas'
     
     // Check current logical column
-    let currentColumn = 'vacias';
     const latestCovering = cycle.coverings[0];
-    const latestCheck = latestCovering?.pregnancyChecks[0];
-    if (latestCovering?.foaling) {
-      currentColumn = 'paridas';
-    } else if (latestCheck?.result === "POSITIVE") {
-      currentColumn = 'prenadas';
-    }
+    const state = mareState(latestCovering);
+    const currentColumn =
+      state === "FOALED" ? 'paridas' : state === "PREGNANT" || state === "TWINS" ? 'prenadas' : 'vacias';
 
     if (currentColumn === targetColumn) return;
 
@@ -292,8 +294,8 @@ export function KanbanBoard({
           title="Vacías / En Celo" 
           icon={WarningCircle} 
           items={colVacias} 
-          bgClass="bg-amber-50/50" 
-          colorClass="text-amber-500" 
+          bgClass="bg-amber-50/60 dark:bg-amber-950/20" 
+          colorClass="text-amber-600 dark:text-amber-400" 
           tenantSlug={tenantSlug}
         />
         <KanbanColumn 
@@ -301,8 +303,8 @@ export function KanbanBoard({
           title="Preñadas" 
           icon={CheckCircle} 
           items={colPrenadas} 
-          bgClass="bg-emerald-50/50" 
-          colorClass="text-emerald-500" 
+          bgClass="bg-emerald-50/60 dark:bg-emerald-950/20" 
+          colorClass="text-emerald-600 dark:text-emerald-400" 
           tenantSlug={tenantSlug}
         />
         <KanbanColumn 
@@ -310,8 +312,8 @@ export function KanbanBoard({
           title="Paridas" 
           icon={Baby} 
           items={colParidas} 
-          bgClass="bg-blue-50/50" 
-          colorClass="text-blue-500" 
+          bgClass="bg-sky-50/50 dark:bg-sky-950/20" 
+          colorClass="text-sky-600 dark:text-sky-400" 
           tenantSlug={tenantSlug}
         />
       </div>

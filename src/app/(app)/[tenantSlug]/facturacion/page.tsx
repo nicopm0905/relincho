@@ -1,4 +1,5 @@
 import { createServerCaller } from "@/lib/trpc/server";
+import { invoiceLabel } from "@/lib/invoice-label";
 import { Receipt, FilePdf, Plus } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,9 +48,9 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
         title="Facturación"
         description="Facturas emitidas a tus clientes, incluidos pupilaje y servicios"
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <InvoiceStatusFilter current={statusFilter} />
-            <Button asChild variant="outline" className="rounded-full">
+            <Button asChild variant="outline">
               <Link href={`/${tenantSlug}/facturacion/nueva`}>
                 <Plus weight="bold" className="mr-2 h-4 w-4" />
                 Nueva factura
@@ -60,7 +61,7 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
         }
       />
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden shadow-bento">
         <div className="p-0">
           {invoices.length === 0 ? (
             <EmptyState
@@ -71,17 +72,17 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
             />
           ) : (
             <div className="no-scrollbar overflow-x-auto">
-              <table className="w-full min-w-[52rem] text-left text-sm">
+              <table className="w-full min-w-[48rem] text-left text-sm">
                 <thead className="border-b border-border bg-muted/50 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                   <tr>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Número</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Fecha</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Vence</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Cliente</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider text-right">Total</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider text-right">Saldo</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider text-center">Estado</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider text-right">Acciones</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Número</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Fecha</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Vence</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Cliente</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider text-right">Total</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider text-right">Saldo</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider text-center">Estado</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
@@ -99,7 +100,7 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
                             href={`/${tenantSlug}/facturacion/${inv.id}`}
                             className="hover:underline"
                           >
-                            {inv.series}-{inv.number.toString().padStart(4, "0")}
+                            {invoiceLabel(inv)}
                           </Link>
                         </td>
                         <td className="px-6 py-4 text-muted-foreground">
@@ -131,7 +132,7 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
                             href={`/api/invoices/${inv.id}/pdf`}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                            className="inline-flex h-8 items-center justify-center rounded-lg px-3 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary/[0.08]"
                           >
                             <FilePdf weight="duotone" className="mr-2 h-4 w-4" />
                             PDF

@@ -13,10 +13,10 @@ export default async function ContactoPage() {
   const t = await getTranslations("legal.contact");
 
   return (
-    <div className="flex min-h-screen flex-col selection:bg-primary/20 bg-white">
+    <div className="flex min-h-screen flex-col selection:bg-primary/20 bg-background">
       <Header session={session} />
 
-      <main className="flex-1 container max-w-4xl mx-auto px-4 sm:px-6 py-32 md:py-40">
+      <main id="main-content" tabIndex={-1} className="flex-1 container max-w-4xl mx-auto px-4 sm:px-6 py-32 md:py-40">
         <h1 className="font-heading text-4xl md:text-5xl font-bold mb-6 text-foreground text-center">
           {t("title")}
         </h1>
@@ -25,7 +25,7 @@ export default async function ContactoPage() {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div className="bg-[#f9f9f6] p-8 rounded-[2rem] border border-border/50">
+          <div className="bg-card p-8 rounded-2xl border border-border/70 shadow-bento">
             <h3 className="text-2xl font-bold font-heading mb-4 text-foreground">{t("support.title")}</h3>
             <p className="text-muted-foreground mb-6">
               {t("support.body")}
@@ -38,7 +38,7 @@ export default async function ContactoPage() {
             </a>
           </div>
 
-          <div className="bg-white p-8 rounded-[2rem] border border-border/50 shadow-sm">
+          <div className="bg-card p-8 rounded-2xl border border-border/70 shadow-bento">
             <h3 className="text-2xl font-bold font-heading mb-4 text-foreground">{t("sales.title")}</h3>
             <p className="text-muted-foreground mb-6">
               {t("sales.body")}

@@ -68,7 +68,7 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        "flex items-end justify-between gap-4 border-b border-border pb-2.5",
+        "flex items-start justify-between gap-3 border-b border-border pb-2.5 sm:items-end sm:gap-4",
         className,
       )}
     >

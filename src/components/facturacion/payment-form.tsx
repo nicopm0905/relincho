@@ -107,7 +107,7 @@ export function PaymentForm({
         <Button
           type="submit"
           disabled={addPayment.isPending}
-          className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white"
+          className="h-10 px-5"
         >
           {addPayment.isPending ? "Registrando..." : "Registrar pago"}
         </Button>

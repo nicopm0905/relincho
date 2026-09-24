@@ -1,5 +1,6 @@
+import Image from "next/image";
 import { createServerCaller } from "@/lib/trpc/server";
-import { Storefront, Plus, User, IdentificationCard, Horse, CurrencyEur } from "@phosphor-icons/react/dist/ssr";
+import { Storefront, User, IdentificationCard, Horse, CurrencyEur } from "@phosphor-icons/react/dist/ssr";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatters";
@@ -24,11 +25,11 @@ export default async function PupilajePage({ params }: PageProps) {
   const [contracts, horses, contacts] = await Promise.all([
     caller.boarding.list(),
     caller.horses.list(),
-    caller.contacts.list({ kind: "CLIENT" }),
+    caller.contacts.list({ kinds: ["CLIENT", "OWNER"] }),
   ]);
 
   return (
-    <div className="space-y-8 animate-in fade-in-0 duration-500">
+    <div className="animate-in fade-in-0 space-y-6 duration-500">
       <PageHeader
         title="Pupilaje"
         description="Contratos de alojamiento en boxes y prados para caballos de clientes"
@@ -47,14 +48,14 @@ export default async function PupilajePage({ params }: PageProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {contracts.map((contract) => (
-            <Card key={contract.id} className={`bg-white shadow-bento border-border/40 overflow-hidden transition-all ${!contract.active && 'opacity-60 grayscale'}`}>
+            <Card key={contract.id} className={`bg-card shadow-bento border-border/80 overflow-hidden transition-all ${!contract.active && 'opacity-60 grayscale'}`}>
               <div className={`h-2 w-full ${contract.active ? 'bg-gradient-to-r from-orange-400 to-amber-400' : 'bg-muted'}`} />
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-xl bg-muted overflow-hidden relative">
                       {contract.horse.photoUrl ? (
-                        <img src={contract.horse.photoUrl} alt={contract.horse.name} className="object-cover h-full w-full" />
+                        <Image src={contract.horse.photoUrl} alt={contract.horse.name} fill sizes="3rem" className="object-cover" />
                       ) : (
                         <Horse weight="duotone" className="h-6 w-6 text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                       )}

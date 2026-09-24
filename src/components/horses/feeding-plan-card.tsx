@@ -87,11 +87,20 @@ export function FeedingPlanCard({ horseId, horseName }: { horseId: string, horse
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger>
-            <Button variant="outline" size="sm" onClick={handleOpenDialog} className="gap-1.5 text-xs font-semibold rounded-lg shadow-xs">
-              <PencilSimple weight="bold" className="h-3.5 w-3.5" />
-              {rawItems.length > 0 ? "Editar Dieta" : "Configurar Dieta"}
-            </Button>
+          {/* `render`: el disparador ya es un boton; un <Button> dentro era un
+              boton anidado y rompia la hidratacion de la ficha. */}
+          <DialogTrigger
+            render={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleOpenDialog}
+                className="gap-1.5 text-xs font-semibold rounded-lg shadow-xs"
+              />
+            }
+          >
+            <PencilSimple weight="bold" className="h-3.5 w-3.5" />
+            {rawItems.length > 0 ? "Editar Dieta" : "Configurar Dieta"}
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg p-6">
             <DialogHeader className="pr-8">

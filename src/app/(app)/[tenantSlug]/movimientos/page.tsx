@@ -1,7 +1,6 @@
 import { createServerCaller } from "@/lib/trpc/server";
-import { Button } from "@/components/ui/button";
-import { Plus, ArrowRight, ArrowLeft, Path } from "@phosphor-icons/react/dist/ssr";
-import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, ArrowLeft, Path } from "@phosphor-icons/react/dist/ssr";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatters";
 import { NewMovementDialog } from "@/components/movimientos/new-movement-dialog";
@@ -27,14 +26,14 @@ export default async function MovimientosPage({ params }: PageProps) {
   ]);
 
   return (
-    <div className="space-y-8 animate-in fade-in-0 duration-500">
+    <div className="animate-in fade-in-0 space-y-6 duration-500">
       <PageHeader
         title="Libro de explotación"
         description="Registro oficial de movimientos REGA: altas y bajas"
-        actions={<NewMovementDialog tenantSlug={tenantSlug} horses={horses} />}
+        actions={<NewMovementDialog horses={horses} />}
       />
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden shadow-bento">
         <div className="p-0">
           {movements.length === 0 ? (
             <EmptyState
@@ -44,22 +43,23 @@ export default async function MovimientosPage({ params }: PageProps) {
               description="Registra las altas y bajas de tus caballos para mantener el libro de explotación al día."
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
+            <div className="no-scrollbar overflow-x-auto">
+              <table className="w-full min-w-[42rem] text-left text-sm">
                 <thead className="border-b border-border bg-muted/50 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                   <tr>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Fecha</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Caballo</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Movimiento</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Origen / Destino</th>
-                    <th className="px-6 py-4 font-semibold tracking-wider">Motivo</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Fecha</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Caballo</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Movimiento</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Origen / Destino</th>
+                    <th scope="col" className="px-6 py-4 font-semibold tracking-wider">Motivo</th>
+                    <th scope="col" className="w-12 px-3 py-4"><span className="sr-only">Acciones</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {movements.map((mov) => {
                     const isEntry = mov.direction === "IN";
                     return (
-                      <tr key={mov.id} className="hover:bg-muted/10 transition-colors">
+                      <tr key={mov.id} className="transition-colors hover:bg-primary/[0.04]">
                         <td className="px-6 py-4 font-medium">
                           {formatDate(mov.date)}
                         </td>
@@ -99,6 +99,20 @@ export default async function MovimientosPage({ params }: PageProps) {
                         </td>
                         <td className="px-6 py-4 text-muted-foreground">
                           {mov.reason || "—"}
+                        </td>
+                        <td className="px-3 py-4 text-right">
+                          <NewMovementDialog
+                            horses={horses}
+                            movement={{
+                              id: mov.id,
+                              horseId: mov.horseId,
+                              direction: mov.direction,
+                              date: mov.date,
+                              originRega: mov.originRega,
+                              destinationRega: mov.destinationRega,
+                              reason: mov.reason,
+                            }}
+                          />
                         </td>
                       </tr>
                     );

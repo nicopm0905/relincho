@@ -1,6 +1,21 @@
 import { createServerCaller } from "@/lib/trpc/server";
 import { PageHeader } from "@/components/layout/page-header";
-import { DocumentsManager } from "@/components/documentos/documents-manager";
+import dynamic from "next/dynamic";
+
+const DocumentsManager = dynamic(
+  () =>
+    import("@/components/documentos/documents-manager").then(
+      (module) => module.DocumentsManager,
+    ),
+  {
+    loading: () => (
+      <div className="space-y-4" aria-busy="true">
+        <div className="h-24 animate-pulse rounded-2xl bg-muted/50" />
+        <div className="h-64 animate-pulse rounded-2xl bg-muted/50" />
+      </div>
+    ),
+  },
+);
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;

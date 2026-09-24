@@ -32,6 +32,7 @@
   },
   "common": {
     "back": "Back",
+    "skipToContent": "Skip to main content",
     "localeSwitcher": {
       "label": "Change language",
       "es": "ES",
@@ -47,6 +48,7 @@
       "pricing": "Pricing",
       "faq": "FAQ"
     },
+    "navigation": "Main navigation",
     "actions": {
       "login": "Sign in",
       "startFree": "Start for free",
@@ -63,7 +65,12 @@
       "subtitle": "Health, breeding, boarding, invoicing and training performance. All in one place. No hassle.",
       "ctaPrimary": "Try it for free",
       "ctaSecondary": "See features",
-      "disclaimer": "No credit card · Cancel anytime"
+      "disclaimer": "No credit card · Cancel anytime",
+      "trust": [
+        "No credit card",
+        "Made in Jerez",
+        "Your data stays in the EU"
+      ]
     },
     "features": {
       "title": "Everything you need. And nothing else.",
@@ -89,7 +96,8 @@
           "title": "Invoicing and payments",
           "description": "Issue legal invoices, generate recurring fees and send SEPA direct debits. All adapted to the new AEAT regulation."
         }
-      }
+      },
+      "eyebrow": "Modules"
     },
     "about": {
       "title": "Who are we?",
@@ -113,7 +121,8 @@
           "title": "Animal welfare",
           "description": "We apply knowledge of biomechanics and sports training to make sure horse monitoring is optimal."
         }
-      }
+      },
+      "eyebrow": "Who we are"
     },
     "faq": {
       "title": "Frequently Asked Questions",
@@ -189,6 +198,18 @@
           ]
         }
       }
+    },
+    "showcase": {
+      "eyebrow": "A look inside",
+      "title": "What's urgent comes first, every morning.",
+      "link": "Open the demo, no sign-up",
+      "alt": "Relincho home screen: active horses, pending alerts, pregnant mares and open tasks for a demo stud farm."
+    },
+    "cta": {
+      "title": "Your stud farm, in order from today.",
+      "subtitle": "Open the demo with a sample stud farm and see it for yourself in two minutes. No account, no card.",
+      "primary": "See the demo",
+      "secondary": "Talk to us"
     }
   },
   "demo": {
@@ -217,12 +238,30 @@
       "title": "The rest of the yard, in the same place",
       "subtitle": "Screens from the demo stud farm, straight out of the app.",
       "items": [
-        { "title": "Home", "description": "Health, tasks and performance alerts in a single list, most urgent first." },
-        { "title": "Health", "description": "Vaccinations, deworming and treatments with automatic reminders." },
-        { "title": "Breeding", "description": "Heats, coverings, ultrasounds and foalings with predictive calculations." },
-        { "title": "Boarding and diets", "description": "Stalls, stays and rates for clients' horses." },
-        { "title": "Invoicing",          "description": "Invoices with series, taxes and PDF, automatic boarding fees and SEPA direct debits." },
-        { "title": "Horse record", "description": "A horse's whole history: health, documents, movements and training." }
+        {
+          "title": "Home",
+          "description": "Health, tasks and performance alerts in a single list, most urgent first."
+        },
+        {
+          "title": "Health",
+          "description": "Vaccinations, deworming and treatments with automatic reminders."
+        },
+        {
+          "title": "Breeding",
+          "description": "Heats, coverings, ultrasounds and foalings with predictive calculations."
+        },
+        {
+          "title": "Boarding and diets",
+          "description": "Stalls, stays and rates for clients' horses."
+        },
+        {
+          "title": "Invoicing",
+          "description": "Invoices with series, taxes and PDF, automatic boarding fees and SEPA direct debits."
+        },
+        {
+          "title": "Horse record",
+          "description": "A horse's whole history: health, documents, movements and training."
+        }
       ]
     },
     "closing": {
@@ -462,6 +501,7 @@
   },
   "sidebar": {
     "brand": "Relincho",
+    "navigation": "Main navigation",
     "home": "Home",
     "groups": {
       "stable": "Stable",
@@ -474,6 +514,7 @@
       "reproduction": "Breeding",
       "movements": "Movements",
       "tasks": "Tasks",
+      "calendar": "Calendar",
       "boarding": "Boarding",
       "invoicing": "Invoicing",
       "contacts": "Contacts",
@@ -481,6 +522,7 @@
       "settings": "Settings"
     },
     "more": "More",
+    "moreSections": "More sections",
     "moreSheet": "More sections",
     "close": "Close",
     "logout": "Sign out",
@@ -488,6 +530,7 @@
   },
   "landingV2": {
     "nav": {
+      "navigation": "Main navigation",
       "features": "Features",
       "about": "About us",
       "pricing": "Pricing",

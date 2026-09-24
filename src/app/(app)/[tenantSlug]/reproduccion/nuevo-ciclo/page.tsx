@@ -91,7 +91,7 @@ export default function NuevoCicloPage() {
         </div>
       </div>
 
-      <Card className="bg-white shadow-bento border-border/40 overflow-hidden">
+      <Card className="overflow-hidden shadow-bento">
         <div className="h-2 bg-gradient-to-r from-pink-400 to-purple-400 w-full" />
         <CardContent className="p-8">
           <Form {...form}>
@@ -158,10 +158,10 @@ export default function NuevoCicloPage() {
               />
 
               <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
-                <Button variant="ghost" asChild className="rounded-full">
+                <Button variant="ghost" asChild >
                   <Link href={`/${tenantSlug}/reproduccion`}>Cancelar</Link>
                 </Button>
-                <Button type="submit" disabled={createCycle.isPending} className="rounded-full shadow-sm">
+                <Button type="submit" disabled={createCycle.isPending} className="shadow-sm">
                   {createCycle.isPending ? "Iniciando..." : "Crear Cuaderno"}
                 </Button>
               </div>

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createServerCaller } from "@/lib/trpc/server";
 import { Button } from "@/components/ui/button";
 import { Plus } from "@phosphor-icons/react/dist/ssr";
@@ -5,6 +6,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { HorsesExplorer } from "@/components/horses/horses-explorer";
 import { HorseImportDialog } from "@/components/horses/horse-import-dialog";
+import { CollectionSkeleton } from "@/components/ui/page-skeleton";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -15,7 +17,15 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: `Caballos — ${tenantSlug}` };
 }
 
-export default async function CaballosPage({ params }: PageProps) {
+export default function CaballosPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<CollectionSkeleton />}>
+      <CaballosContent params={params} />
+    </Suspense>
+  );
+}
+
+async function CaballosContent({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
   const horses = await caller.horses.list();

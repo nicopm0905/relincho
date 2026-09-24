@@ -2,6 +2,7 @@
 
 import { trpc } from "@/lib/trpc/react"
 import { BrainCircuit, Loader2 } from "lucide-react"
+import { EditJournalDialog } from "./record-edit-dialogs"
 
 export function JournalFeed({ horseId }: { horseId: string }) {
   const { data: journals, isLoading } = trpc.journal.list.useQuery({ horseId })
@@ -30,6 +31,7 @@ export function JournalFeed({ horseId }: { horseId: string }) {
             <span className="text-xs font-semibold text-muted-foreground">
               {new Date(journal.date).toLocaleDateString()} a las {new Date(journal.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
+            <EditJournalDialog entry={{ id: journal.id, content: journal.content }} />
           </div>
           <p className="text-sm text-foreground whitespace-pre-wrap">{journal.content}</p>
           

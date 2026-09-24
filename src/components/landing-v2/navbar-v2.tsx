@@ -62,6 +62,7 @@ export function NavbarV2({ session }: NavbarV2Props) {
         </Link>
 
         <nav
+          aria-label={t("navigation")}
           className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/10 px-2 py-1.5 backdrop-blur-[12px] md:flex"
           style={{ backgroundColor: "rgba(20,22,16,0.75)" }}
         >

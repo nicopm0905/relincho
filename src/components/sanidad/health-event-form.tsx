@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Heartbeat, CalendarBlank, User, CurrencyEur } from "@phosphor-icons/react";
+import { CalendarBlank, CurrencyEur } from "@phosphor-icons/react";
 import { HealthEventType } from "@prisma/client";
 
 const healthEventSchema = z.object({
@@ -23,7 +23,8 @@ const healthEventSchema = z.object({
   notes: z.string().optional(),
 });
 
-type FormData = z.infer<typeof healthEventSchema>;
+type FormInput = z.input<typeof healthEventSchema>;
+type FormData = z.output<typeof healthEventSchema>;
 
 interface HealthEventFormProps {
   tenantSlug: string;
@@ -45,8 +46,12 @@ const typeLabels: Record<HealthEventType, string> = {
 export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEventFormProps) {
   const router = useRouter();
   
-  const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm<FormData>({
-    resolver: zodResolver(healthEventSchema) as any,
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<
+    FormInput,
+    unknown,
+    FormData
+  >({
+    resolver: zodResolver(healthEventSchema),
     defaultValues: {
       horseId: defaultHorseId || (horses.length === 1 ? horses[0].id : undefined),
       date: new Date().toISOString().split('T')[0],
@@ -82,9 +87,10 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEv
       
       {!defaultHorseId && horses.length > 1 && (
         <div className="space-y-2">
-          <Label className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Caballo</Label>
+          <Label htmlFor="healthHorse" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Caballo</Label>
           <div className="relative">
-            <select 
+            <select
+              id="healthHorse"
               {...register("horseId")} 
               className="flex h-12 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none font-medium"
             >
@@ -92,15 +98,16 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEv
               {horses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
             </select>
           </div>
-          {errors.horseId && <p className="text-sm text-destructive">{errors.horseId.message}</p>}
+          {errors.horseId && <p role="alert" className="text-sm text-destructive">{errors.horseId.message}</p>}
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2 col-span-2 sm:col-span-1">
-          <Label className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Tipo</Label>
+          <Label htmlFor="healthType" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Tipo</Label>
           <div className="relative">
-            <select 
+            <select
+              id="healthType"
               {...register("type")} 
               className="flex h-12 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none font-medium"
             >
@@ -109,51 +116,52 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEv
               ))}
             </select>
           </div>
-          {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
+          {errors.type && <p role="alert" className="text-sm text-destructive">{errors.type.message}</p>}
         </div>
 
         <div className="space-y-2 col-span-2 sm:col-span-1">
-          <Label className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Fecha</Label>
+          <Label htmlFor="healthDate" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Fecha</Label>
           <div className="relative">
             <CalendarBlank className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-            <Input type="date" {...register("date")} className="h-12 pl-10 rounded-xl text-base" />
+            <Input id="healthDate" type="date" {...register("date")} className="h-12 pl-10 rounded-xl text-base" />
           </div>
-          {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
+          {errors.date && <p role="alert" className="text-sm text-destructive">{errors.date.message}</p>}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Tratamiento / Descripción</Label>
+        <Label htmlFor="healthName" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Tratamiento / Descripción</Label>
         <Input 
+          id="healthName"
           {...register("name")} 
           placeholder="Ej: Vacuna Tétanos, Herrador completo..." 
           className="h-12 rounded-xl text-base"
         />
-        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+        {errors.name && <p role="alert" className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Próxima Fecha (Opcional)</Label>
+          <Label htmlFor="healthNextDate" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Próxima Fecha (Opcional)</Label>
           <div className="relative">
             <CalendarBlank className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-            <Input type="date" {...register("nextDueDate")} className="h-12 pl-10 rounded-xl text-base" />
+            <Input id="healthNextDate" type="date" {...register("nextDueDate")} className="h-12 pl-10 rounded-xl text-base" />
           </div>
         </div>
         
         <div className="space-y-2">
-          <Label className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Coste (€) (Opcional)</Label>
+          <Label htmlFor="healthCost" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Coste (€) (Opcional)</Label>
           <div className="relative">
             <CurrencyEur className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-            <Input type="number" step="0.01" {...register("cost", { valueAsNumber: true })} className="h-12 pl-10 rounded-xl text-base" placeholder="0.00" />
+            <Input id="healthCost" type="number" step="0.01" {...register("cost", { valueAsNumber: true })} className="h-12 pl-10 rounded-xl text-base" placeholder="0.00" />
           </div>
-          {errors.cost && <p className="text-sm text-destructive">{errors.cost.message}</p>}
+          {errors.cost && <p role="alert" className="text-sm text-destructive">{errors.cost.message}</p>}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Notas adicionales</Label>
-        <Textarea {...register("notes")} className="rounded-xl min-h-[100px] text-base" placeholder="Cualquier observación relevante..." />
+        <Label htmlFor="healthNotes" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Notas adicionales</Label>
+        <Textarea id="healthNotes" {...register("notes")} className="rounded-xl min-h-[100px] text-base" placeholder="Cualquier observación relevante..." />
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full h-14 rounded-xl text-lg font-bold shadow-md">

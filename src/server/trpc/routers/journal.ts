@@ -1,8 +1,10 @@
 import { z } from "zod"
 import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init"
+import { assertHorseAccess } from "../access";
 import { generateText } from "ai"
 import { google } from "@ai-sdk/google"
-import { prisma, withTenant } from "@/server/db/prisma"
+import { withTenant } from "@/server/db/prisma"
+import { TRPCError } from "@trpc/server"
 
 const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM")
 
@@ -10,6 +12,7 @@ export const journalRouter = createTRPCRouter({
   list: tenantProcedure
     .input(z.object({ horseId: z.string() }))
     .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
       return withTenant(ctx.tenantId, (tx) => 
         tx.dailyJournal.findMany({
           where: {
@@ -84,5 +87,30 @@ Tarea: Analiza la entrada del diario y da un breve aviso o recomendación nutric
           },
         })
       )
+    }),
+
+  /** Corregir el texto. El analisis de IA se borra: hablaba del texto anterior. */
+  update: dailyProcedure
+    .input(z.object({ id: z.string().uuid(), content: z.string().trim().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const existing = await tx.dailyJournal.count({ where: { id: input.id, tenantId: ctx.tenantId } })
+        if (!existing) throw new TRPCError({ code: "NOT_FOUND" })
+        return tx.dailyJournal.update({
+          where: { id: input.id },
+          data: { content: input.content, aiAnalysis: null },
+        })
+      })
+    }),
+
+  delete: dailyProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const existing = await tx.dailyJournal.count({ where: { id: input.id, tenantId: ctx.tenantId } })
+        if (!existing) throw new TRPCError({ code: "NOT_FOUND" })
+        await tx.dailyJournal.delete({ where: { id: input.id } })
+        return { id: input.id }
+      })
     }),
 })

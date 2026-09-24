@@ -63,7 +63,12 @@ export async function withDownloadUrls<
 
 export async function listDocuments(
   tenantId: string,
-  opts: { horseId?: string; kind?: string } = {},
+  opts: {
+    horseId?: string;
+    kind?: string;
+    /** Solo documentos de estos caballos (miembros externos). `null`: todos. */
+    allowedHorseIds?: string[] | null;
+  } = {},
 ) {
   return withTenant(tenantId, (tx) =>
     tx.document.findMany({
@@ -71,6 +76,7 @@ export async function listDocuments(
         tenantId,
         deletedAt: null,
         ...(opts.horseId ? { horseId: opts.horseId } : {}),
+        ...(opts.allowedHorseIds ? { horseId: { in: opts.allowedHorseIds } } : {}),
         ...(opts.kind ? { kind: opts.kind } : {}),
       },
       include: { horse: { select: { id: true, name: true } } },

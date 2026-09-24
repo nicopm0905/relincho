@@ -1,4 +1,5 @@
 import { createServerCaller } from "@/lib/trpc/server";
+import { invoiceLabel } from "@/lib/invoice-label";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,7 +87,7 @@ export default async function PortalFacturasPage({ params }: PageProps) {
                   return (
                     <tr key={inv.id} className="hover:bg-muted/10">
                       <td className="px-5 py-3 font-mono font-medium text-foreground">
-                        {inv.series}-{inv.number.toString().padStart(4, "0")}
+                        {invoiceLabel(inv)}
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">
                         {formatDate(inv.issueDate)}

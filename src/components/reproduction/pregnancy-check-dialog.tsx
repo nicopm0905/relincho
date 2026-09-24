@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { CHECK_RESULTS } from "@/lib/reproduction";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -51,8 +52,13 @@ const results = [
 
 const formSchema = z.object({
   date: z.string().min(1, "Debes seleccionar una fecha"),
-  result: z.string().min(1, "Debes seleccionar un resultado"),
-  dayOfPregnancy: z.coerce.number().optional(),
+  result: z.enum(CHECK_RESULTS, { message: "Debes seleccionar un resultado" }),
+  // Vacio = sin dato (se calcula desde la cubricion). `z.coerce.number()` a
+  // secas convertia el campo vacio en 0 y guardaba "dia 0".
+  dayOfPregnancy: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : Number(value)),
+    z.number().int().min(0).max(400).optional(),
+  ),
 });
 
 interface PregnancyCheckDialogProps {

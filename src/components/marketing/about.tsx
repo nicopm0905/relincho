@@ -1,9 +1,7 @@
-"use client";
-
 import Link from "next/link";
-import { Users, Target, Heart, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { getTranslations } from "next-intl/server";
+import { Users, Target, Heart, ArrowRight, MapPin } from "lucide-react";
 
 const values = [
   { key: "local", icon: Heart },
@@ -11,83 +9,76 @@ const values = [
   { key: "welfare", icon: Users },
 ] as const;
 
-export function About() {
-  const t = useTranslations("marketing.about");
-  const strong = (chunks: React.ReactNode) => <strong>{chunks}</strong>;
+export async function About() {
+  const t = await getTranslations("marketing.about");
+  const strong = (chunks: React.ReactNode) => <strong className="font-semibold text-foreground">{chunks}</strong>;
 
   return (
-    <section id="nosotros" className="relative overflow-hidden bg-white py-20 md:py-32">
-      <div className="container max-w-6xl mx-auto px-4 sm:px-6">
+    <section id="nosotros" className="bg-[#eef1e6] py-20 md:py-28">
+      <div className="container mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          <div className="relative">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-raised sm:aspect-[4/3] lg:aspect-[4/5]">
+              <Image
+                src="/landing/nosotros.jpg"
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 540px, 100vw"
+                className="object-cover"
+              />
+            </div>
+            {/* Tarjeta flotante con el origen: sustituye al icono generico. */}
+            <div className="absolute -bottom-6 left-6 flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-5 py-4 shadow-raised sm:left-8">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-ink">
+                <MapPin className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="font-heading text-lg leading-tight font-bold text-foreground">
+                  {t("cardTitle")}
+                </p>
+                <p className="text-sm text-muted-foreground">{t("cardSubtitle")}</p>
+              </div>
+            </div>
+          </div>
 
-        <div className="mb-16 grid grid-cols-1 items-center gap-10 md:mb-24 lg:grid-cols-2 lg:gap-16">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8 }}
-            className="lg:order-1"
-          >
-            <h2 className="font-heading text-4xl md:text-5xl text-foreground mb-6">
+          <div className="pt-6 lg:pt-0">
+            <p className="text-xs font-bold tracking-[0.2em] text-primary-ink uppercase">
+              {t("eyebrow")}
+            </p>
+            <h2 className="mt-3 mb-4 font-heading text-3xl text-foreground sm:text-4xl md:text-5xl">
               {t("title")}
             </h2>
-            <h3 className="text-xl text-foreground font-semibold mb-6">
-              {t("subtitle")}
-            </h3>
-            <div className="space-y-6 text-lg text-muted-foreground">
+            <p className="mb-6 text-lg font-semibold text-foreground">{t("subtitle")}</p>
+            <div className="space-y-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
               <p>{t("p1")}</p>
               <p>{t.rich("p2", { strong })}</p>
               <p>{t.rich("p3", { strong })}</p>
-              <Link
-                href="/fundadores"
-                className="inline-flex items-center gap-1.5 text-base font-semibold text-primary-ink transition-colors hover:text-primary"
-              >
-                {t("readMore")}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="group relative flex aspect-[4/3] max-h-[300px] items-center justify-center overflow-hidden rounded-[2rem] border border-border/50 bg-[#f9f9f6] p-8 lg:order-2 lg:max-h-none"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent transition-opacity group-hover:opacity-75"></div>
-            <div className="text-center relative z-10">
-              <div className="w-24 h-24 bg-[#222222] text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl transform transition-transform group-hover:scale-110 duration-500">
-                <Heart strokeWidth={1.5} className="w-10 h-10" />
-              </div>
-              <h4 className="font-heading text-2xl text-foreground">{t("cardTitle")}</h4>
-              <p className="text-muted-foreground mt-2">{t("cardSubtitle")}</p>
-            </div>
-          </motion.div>
+            <Link
+              href="/fundadores"
+              className="mt-6 inline-flex items-center gap-1.5 text-base font-semibold text-primary-ink transition-colors hover:text-primary"
+            >
+              {t("readMore")}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
-          {values.map((value, i) => (
-            <motion.div
-              key={value.key}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6, delay: i * 0.15 }}
-              className="bg-[#f9f9f6] rounded-[2rem] p-8 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-2"
-            >
-              <div className="w-16 h-16 mx-auto bg-white border border-border/50 text-foreground rounded-full flex items-center justify-center mb-6 shadow-sm">
-                <value.icon strokeWidth={2} className="w-7 h-7" />
+        <div className="mt-16 grid grid-cols-1 gap-8 border-t border-[#d6ddcd] pt-12 sm:grid-cols-3 md:mt-24">
+          {values.map((value) => (
+            <div key={value.key} className="flex gap-4">
+              <value.icon strokeWidth={2} className="mt-1 h-5 w-5 shrink-0 text-primary-ink" />
+              <div>
+                <h3 className="mb-2 font-heading text-lg font-bold text-foreground">
+                  {t(`values.${value.key}.title`)}
+                </h3>
+                <p className="text-[15px] leading-relaxed text-muted-foreground">
+                  {t(`values.${value.key}.description`)}
+                </p>
               </div>
-              <h4 className="text-xl font-bold font-heading mb-4 text-foreground">
-                {t(`values.${value.key}.title`)}
-              </h4>
-              <p className="text-muted-foreground">
-                {t(`values.${value.key}.description`)}
-              </p>
-            </motion.div>
+            </div>
           ))}
         </div>
-
       </div>
     </section>
   );

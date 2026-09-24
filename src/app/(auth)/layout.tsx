@@ -11,8 +11,9 @@ export default async function AuthLayout({
     redirect("/dashboard");
   }
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md px-4">{children}</div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgb(142_166_68_/_0.12),transparent_32rem)]" />
+      <div className="relative w-full max-w-md">{children}</div>
     </div>
   );
 }

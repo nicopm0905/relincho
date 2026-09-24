@@ -2,7 +2,19 @@ import { createServerCaller } from "@/lib/trpc/server";
 import { Button } from "@/components/ui/button";
 import { CaretLeft, Receipt } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { NewInvoiceEditor } from "@/components/facturacion/new-invoice-editor";
+import dynamic from "next/dynamic";
+
+const NewInvoiceEditor = dynamic(
+  () =>
+    import("@/components/facturacion/new-invoice-editor").then(
+      (module) => module.NewInvoiceEditor,
+    ),
+  {
+    loading: () => (
+      <div className="h-96 animate-pulse rounded-xl bg-muted/40" aria-busy="true" />
+    ),
+  },
+);
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -18,7 +30,7 @@ export default async function NuevaFacturaPage({ params }: PageProps) {
   const caller = await createServerCaller(tenantSlug);
 
   const [contacts, horses, series] = await Promise.all([
-    caller.contacts.list({ kind: "CLIENT" }),
+    caller.contacts.list({ kinds: ["CLIENT", "OWNER"] }),
     caller.horses.list(),
     caller.invoices.seriesList(),
   ]);
@@ -26,7 +38,7 @@ export default async function NuevaFacturaPage({ params }: PageProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in-0 duration-500 w-full">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild className="rounded-full -ml-3">
+        <Button variant="ghost" size="sm" asChild className="-ml-3">
           <Link href={`/${tenantSlug}/facturacion`}>
             <CaretLeft weight="bold" className="mr-1 h-4 w-4" />
             Volver a facturación
@@ -34,7 +46,7 @@ export default async function NuevaFacturaPage({ params }: PageProps) {
         </Button>
       </div>
 
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-bento border border-border/40 relative overflow-hidden">
+      <div className="bg-card rounded-2xl p-6 shadow-bento border border-border/80 sm:p-8 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-blue-600" />
         <div className="flex items-center gap-3 mb-8">
           <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-sm">

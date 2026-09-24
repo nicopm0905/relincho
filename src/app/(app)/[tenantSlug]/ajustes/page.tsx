@@ -1,5 +1,5 @@
-import { auth } from "@/server/auth";
-import { prisma } from "@/server/db/prisma";
+import { getSession } from "@/server/auth";
+import { getTenantAccess } from "@/server/tenant-access";
 import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,20 @@ import { CreditCard, UsersThree, WarningCircle } from "@phosphor-icons/react/dis
 import { formatDate } from "@/lib/formatters";
 
 import { TenantSettingsForm } from "@/components/settings/tenant-settings-form";
-import { TeamManagement } from "@/components/settings/team-management";
+import dynamic from "next/dynamic";
+
+const TeamManagement = dynamic(
+  () =>
+    import("@/components/settings/team-management").then(
+      (module) => module.TeamManagement,
+    ),
+  {
+    loading: () => (
+      <div className="h-56 animate-pulse rounded-xl bg-muted/40" aria-busy="true" />
+    ),
+  },
+);
+import { PageHeader } from "@/components/layout/page-header";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -20,18 +33,14 @@ const PRO_PRICE_LABEL = "79 €/mes";
 
 export default async function AjustesPage({ params }: PageProps) {
   const { tenantSlug } = await params;
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) redirect("/login");
 
-  const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+  const { tenant, membership } = await getTenantAccess(
+    tenantSlug,
+    session.user.id,
+  );
   if (!tenant) notFound();
-
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_tenantId: { userId: session.user.id, tenantId: tenant.id },
-    },
-    select: { role: true },
-  });
   if (!membership) notFound();
 
   const isOwner = membership.role === "OWNER";
@@ -40,18 +49,20 @@ export default async function AjustesPage({ params }: PageProps) {
     tenant.stripeStatus === "past_due" || tenant.stripeStatus === "unpaid";
 
   return (
-    <div className="space-y-8 max-w-2xl">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Ajustes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Configuración de tu ganadería y plan de suscripción
-        </p>
-      </div>
+    <div className="animate-in fade-in-0 max-w-2xl space-y-6 duration-500">
+      <PageHeader
+        title="Ajustes"
+        description="Configuración de tu ganadería, equipo y plan de suscripción"
+      />
 
       <TenantSettingsForm tenant={{
         id: tenant.id,
         name: tenant.name,
+        fiscalName: tenant.fiscalName,
         nif: tenant.nif,
+        address: tenant.address,
+        postalCode: tenant.postalCode,
+        city: tenant.city,
         province: tenant.province,
         regaCode: tenant.regaCode,
       }} />

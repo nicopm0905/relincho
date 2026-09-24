@@ -1,15 +1,14 @@
 import { z } from "zod";
-import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { assertHorseAccess, horseScope, allowedHorseIds } from "../access";
 import { withTenant } from "@/server/db/prisma";
 import {
   generatePlan,
   getPlanSnapshot,
   markMissedDay,
-  reportSession,
 } from "@/server/services/performance/plan-service";
-import { syncNutritionForDay } from "@/server/services/nutrition/sync";
+import { recordSessionWithLoad } from "@/server/services/performance/record-session";
 import { projectNutrition } from "@/server/services/nutrition/projection";
 import { stripTime } from "@/server/services/performance/periodization";
 import { listPendingCheckIns } from "@/server/services/performance/check-in";
@@ -84,6 +83,7 @@ export const performanceRouter = createTRPCRouter({
   chipsByHorse: tenantProcedure
     .input(z.object({ horseId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
       return withTenant(ctx.tenantId, (tx) =>
         tx.chipTag.findMany({
           where: { horseId: input.horseId, tenantId: ctx.tenantId },
@@ -96,6 +96,7 @@ export const performanceRouter = createTRPCRouter({
   getVetProfile: tenantProcedure
     .input(z.object({ horseId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
       return withTenant(ctx.tenantId, (tx) =>
         tx.veterinaryProfile.findUnique({ where: { horseId: input.horseId } }),
       );
@@ -131,6 +132,7 @@ export const performanceRouter = createTRPCRouter({
   listCompetitions: tenantProcedure
     .input(z.object({ horseId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
       return withTenant(ctx.tenantId, (tx) =>
         tx.competitionTarget.findMany({
           where: { horseId: input.horseId, tenantId: ctx.tenantId },
@@ -188,10 +190,15 @@ export const performanceRouter = createTRPCRouter({
 
   /** Estado de todos los caballos con plan activo, para el panel de rendimiento. */
   overview: tenantProcedure.query(async ({ ctx }) => {
+    const scope = await horseScope(ctx, "id");
     return withTenant(ctx.tenantId, async (tx) => {
       const today = stripTime(new Date());
       const horses = await tx.horse.findMany({
-        where: { tenantId: ctx.tenantId, status: { in: ["ACTIVE", "IN_TRAINING"] } },
+        where: {
+          tenantId: ctx.tenantId,
+          status: { in: ["ACTIVE", "IN_TRAINING"] },
+          ...scope,
+        },
         select: {
           id: true,
           name: true,
@@ -269,15 +276,18 @@ export const performanceRouter = createTRPCRouter({
     .input(
       z.object({ days: z.number().int().min(1).max(14).default(4) }).optional(),
     )
-    .query(({ ctx, input }) =>
-      withTenant(ctx.tenantId, (tx) =>
+    .query(async ({ ctx, input }) => {
+      const ids = await allowedHorseIds(ctx);
+      const pending = await withTenant(ctx.tenantId, (tx) =>
         listPendingCheckIns(tx, ctx.tenantId, input?.days ?? 4),
-      ),
-    ),
+      );
+      return ids ? pending.filter((item) => ids.includes(item.horseId)) : pending;
+    }),
 
   snapshot: tenantProcedure
     .input(z.object({ horseId: z.string().uuid(), date: z.coerce.date().optional() }))
     .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
       return getPlanSnapshot({ tenantId: ctx.tenantId, ...input });
     }),
 
@@ -298,28 +308,8 @@ export const performanceRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const result = await reportSession({ tenantId: ctx.tenantId, ...input });
-      const prescription = await syncNutritionForDay({
-        tenantId: ctx.tenantId,
-        horseId: input.horseId,
-        date: input.date,
-        internalLoadUa: result.internalLoadUa,
-        sweatLoss: input.sweatLoss ?? null,
-        strengthSession: input.strengthSession,
-        isProjection: false,
-      });
-
-      // Si el plan se ha reajustado, la dieta prevista de los dias siguientes
-      // deja de ser valida y hay que rehacerla con las cargas nuevas.
-      if (result.adjustments.length > 0) {
-        await projectNutrition({
-          tenantId: ctx.tenantId,
-          horseId: input.horseId,
-          from: addDays(input.date, 1),
-        });
-      }
-
-      return { ...result, prescription };
+      await assertHorseAccess(ctx, input.horseId);
+      return recordSessionWithLoad({ tenantId: ctx.tenantId, ...input });
     }),
 
   markMissedDay: dailyProcedure

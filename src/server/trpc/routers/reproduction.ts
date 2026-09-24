@@ -1,33 +1,115 @@
 import { z } from "zod";
 import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { assertHorseAccess, horseScope } from "../access";
 import { TRPCError } from "@trpc/server";
-import { withTenant } from "@/server/db/prisma";
+import { withTenant, type PrismaClient } from "@/server/db/prisma";
+import { CHECK_RESULTS, coveringResult } from "@/lib/reproduction";
 
 const managerProcedure = roleProcedure("OWNER", "MANAGER");
+/** Ecografias: tambien el veterinario externo, que es quien las hace. */
+const checkProcedure = roleProcedure("OWNER", "MANAGER", "VET_EXTERNAL");
+
+const coveringInput = z.object({
+  stallionId: z.string().uuid().optional(),
+  method: z.enum(["NATURAL", "AI_FRESH", "AI_REFRIGERATED", "AI_FROZEN", "ET"]),
+  date: z.date(),
+});
+
+const checkInput = z.object({
+  date: z.date(),
+  result: z.enum(CHECK_RESULTS),
+  dayOfPregnancy: z.number().int().min(0).max(400).optional(),
+});
+
+const foalingInput = z.object({
+  date: z.date(),
+  sex: z.enum(["MALE", "FEMALE"]).optional(),
+  alive: z.boolean().default(true),
+  notes: z.string().optional(),
+});
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+function dayOfPregnancy(coveringDate: Date, checkDate: Date) {
+  const days = Math.round((checkDate.getTime() - coveringDate.getTime()) / DAY_MS);
+  return days >= 0 ? days : undefined;
+}
+
+async function findCovering(tx: PrismaClient, tenantId: string, id: string) {
+  const covering = await tx.covering.findFirst({ where: { id, tenantId } });
+  if (!covering) throw new TRPCError({ code: "NOT_FOUND", message: "Cubrición no encontrada" });
+  return covering;
+}
+
+/** `PregnancyCheck` y `Foaling` no llevan tenantId: se comprueba por su cubricion. */
+async function findCheck(tx: PrismaClient, tenantId: string, id: string) {
+  const check = await tx.pregnancyCheck.findFirst({
+    where: { id, covering: { tenantId } },
+    include: { covering: { select: { mareId: true } } },
+  });
+  if (!check) throw new TRPCError({ code: "NOT_FOUND", message: "Ecografía no encontrada" });
+  return check;
+}
+
+async function findFoaling(tx: PrismaClient, tenantId: string, id: string) {
+  const foaling = await tx.foaling.findFirst({ where: { id, covering: { tenantId } } });
+  if (!foaling) throw new TRPCError({ code: "NOT_FOUND", message: "Parto no encontrado" });
+  return foaling;
+}
+
+async function assertStallion(tx: PrismaClient, tenantId: string, stallionId?: string) {
+  if (!stallionId) return;
+  const stallion = await tx.horse.count({ where: { id: stallionId, tenantId, sex: "MALE" } });
+  if (!stallion) throw new TRPCError({ code: "NOT_FOUND", message: "Semental no encontrado" });
+}
+
+/**
+ * `Covering.result` refleja siempre su ultima ecografia (ver `coveringResult`).
+ * Antes solo se actualizaba con positiva o negativa, y gemelos, reabsorcion o
+ * aborto dejaban la cubricion en el estado anterior.
+ */
+async function syncCoveringResult(tx: PrismaClient, coveringId: string) {
+  const checks = await tx.pregnancyCheck.findMany({
+    where: { coveringId },
+    select: { date: true, result: true },
+  });
+  await tx.covering.update({
+    where: { id: coveringId },
+    data: { result: coveringResult(checks) },
+  });
+}
 
 export const reproductionRouter = createTRPCRouter({
   listActiveCycles: tenantProcedure
     .input(z.object({ season: z.number().optional() }))
     .query(async ({ ctx, input }) => {
       const currentSeason = input.season || new Date().getFullYear();
+      const scope = await horseScope(ctx, "mareId");
       
       const cycles = await withTenant(ctx.tenantId, (tx) => tx.reproductionCycle.findMany({
         where: {
           tenantId: ctx.tenantId,
           season: currentSeason,
+          ...scope,
         },
-        include: {
-          mare: true,
+        select: {
+          id: true,
+          season: true,
+          mare: { select: { id: true, name: true } },
           coverings: {
             orderBy: { date: 'desc' },
             take: 1, // Get the latest covering to determine current status
-            include: {
-              stallion: true,
+            select: {
+              id: true,
+              date: true,
+              result: true,
+              stallion: { select: { id: true, name: true } },
               pregnancyChecks: {
                 orderBy: { date: 'desc' },
                 take: 1,
+                select: { result: true, date: true },
               },
-              foaling: true,
+              foaling: { select: { id: true, date: true } },
+              _count: { select: { pregnancyChecks: true } },
             }
           }
         },
@@ -65,6 +147,7 @@ export const reproductionRouter = createTRPCRouter({
       if (!cycle) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Ciclo no encontrado" });
       }
+      await assertHorseAccess(ctx, cycle.mareId);
 
       return cycle;
     }),
@@ -105,96 +188,161 @@ export const reproductionRouter = createTRPCRouter({
     }),
 
   addCovering: managerProcedure
-    .input(z.object({
-      cycleId: z.string(),
-      stallionId: z.string().optional(),
-      method: z.enum(["NATURAL", "AI_FRESH", "AI_REFRIGERATED", "AI_FROZEN", "ET"]),
-      date: z.date(),
-      notes: z.string().optional(),
-    }))
+    .input(coveringInput.extend({ cycleId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const cycle = await withTenant(ctx.tenantId, (tx) => tx.reproductionCycle.findUnique({
-        where: { id: input.cycleId, tenantId: ctx.tenantId }
-      }));
-
-      if (!cycle) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Ciclo no encontrado" });
-      }
-
-      return withTenant(ctx.tenantId, (tx) => tx.covering.create({
-        data: {
-          tenantId: ctx.tenantId,
-          cycleId: cycle.id,
-          mareId: cycle.mareId,
-          stallionId: input.stallionId,
-          method: input.method,
-          date: input.date,
-          result: "PENDING", // PENDING, POSITIVE, NEGATIVE, ABORTION
+      return withTenant(ctx.tenantId, async (tx) => {
+        const cycle = await tx.reproductionCycle.findFirst({
+          where: { id: input.cycleId, tenantId: ctx.tenantId },
+        });
+        if (!cycle) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Ciclo no encontrado" });
         }
-      }));
+        await assertStallion(tx, ctx.tenantId, input.stallionId);
+
+        return tx.covering.create({
+          data: {
+            tenantId: ctx.tenantId,
+            cycleId: cycle.id,
+            mareId: cycle.mareId,
+            stallionId: input.stallionId ?? null,
+            method: input.method,
+            date: input.date,
+            result: "PENDING",
+          },
+        });
+      });
     }),
 
-  addPregnancyCheck: managerProcedure
-    .input(z.object({
-      coveringId: z.string(),
-      date: z.date(),
-      result: z.string(), // e.g. "POSITIVE", "NEGATIVE", "TWINS"
-      dayOfPregnancy: z.number().optional(),
-    }))
+  updateCovering: managerProcedure
+    .input(coveringInput.partial().extend({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const covering = await withTenant(ctx.tenantId, (tx) => tx.covering.findUnique({
-        where: { id: input.coveringId, tenantId: ctx.tenantId }
-      }));
+      const { id, ...data } = input;
+      return withTenant(ctx.tenantId, async (tx) => {
+        await findCovering(tx, ctx.tenantId, id);
+        await assertStallion(tx, ctx.tenantId, data.stallionId);
+        return tx.covering.update({ where: { id }, data });
+      });
+    }),
 
-      if (!covering) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Cubrición no encontrada" });
-      }
+  /** Borra la cubricion con sus ecografias y su parto (cascada en BD). */
+  deleteCovering: managerProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        await findCovering(tx, ctx.tenantId, input.id);
+        await tx.covering.delete({ where: { id: input.id } });
+        return { id: input.id };
+      });
+    }),
 
-      const check = await withTenant(ctx.tenantId, (tx) => tx.pregnancyCheck.create({
-        data: {
-          coveringId: covering.id,
-          date: input.date,
-          result: input.result,
-          dayOfPregnancy: input.dayOfPregnancy,
-        }
-      }));
+  addPregnancyCheck: checkProcedure
+    .input(checkInput.extend({ coveringId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const covering = await findCovering(tx, ctx.tenantId, input.coveringId);
+        await assertHorseAccess(ctx, covering.mareId);
 
-      // Si el resultado es positivo o negativo claro, actualizamos la cubrición
-      if (input.result === "POSITIVE" || input.result === "NEGATIVE") {
-        await withTenant(ctx.tenantId, (tx) => tx.covering.update({
-          where: { id: covering.id },
-          data: { result: input.result }
-        }));
-      }
+        const check = await tx.pregnancyCheck.create({
+          data: {
+            coveringId: covering.id,
+            date: input.date,
+            result: input.result,
+            // Si no lo dan, se calcula desde la cubricion.
+            dayOfPregnancy: input.dayOfPregnancy ?? dayOfPregnancy(covering.date, input.date),
+          },
+        });
+        await syncCoveringResult(tx, covering.id);
+        return check;
+      });
+    }),
 
-      return check;
+  updatePregnancyCheck: checkProcedure
+    .input(checkInput.partial().extend({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return withTenant(ctx.tenantId, async (tx) => {
+        const check = await findCheck(tx, ctx.tenantId, id);
+        await assertHorseAccess(ctx, check.covering.mareId);
+        const updated = await tx.pregnancyCheck.update({ where: { id }, data });
+        await syncCoveringResult(tx, check.coveringId);
+        return updated;
+      });
+    }),
+
+  deletePregnancyCheck: checkProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const check = await findCheck(tx, ctx.tenantId, input.id);
+        await assertHorseAccess(ctx, check.covering.mareId);
+        await tx.pregnancyCheck.delete({ where: { id: input.id } });
+        await syncCoveringResult(tx, check.coveringId);
+        return { id: input.id };
+      });
     }),
 
   addFoaling: managerProcedure
-    .input(z.object({
-      coveringId: z.string(),
-      date: z.date(),
-      sex: z.enum(["MALE", "FEMALE"]).optional(),
-      alive: z.boolean().default(true),
-      notes: z.string().optional(),
-    }))
+    .input(foalingInput.extend({ coveringId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const covering = await withTenant(ctx.tenantId, (tx) => tx.covering.findUnique({
-        where: { id: input.coveringId, tenantId: ctx.tenantId }
-      }));
-
-      if (!covering) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Cubrición no encontrada" });
-      }
-
-      return withTenant(ctx.tenantId, (tx) => tx.foaling.create({
-        data: {
-          coveringId: covering.id,
-          date: input.date,
-          sex: input.sex,
-          alive: input.alive,
-          notes: input.notes,
+      return withTenant(ctx.tenantId, async (tx) => {
+        const covering = await findCovering(tx, ctx.tenantId, input.coveringId);
+        const existing = await tx.foaling.count({ where: { coveringId: covering.id } });
+        if (existing) {
+          throw new TRPCError({ code: "CONFLICT", message: "Esta cubrición ya tiene un parto registrado" });
         }
-      }));
+        if (input.date < covering.date) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "El parto no puede ser anterior a la cubrición" });
+        }
+        return tx.foaling.create({
+          data: {
+            coveringId: covering.id,
+            date: input.date,
+            sex: input.sex,
+            alive: input.alive,
+            notes: input.notes,
+          },
+        });
+      });
+    }),
+
+  updateFoaling: managerProcedure
+    .input(foalingInput.partial().extend({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return withTenant(ctx.tenantId, async (tx) => {
+        await findFoaling(tx, ctx.tenantId, id);
+        return tx.foaling.update({ where: { id }, data });
+      });
+    }),
+
+  deleteFoaling: managerProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        await findFoaling(tx, ctx.tenantId, input.id);
+        await tx.foaling.delete({ where: { id: input.id } });
+        return { id: input.id };
+      });
+    }),
+
+  /** Solo un ciclo vacio: con cubriciones hay historial que no se tira de golpe. */
+  deleteCycle: managerProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const cycle = await tx.reproductionCycle.findFirst({
+          where: { id: input.id, tenantId: ctx.tenantId },
+          include: { _count: { select: { coverings: true } } },
+        });
+        if (!cycle) throw new TRPCError({ code: "NOT_FOUND" });
+        if (cycle._count.coverings > 0) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Borra antes sus cubriciones: el ciclo tiene historial.",
+          });
+        }
+        await tx.reproductionCycle.delete({ where: { id: input.id } });
+        return { id: input.id };
+      });
     }),
 });

@@ -9,14 +9,16 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatDate } from "@/lib/formatters";
 import { CalendarCheck, QrCode, Warning } from "@phosphor-icons/react/dist/ssr";
-import { WeekStrip } from "@/components/rendimiento/week-strip";
-import { MesocycleTimeline } from "@/components/rendimiento/mesocycle-timeline";
-import { PlanActions } from "@/components/rendimiento/plan-actions";
-import { ReportSessionDialog } from "@/components/rendimiento/report-session-dialog";
-import { VetPanelDialog } from "@/components/rendimiento/vet-panel-dialog";
-import { ChipPairing } from "@/components/rendimiento/chip-pairing";
-import { RationCard } from "@/components/rendimiento/ration-card";
-import { RationForecast } from "@/components/rendimiento/ration-forecast";
+import dynamic from "next/dynamic";
+
+const WeekStrip = dynamic(() => import("@/components/rendimiento/week-strip").then((module) => module.WeekStrip), { loading: () => <div className="h-48 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const MesocycleTimeline = dynamic(() => import("@/components/rendimiento/mesocycle-timeline").then((module) => module.MesocycleTimeline), { loading: () => <div className="h-48 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const PlanActions = dynamic(() => import("@/components/rendimiento/plan-actions").then((module) => module.PlanActions), { loading: () => <div className="h-10 w-32 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const ReportSessionDialog = dynamic(() => import("@/components/rendimiento/report-session-dialog").then((module) => module.ReportSessionDialog), { loading: () => <div className="h-10 w-32 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const VetPanelDialog = dynamic(() => import("@/components/rendimiento/vet-panel-dialog").then((module) => module.VetPanelDialog), { loading: () => <div className="h-10 w-32 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const ChipPairing = dynamic(() => import("@/components/rendimiento/chip-pairing").then((module) => module.ChipPairing), { loading: () => <div className="h-20 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const RationCard = dynamic(() => import("@/components/rendimiento/ration-card").then((module) => module.RationCard), { loading: () => <div className="h-32 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
+const RationForecast = dynamic(() => import("@/components/rendimiento/ration-forecast").then((module) => module.RationForecast), { loading: () => <div className="h-32 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
 import {
   bufferStatusLabels,
   disciplineLabels,

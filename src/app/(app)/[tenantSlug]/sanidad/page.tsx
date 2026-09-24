@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { createServerCaller } from "@/lib/trpc/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import {
   HealthEventsList,
   healthTypeLabels,
 } from "@/components/sanidad/health-events-list";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -22,7 +24,15 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: `Sanidad — ${tenantSlug}` };
 }
 
-export default async function SanidadPage({ params }: PageProps) {
+export default function SanidadPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<PageSkeleton rows={7} />}>
+      <SanidadContent params={params} />
+    </Suspense>
+  );
+}
+
+async function SanidadContent({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
   const [events, upcoming, horses] = await Promise.all([

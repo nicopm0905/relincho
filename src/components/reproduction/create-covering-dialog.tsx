@@ -28,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
@@ -57,7 +56,6 @@ const formSchema = z.object({
     error: "Debes seleccionar un método",
   }),
   date: z.string().min(1, "Debes seleccionar una fecha"),
-  notes: z.string().optional(),
 });
 
 interface CreateCoveringDialogProps {
@@ -97,7 +95,6 @@ export function CreateCoveringDialog({ cycleId }: CreateCoveringDialogProps) {
       stallionId: values.stallionId || undefined,
       method: values.method,
       date: new Date(values.date),
-      notes: values.notes,
     });
   }
 
@@ -177,24 +174,6 @@ export function CreateCoveringDialog({ cycleId }: CreateCoveringDialogProps) {
                       
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notas</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Cualquier información relevante..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

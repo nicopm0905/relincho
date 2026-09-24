@@ -3,6 +3,7 @@ import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
+import { allowedHorseIds } from "@/server/trpc/access";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -63,6 +64,14 @@ export async function GET(
 
     if (!membership) {
       // No revelamos la existencia del caballo a quien no es miembro.
+      return NextResponse.json({ error: "Caballo no encontrado" }, { status: 404 });
+    }
+    // Ser miembro no basta: un externo solo accede a sus caballos.
+    const visibleHorses = await allowedHorseIds({
+      role: membership.role,
+      membershipId: membership.id,
+    });
+    if (visibleHorses && !visibleHorses.includes(horse.id)) {
       return NextResponse.json({ error: "Caballo no encontrado" }, { status: 404 });
     }
 
@@ -153,6 +162,7 @@ export async function GET(
 
     doc.y = dataTop;
     row("UELN", horse.uelnCode ?? "—");
+    row("Libro Genealógico", horse.lgNumber ?? "—");
     row("Microchip", horse.microchip ?? "—");
     row("Sexo", sexLabels[horse.sex] ?? horse.sex);
     row("Capa", horse.coat ?? "—");

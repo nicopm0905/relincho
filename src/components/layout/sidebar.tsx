@@ -20,6 +20,8 @@ import {
   Store,
   Gauge,
   LogOut,
+  ChevronDown,
+  CalendarDays,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,7 @@ type NavKey =
   | "reproduction"
   | "movements"
   | "tasks"
+  | "calendar"
   | "boarding"
   | "invoicing"
   | "contacts"
@@ -56,6 +59,7 @@ const navGroups: { groupKey?: "stable" | "business"; items: NavItem[] }[] = [
       { key: "reproduction", href: "reproduccion", icon: Baby },
       { key: "movements", href: "movimientos", icon: Route },
       { key: "tasks", href: "tareas", icon: CheckSquare },
+      { key: "calendar", href: "calendario", icon: CalendarDays },
     ],
   },
   {
@@ -70,6 +74,22 @@ const navGroups: { groupKey?: "stable" | "business"; items: NavItem[] }[] = [
 ];
 
 const allNavItems = navGroups.flatMap((group) => group.items);
+const desktopPrimaryItems: NavItem[] = [
+  allNavItems.find((item) => item.href === "inicio")!,
+  allNavItems.find((item) => item.href === "caballos")!,
+  allNavItems.find((item) => item.href === "sanidad")!,
+  allNavItems.find((item) => item.href === "reproduccion")!,
+  allNavItems.find((item) => item.href === "tareas")!,
+  allNavItems.find((item) => item.href === "calendario")!,
+];
+const desktopSecondaryItems: NavItem[] = [
+  allNavItems.find((item) => item.href === "rendimiento")!,
+  allNavItems.find((item) => item.href === "movimientos")!,
+  allNavItems.find((item) => item.href === "pupilaje")!,
+  allNavItems.find((item) => item.href === "facturacion")!,
+  allNavItems.find((item) => item.href === "contactos")!,
+  allNavItems.find((item) => item.href === "documentos")!,
+];
 const settingsItem: NavItem = {
   key: "settings",
   href: "ajustes",
@@ -77,7 +97,9 @@ const settingsItem: NavItem = {
 };
 
 /** Chosen by daily use in a yeguada, not by order in the rail. */
-const mobileTabHrefs = ["inicio", "caballos", "sanidad", "reproduccion"];
+// En móvil el logo ya lleva a Inicio: reservamos las cuatro pestañas para el
+// trabajo de cuadra y dejamos el resto, incluido Inicio, en "Más".
+const mobileTabHrefs = ["caballos", "sanidad", "reproduccion", "tareas"];
 const mobileTabItems = mobileTabHrefs
   .map((href) => allNavItems.find((item) => item.href === href))
   .filter((item): item is NavItem => Boolean(item));
@@ -110,10 +132,11 @@ export function Sidebar({
   const t = useTranslations("sidebar");
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
-
-  useEffect(() => {
-    setMoreOpen(false);
-  }, [pathname]);
+  const [desktopMoreOpen, setDesktopMoreOpen] = useState(() =>
+    desktopSecondaryItems.some((item) =>
+      pathname.startsWith(`/${tenantSlug}/${item.href}`),
+    ),
+  );
 
   useEffect(() => {
     document.body.style.overflow = moreOpen ? "hidden" : "";
@@ -145,6 +168,10 @@ export function Sidebar({
         key={href}
         href={`/${tenantSlug}/${href}`}
         aria-current={active ? "page" : undefined}
+        onClick={() => {
+          setMoreOpen(false);
+          setDesktopMoreOpen(false);
+        }}
         className={cn(
           "group flex items-center gap-3 rounded-lg transition-colors duration-150",
           large ? "px-3 py-3 text-[15px]" : "px-3 py-2 text-[13.5px]",
@@ -182,6 +209,7 @@ export function Sidebar({
               src="/logo.png"
               alt=""
               fill
+              sizes="36px"
               className="object-contain p-1"
               priority
             />
@@ -196,17 +224,33 @@ export function Sidebar({
           </span>
         </Link>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pt-2 pb-6">
-          {navGroups.map((group, index) => (
-            <div key={group.groupKey ?? index} className="space-y-0.5">
-              {group.groupKey && (
-                <p className="px-3 pb-1.5 text-[10.5px] font-semibold tracking-[0.08em] text-muted-foreground/70 uppercase">
-                  {t(`groups.${group.groupKey}`)}
-                </p>
-              )}
-              {group.items.map((item) => navLink(item))}
-            </div>
-          ))}
+        <nav aria-label={t("navigation")} className="flex-1 space-y-5 overflow-y-auto px-3 pt-2 pb-6">
+          <div className="space-y-0.5">
+            {desktopPrimaryItems.map((item) => navLink(item))}
+          </div>
+
+          <div className="space-y-0.5">
+            <button
+              type="button"
+              onClick={() => setDesktopMoreOpen((open) => !open)}
+              aria-expanded={desktopMoreOpen}
+              className="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-[10.5px] font-semibold tracking-[0.08em] text-muted-foreground/70 uppercase transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+            >
+              <span>{t("moreSections")}</span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform",
+                  desktopMoreOpen && "rotate-180",
+                )}
+                strokeWidth={2}
+              />
+            </button>
+            {desktopMoreOpen && (
+              <div className="space-y-0.5">
+                {desktopSecondaryItems.map((item) => navLink(item))}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="space-y-0.5 border-t border-border px-3 py-3">
@@ -240,7 +284,7 @@ export function Sidebar({
           className="flex min-w-0 items-center gap-2.5"
         >
           <span className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
-            <Image src="/logo.png" alt="" fill className="object-contain p-1" />
+            <Image src="/logo.png" alt="" fill sizes="32px" className="object-contain p-1" />
           </span>
           <span className="truncate text-[15px] font-semibold text-foreground">
             {tenantName}
@@ -256,7 +300,7 @@ export function Sidebar({
       </header>
 
       {/* ── Mobile bottom tabs ───────────────────────────────── */}
-      <nav className="safe-area-bottom fixed right-0 bottom-0 left-0 z-40 border-t border-border bg-sidebar/95 backdrop-blur-lg md:hidden">
+      <nav aria-label={t("navigation")} className="safe-area-bottom fixed right-0 bottom-0 left-0 z-40 border-t border-border bg-sidebar/95 backdrop-blur-lg md:hidden">
         <div className="flex h-16 items-stretch">
           {mobileTabItems.map(({ key, href, icon: Icon }) => {
             const active = isActive(href);
@@ -291,6 +335,8 @@ export function Sidebar({
             type="button"
             onClick={() => setMoreOpen(true)}
             aria-expanded={moreOpen}
+            aria-controls="mobile-navigation"
+            aria-label={t("moreSheet")}
             className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 pt-1"
           >
             <Menu
@@ -322,6 +368,7 @@ export function Sidebar({
             onClick={() => setMoreOpen(false)}
           />
           <div
+            id="mobile-navigation"
             role="dialog"
             aria-label={t("moreSheet")}
             className="safe-area-bottom animate-in slide-in-from-bottom fixed right-0 bottom-0 left-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-border bg-background duration-200 md:hidden"

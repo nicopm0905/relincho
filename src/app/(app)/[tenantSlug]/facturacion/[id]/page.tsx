@@ -1,4 +1,5 @@
 import { createServerCaller } from "@/lib/trpc/server";
+import { invoiceLabel } from "@/lib/invoice-label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/formatters";
 import { PaymentForm } from "@/components/facturacion/payment-form";
+import { InvoiceActions } from "@/components/facturacion/invoice-actions";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string; id: string }>;
@@ -65,21 +67,62 @@ export default async function FacturaDetallePage({ params }: PageProps) {
         </Button>
       </div>
 
+      <InvoiceActions
+        tenantSlug={tenantSlug}
+        invoice={{
+          id: invoice.id,
+          status: invoice.status,
+          hasNumber: invoice.number != null,
+          isRectification: Boolean(invoice.rectifiesId),
+          hasPayments: invoice.payments.length > 0,
+          lines: invoice.lines.map((l) => ({
+            description: l.description,
+            quantity: Number(l.quantity),
+            unitPrice: Number(l.unitPrice),
+            vatRate: Number(l.vatRate),
+          })),
+        }}
+      />
+
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-bold font-mono text-foreground">
-                {invoice.series}-{invoice.number.toString().padStart(4, "0")}
+                {invoiceLabel(invoice)}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">{invoice.client.name}</p>
+              {invoice.rectifies && (
+                <p className="mt-1 text-sm">
+                  Rectifica la{" "}
+                  <Link className="font-medium underline" href={`/${tenantSlug}/facturacion/${invoice.rectifies.id}`}>
+                    {invoiceLabel(invoice.rectifies)}
+                  </Link>
+                  {invoice.rectificationReason ? ` · ${invoice.rectificationReason}` : ""}
+                </p>
+              )}
+              {invoice.rectifiedBy.length > 0 && (
+                <p className="mt-1 text-sm text-amber-700">
+                  Rectificada por{" "}
+                  {invoice.rectifiedBy.map((r, i) => (
+                    <span key={r.id}>
+                      {i > 0 && ", "}
+                      <Link className="font-medium underline" href={`/${tenantSlug}/facturacion/${r.id}`}>
+                        {invoiceLabel(r)}
+                      </Link>
+                    </span>
+                  ))}
+                </p>
+              )}
             </div>
             <Badge variant="outline">{STATUS_LABEL[invoice.status] ?? invoice.status}</Badge>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Emisión</p>
-              <p className="font-medium">{formatDate(invoice.issueDate)}</p>
+              <p className="font-medium">
+                {invoice.status === "DRAFT" ? "Al emitir" : formatDate(invoice.issueDate)}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Vencimiento</p>
@@ -148,6 +191,32 @@ export default async function FacturaDetallePage({ params }: PageProps) {
         </CardContent>
       </Card>
 
+      {invoice.verifactuRecords.length > 0 && (
+        <Card>
+          <CardContent className="pt-6 space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Registro Veri*Factu
+            </h2>
+            <ul className="space-y-2 text-sm">
+              {invoice.verifactuRecords.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2">
+                  <span>
+                    <span className="font-medium">{r.kind === "ALTA" ? "Alta" : "Anulación"}</span>
+                    <span className="text-muted-foreground"> · {r.generatedAt}</span>
+                  </span>
+                  <span className="font-mono text-xs text-muted-foreground" title={r.hash}>
+                    Huella {r.hash.slice(0, 12)}…
+                  </span>
+                  <Badge variant={r.status === "SENT" ? "success" : "warning"}>
+                    {r.status === "SENT" ? "Enviado a la AEAT" : "Pendiente de envío"}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center justify-between">
@@ -186,7 +255,7 @@ export default async function FacturaDetallePage({ params }: PageProps) {
             </ul>
           )}
 
-          {invoice.status !== "CANCELLED" && balance > 0 && (
+          {invoice.status !== "CANCELLED" && invoice.status !== "DRAFT" && balance > 0 && (
             <div className="border-t border-border/40 pt-4">
               <PaymentForm invoiceId={invoice.id} balance={balance} />
             </div>

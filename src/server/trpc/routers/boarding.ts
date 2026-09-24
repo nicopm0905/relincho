@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { createTRPCRouter, roleProcedure, staffProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
 
 const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
 export const boardingRouter = createTRPCRouter({
-  list: tenantProcedure.query(async ({ ctx }) => {
+  list: staffProcedure.query(async ({ ctx }) => {
     return withTenant(ctx.tenantId, (tx) =>
       tx.boardingContract.findMany({
         where: { tenantId: ctx.tenantId },
