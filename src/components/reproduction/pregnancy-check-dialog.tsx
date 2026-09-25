@@ -59,6 +59,12 @@ const formSchema = z.object({
     (value) => (value === "" || value === null || value === undefined ? undefined : Number(value)),
     z.number().int().min(0).max(400).optional(),
   ),
+  vesicleMm: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : Number(value)),
+    z.number().int().min(1).max(200).optional(),
+  ),
+  heartbeat: z.enum(["", "yes", "no"]).optional(),
+  notes: z.string().max(1000).optional(),
 });
 
 interface PregnancyCheckDialogProps {
@@ -74,6 +80,9 @@ export function PregnancyCheckDialog({ coveringId }: PregnancyCheckDialogProps) 
       date: format(new Date(), "yyyy-MM-dd"),
       result: "POSITIVE",
       dayOfPregnancy: undefined,
+      vesicleMm: undefined,
+      heartbeat: "",
+      notes: "",
     },
   });
 
@@ -95,6 +104,9 @@ export function PregnancyCheckDialog({ coveringId }: PregnancyCheckDialogProps) 
       date: new Date(values.date),
       result: values.result,
       dayOfPregnancy: values.dayOfPregnancy,
+      vesicleMm: values.vesicleMm,
+      heartbeat: values.heartbeat === "yes" ? true : values.heartbeat === "no" ? false : undefined,
+      notes: values.notes?.trim() || undefined,
     });
   }
 
@@ -161,6 +173,55 @@ export function PregnancyCheckDialog({ coveringId }: PregnancyCheckDialogProps) 
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="vesicleMm"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vesícula (mm)</FormLabel>
+                    <FormControl>
+                      <Input type="number" inputMode="numeric" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="heartbeat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Latido</FormLabel>
+                    <FormControl>
+                      <select
+                        className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm"
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                      >
+                        <option value="">Sin valorar</option>
+                        <option value="yes">Presente</option>
+                        <option value="no">Ausente</option>
+                      </select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notas</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value ?? ""} placeholder="p. ej. vesícula en cuerno derecho" />
+                  </FormControl>
                 </FormItem>
               )}
             />

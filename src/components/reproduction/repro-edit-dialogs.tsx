@@ -42,6 +42,12 @@ function toDateInput(date: Date | string) {
   return new Date(d.getTime() - offset).toISOString().slice(0, 10);
 }
 const atNoon = (value: string) => new Date(`${value}T12:00:00`);
+/** Cubriciones con hora: la ventana de inseminacion se cuenta en horas. */
+function toDateTimeInput(date: Date | string) {
+  const d = new Date(date);
+  const offset = d.getTimezoneOffset() * 60_000;
+  return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+}
 
 function errorMessage(err: { message: string; data?: { code?: string } | null }) {
   return err.data?.code === "FORBIDDEN"
@@ -156,7 +162,7 @@ export function EditCoveringDialog({
 }) {
   const [open, setOpen] = useState(false);
   const done = useDone(setOpen);
-  const [date, setDate] = useState(toDateInput(covering.date));
+  const [date, setDate] = useState(toDateTimeInput(covering.date));
   const [method, setMethod] = useState<Method>(covering.method as Method);
   const [stallionId, setStallionId] = useState(covering.stallionId ?? NONE);
 
@@ -185,7 +191,7 @@ export function EditCoveringDialog({
       onSubmit={() =>
         update.mutate({
           id: covering.id,
-          date: atNoon(date),
+          date: new Date(date),
           method,
           stallionId: stallionId === NONE ? undefined : stallionId,
         })
@@ -193,8 +199,8 @@ export function EditCoveringDialog({
     >
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor={`cov-date-${covering.id}`}>Fecha</Label>
-          <Input id={`cov-date-${covering.id}`} type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+          <Label htmlFor={`cov-date-${covering.id}`}>Fecha y hora</Label>
+          <Input id={`cov-date-${covering.id}`} type="datetime-local" required value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`cov-method-${covering.id}`}>Método</Label>

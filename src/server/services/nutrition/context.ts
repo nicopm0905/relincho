@@ -6,6 +6,8 @@ import type {
   NutritionVetContext,
   ReproductiveStatusValue,
 } from "./engine";
+import { mareInsight, nutritionReproStatus } from "@/lib/repro-engine";
+import { loadMareHistories, loadReproSettings } from "../reproduction/overview";
 
 /** Peso de referencia cuando el veterinario aun no ha pesado al caballo. */
 const DEFAULT_WEIGHT_KG = 500;
@@ -54,12 +56,26 @@ export async function loadNutritionContext(
     ? Number(horse.vetProfile.baseWeightKg)
     : DEFAULT_WEIGHT_KG;
 
+  let reproductiveStatus =
+    (horse.vetProfile?.reproductiveStatus as ReproductiveStatusValue | undefined) ?? "NA";
+  let gestationMonth = horse.vetProfile?.gestationMonth ?? null;
+  // En una yegua con historial reproductivo manda lo que dicen sus
+  // cubriciones, ecografias y partos: el campo manual de la ficha podia
+  // quedarse en "gestante" meses despues del parto.
+  if (horse.sex === "FEMALE") {
+    const history = (await loadMareHistories(tx, tenantId, [horse.id])).get(horse.id)!;
+    if (history.coverings.length > 0 || history.exams.length > 0) {
+      const settings = await loadReproSettings(tx, tenantId);
+      const derived = nutritionReproStatus(mareInsight(history, settings));
+      reproductiveStatus = derived.status;
+      gestationMonth = derived.gestationMonth;
+    }
+  }
+
   const vet: NutritionVetContext = {
     baseWeightKg: weightKg,
-    reproductiveStatus:
-      (horse.vetProfile?.reproductiveStatus as ReproductiveStatusValue | undefined) ??
-      "NA",
-    gestationMonth: horse.vetProfile?.gestationMonth ?? null,
+    reproductiveStatus,
+    gestationMonth,
     restrictions: horse.vetProfile?.restrictions ?? [],
   };
 

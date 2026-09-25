@@ -1,27 +1,12 @@
+import Link from "next/link";
+import { Plus, Egg, GearSix } from "@phosphor-icons/react/dist/ssr";
 import { createServerCaller } from "@/lib/trpc/server";
 import { Button } from "@/components/ui/button";
-import { Plus, Egg } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import { mareState } from "@/lib/reproduction";
-
-const KanbanBoard = dynamic(
-  () =>
-    import("@/components/reproduction/kanban-board").then(
-      (module) => module.KanbanBoard,
-    ),
-  {
-    loading: () => (
-      <div className="grid gap-4 md:grid-cols-3" aria-busy="true">
-        {["vacias", "prenadas", "paridas"].map((column) => (
-          <div key={column} className="h-[500px] animate-pulse rounded-2xl bg-muted/50" />
-        ))}
-      </div>
-    ),
-  },
-);
+import { StatCard } from "@/components/ui/stat-card";
+import { ReproHub } from "@/components/reproduction/repro-hub";
+import { StartSeasonButton } from "@/components/reproduction/start-season-button";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -32,62 +17,88 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: `Reproducción — ${tenantSlug}` };
 }
 
+const DAY = 24 * 60 * 60 * 1000;
+
 export default async function ReproductionPage({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
-  const activeCycles = await caller.reproduction.listActiveCycles({});
+  const { tracked, untracked, season } = await caller.reproduction.overview({});
 
-  // Agrupación para el Kanban
-  type ActiveCycle = (typeof activeCycles)[number];
-  const colVacias: ActiveCycle[] = [];
-  const colPrenadas: ActiveCycle[] = [];
-  const colParidas: ActiveCycle[] = [];
-
-  // Mismo criterio que la ficha y el Inicio (`mareState`): gemelos es
-  // gestante; cubierta sin eco y perdida gestacional vuelven a vacias.
-  activeCycles.forEach((cycle) => {
-    const state = mareState(cycle.coverings[0]);
-    if (state === "FOALED") colParidas.push(cycle);
-    else if (state === "PREGNANT" || state === "TWINS") colPrenadas.push(cycle);
-    else colVacias.push(cycle);
-  });
+  const inHeat = tracked.filter((m) => m.insight.phase === "IN_HEAT").length;
+  const covered = tracked.filter((m) => m.insight.phase === "COVERED").length;
+  const pregnant = tracked.filter((m) => m.insight.gestation).length;
+  const now = new Date().getTime();
+  const foalingSoon = tracked.filter(
+    (m) => m.insight.gestation && new Date(m.insight.gestation.windowFrom).getTime() <= now + 60 * DAY,
+  ).length;
+  const overdue = tracked.reduce((n, m) => n + m.insight.actions.filter((a) => a.overdue).length, 0);
 
   return (
     <div className="animate-in fade-in-0 space-y-6 duration-500">
       <PageHeader
         title="Reproducción"
-        description={`Gestión reproductiva de la temporada ${new Date().getFullYear()}`}
+        description={`Temporada ${season} · ${tracked.length} ${tracked.length === 1 ? "yegua" : "yeguas"} en seguimiento`}
         actions={
-          <Button asChild>
-            <Link href={`/${tenantSlug}/reproduccion/nuevo-ciclo`}>
-              <Plus weight="bold" />
-              Nuevo ciclo
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href={`/${tenantSlug}/reproduccion/ajustes`}>
+                <GearSix />
+                Parámetros
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/${tenantSlug}/reproduccion/nuevo-ciclo`}>
+                <Plus weight="bold" />
+                Nueva temporada
+              </Link>
+            </Button>
+          </>
         }
       />
 
-      {activeCycles.length === 0 ? (
+      {untracked.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[13.5px] text-muted-foreground">
+            {untracked.length === 1
+              ? `1 yegua activa sin temporada ${season}: `
+              : `${untracked.length} yeguas activas sin temporada ${season}: `}
+            <span className="text-foreground">
+              {untracked
+                .slice(0, 6)
+                .map((m) => m.name)
+                .join(", ")}
+              {untracked.length > 6 ? "…" : ""}
+            </span>
+          </p>
+          <StartSeasonButton season={season} count={untracked.length} />
+        </div>
+      )}
+
+      {tracked.length === 0 ? (
         <EmptyState
-          icon={<Egg weight="duotone" />}
-          title="Sin ciclos activos"
-          description="No hay yeguas en ciclo reproductivo esta temporada. Añade la primera para empezar a registrar cubriciones y ecografías."
+          icon={<Egg />}
+          title="Sin yeguas en seguimiento"
+          description="Inicia la temporada de tus yeguas para registrar exploraciones, predecir celos y ovulaciones, y seguir cubriciones, gestaciones y partos."
           action={
             <Button asChild size="lg">
               <Link href={`/${tenantSlug}/reproduccion/nuevo-ciclo`}>
                 <Plus weight="bold" />
-                Añadir la primera
+                Iniciar una temporada
               </Link>
             </Button>
           }
         />
       ) : (
-        <KanbanBoard 
-          tenantSlug={tenantSlug} 
-          colVacias={colVacias} 
-          colPrenadas={colPrenadas} 
-          colParidas={colParidas} 
-        />
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <StatCard label="En celo" value={inHeat} />
+            <StatCard label="Cubiertas pdte. eco" value={covered} />
+            <StatCard label="Gestantes" value={pregnant} />
+            <StatCard label="Partos en 60 días" value={foalingSoon} />
+            <StatCard label="Tareas atrasadas" value={overdue} emphasis={overdue > 0} />
+          </div>
+          <ReproHub tracked={tracked} tenantSlug={tenantSlug} />
+        </>
       )}
     </div>
   );

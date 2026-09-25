@@ -13,7 +13,6 @@ import {
   Baby,
   Receipt,
 } from "@phosphor-icons/react/dist/ssr";
-import { gestation, mareState, nextCheckpoint } from "@/lib/reproduction";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -75,11 +74,11 @@ async function InicioContent({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
 
-  const [horses, upcomingHealth, cycles, openTasks, performance, pendingCheckIns, receivables] =
+  const [horses, upcomingHealth, repro, openTasks, performance, pendingCheckIns, receivables] =
     await Promise.all([
       caller.horses.list(),
       caller.health.upcoming({ days: 30 }),
-      caller.reproduction.listActiveCycles({}),
+      caller.reproduction.overview({}),
       caller.tasks.list({ done: false }),
       caller.performance.overview(),
       caller.performance.pendingCheckIns({}),
@@ -94,32 +93,19 @@ async function InicioContent({ params }: PageProps) {
   const activeHorses = horses.filter((h) => h.status === "ACTIVE").length;
   const DAYS = (n: number) => n * DAY_MS;
 
-  // Lo propio de una yeguada de cria: ecografias que tocan y partos cerca.
-  const breeding = cycles.flatMap((cycle) => {
-    const covering = cycle.coverings[0];
-    if (!covering) return [];
-    const state = mareState(covering);
-    return [{ cycle, covering, state }];
-  });
-  const pregnant = breeding.filter((b) => b.state === "PREGNANT" || b.state === "TWINS");
-  const pregnantMares = pregnant.length;
-
-  const checksDue = breeding.flatMap(({ cycle, covering, state }) => {
-    if (state !== "COVERED" && state !== "PREGNANT" && state !== "TWINS") return [];
-    const next = nextCheckpoint(covering.date, covering._count.pregnancyChecks, now);
-    // Solo lo que toca esta semana o ya va tarde.
-    if (!next || next.due.getTime() > today + DAYS(7)) return [];
-    return [{ cycle, next }];
-  });
-
-  const foalingsSoon = pregnant.flatMap(({ cycle, covering }) => {
-    const g = gestation(covering.date, now);
-    if (g.windowFrom.getTime() > today + DAYS(30)) return [];
-    return [{ cycle, g }];
-  });
-  const foalingsIn60 = pregnant.filter(
-    ({ covering }) => gestation(covering.date, now).windowFrom.getTime() <= today + DAYS(60),
+  // Lo propio de una yeguada de cria, del mismo motor que la pantalla de
+  // Reproduccion: celos, ventanas de cubricion, ecografias y partos.
+  const tracked = repro.tracked;
+  const pregnantMares = tracked.filter((m) => m.insight.gestation).length;
+  const foalingsIn60 = tracked.filter(
+    (m) => m.insight.gestation && m.insight.gestation.windowFrom.getTime() <= today + DAYS(60),
   ).length;
+  // Solo lo que toca esta semana o ya va tarde.
+  const reproDue = tracked.flatMap((m) =>
+    m.insight.actions
+      .filter((a) => a.overdue || a.from.getTime() <= today + DAYS(7))
+      .map((action) => ({ mare: m, action })),
+  );
 
   // One prioritised worklist instead of two parallel lists the user has to
   // cross-reference. Everything that has a date lands here, soonest first.
@@ -156,21 +142,16 @@ async function InicioContent({ params }: PageProps) {
         href: `/${tenantSlug}/sanidad`,
         icon: <Heartbeat weight="duotone" />,
       })),
-    ...foalingsSoon.map(({ cycle, g }) => ({
-      id: `foaling-${cycle.id}`,
-      due: g.windowFrom,
-      title: `Parto previsto · ${cycle.mare.name}`,
-      subtitle: `Hacia el ${format(g.expected, "d 'de' MMMM", { locale: es })} · día ${g.days} de gestación`,
-      href: `/${tenantSlug}/reproduccion/${cycle.id}`,
-      icon: <Baby weight="duotone" />,
-    })),
-    ...checksDue.map(({ cycle, next }) => ({
-      id: `check-${cycle.id}`,
-      due: next.due,
-      title: `${next.label} · ${cycle.mare.name}`,
-      subtitle: `Días ${next.from}-${next.to} tras la cubrición`,
-      href: `/${tenantSlug}/reproduccion/${cycle.id}`,
-      icon: <Baby weight="duotone" />,
+    ...reproDue.map(({ mare, action }, idx) => ({
+      id: `repro-${mare.mare.id}-${action.kind}-${idx}`,
+      due: action.from,
+      title: `${action.label} · ${mare.mare.name}`,
+      subtitle:
+        action.kind === "foaling_watch" && mare.insight.gestation
+          ? `Hacia el ${format(mare.insight.gestation.expected, "d 'de' MMMM", { locale: es })} · día ${mare.insight.gestation.days} de gestación`
+          : `${format(action.from, "d MMM, HH:mm", { locale: es })} – ${format(action.to, "d MMM, HH:mm", { locale: es })}`,
+      href: `/${tenantSlug}/reproduccion/${mare.cycle?.id ?? mare.latestCycleId ?? ""}`,
+      icon: <Baby />,
     })),
     ...(receivables?.overdue ?? []).map((invoice) => ({
       id: `invoice-${invoice.id}`,
@@ -255,7 +236,7 @@ async function InicioContent({ params }: PageProps) {
           hint={
             foalingsIn60 > 0
               ? `${foalingsIn60} ${foalingsIn60 === 1 ? "parto" : "partos"} en 60 días`
-              : `${cycles.length} ciclos esta temporada`
+              : `${tracked.length} yeguas en seguimiento`
           }
           href={`/${tenantSlug}/reproduccion`}
         />

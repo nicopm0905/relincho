@@ -4,6 +4,8 @@
  * ecografia de gemelos la mandaba a "vacias".
  */
 
+import { DEFAULT_REPRO_SETTINGS, type ReproSettings } from "./repro-settings";
+
 export const CHECK_RESULTS = [
   "POSITIVE",
   "TWINS",
@@ -70,10 +72,10 @@ export function mareState(
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** Gestacion media de la yegua; el parto normal cae entre 335 y 342 dias. */
-export const GESTATION_DAYS = 340;
-const GESTATION_MIN = 335;
-const GESTATION_MAX = 342;
+/** Gestacion media de la yegua. Cada yeguada la ajusta y cada yegua la aprende. */
+export const GESTATION_DAYS = DEFAULT_REPRO_SETTINGS.gestationDays;
+/** Margen de la fecha probable de parto alrededor de la media de la yegua. */
+const PROBABLE_MARGIN_DAYS = 10;
 
 function addDays(date: Date, days: number) {
   const d = new Date(date);
@@ -81,35 +83,56 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
-export function gestation(coveringDate: Date | string, now: Date = new Date()) {
+type GestationOptions = {
+  /** Gestacion media para esta yegua (aprendida o corregida a mano). */
+  gestationDays?: number;
+  settings?: Pick<ReproSettings, "gestationDays" | "gestationMinDays" | "gestationMaxDays">;
+};
+
+/**
+ * Dias de gestacion y fecha probable de parto. La ventana probable son ±10
+ * dias sobre la media de la yegua; `normalFrom`-`normalTo` es el rango normal
+ * de la especie (antes de `normalFrom` seria prematuro, despues de `normalTo`
+ * gestacion prolongada).
+ */
+export function gestation(
+  coveringDate: Date | string,
+  now: Date = new Date(),
+  options: GestationOptions = {},
+) {
+  const settings = options.settings ?? DEFAULT_REPRO_SETTINGS;
+  const mean = options.gestationDays ?? settings.gestationDays;
   const start = new Date(coveringDate);
   const days = Math.max(0, Math.floor((now.getTime() - start.getTime()) / DAY_MS));
   return {
     days,
-    percent: Math.min(100, Math.round((days / GESTATION_DAYS) * 100)),
-    expected: addDays(start, GESTATION_DAYS),
-    windowFrom: addDays(start, GESTATION_MIN),
-    windowTo: addDays(start, GESTATION_MAX),
+    meanDays: mean,
+    percent: Math.min(100, Math.round((days / mean) * 100)),
+    expected: addDays(start, mean),
+    windowFrom: addDays(start, Math.max(settings.gestationMinDays, mean - PROBABLE_MARGIN_DAYS)),
+    windowTo: addDays(start, Math.min(settings.gestationMaxDays, mean + PROBABLE_MARGIN_DAYS)),
+    normalFrom: addDays(start, settings.gestationMinDays),
+    normalTo: addDays(start, settings.gestationMaxDays),
+    premature: days > 0 && days < settings.gestationMinDays,
+    prolonged: days > settings.gestationMaxDays,
   };
 }
 
 /**
- * Ecografias de control tras la cubricion: deteccion (14-16 dias), latido
- * (25-30) y confirmacion (45-60). Devuelve la siguiente que toca y si ya va
- * tarde, contando las que ya estan hechas.
+ * Ecografias de control tras la cubricion. Por defecto: deteccion y gemelos
+ * (14-16 dias, antes de la fijacion), latido (28-35) y confirmacion (45-60);
+ * cada yeguada las ajusta en sus parametros. Devuelve la siguiente que toca y
+ * si ya va tarde, contando las que ya estan hechas.
  */
-export const CHECKPOINTS = [
-  { key: "detection", label: "Eco de detección", from: 14, to: 16 },
-  { key: "heartbeat", label: "Eco de latido", from: 25, to: 30 },
-  { key: "confirmation", label: "Eco de confirmación", from: 45, to: 60 },
-] as const;
+export const CHECKPOINTS = DEFAULT_REPRO_SETTINGS.pregnancyCheckpoints;
 
 export function nextCheckpoint(
   coveringDate: Date | string,
   checksDone: number,
   now: Date = new Date(),
+  checkpoints: ReproSettings["pregnancyCheckpoints"] = CHECKPOINTS,
 ) {
-  const checkpoint = CHECKPOINTS[checksDone];
+  const checkpoint = checkpoints[checksDone];
   if (!checkpoint) return null;
   const start = new Date(coveringDate);
   const due = addDays(start, checkpoint.from);

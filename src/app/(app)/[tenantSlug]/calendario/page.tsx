@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 const KIND: Record<CalendarKind, { label: string; dot: string; chip: string }> = {
   health: { label: "Sanidad", dot: "bg-rose-500", chip: "bg-rose-50 text-rose-700 border-rose-200" },
+  heat: { label: "Celo / cubrición", dot: "bg-orange-500", chip: "bg-orange-50 text-orange-700 border-orange-200" },
   check: { label: "Ecografía", dot: "bg-violet-500", chip: "bg-violet-50 text-violet-700 border-violet-200" },
   foaling: { label: "Parto", dot: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   task: { label: "Tarea", dot: "bg-sky-500", chip: "bg-sky-50 text-sky-700 border-sky-200" },

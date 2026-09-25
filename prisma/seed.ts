@@ -270,6 +270,7 @@ async function main() {
 
   await prisma.pregnancyCheck.create({
     data: {
+      tenantId: tenant.id,
       coveringId: covering.id,
       date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
       result: "POSITIVE",

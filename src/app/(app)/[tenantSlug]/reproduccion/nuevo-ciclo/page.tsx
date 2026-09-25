@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
-import { CaretLeft, Baby } from "@phosphor-icons/react/dist/ssr";
+import { CaretLeft } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -56,12 +56,12 @@ export default function NuevoCicloPage() {
 
   const createCycle = trpc.reproduction.createCycle.useMutation({
     onSuccess: (data) => {
-      toast.success("Ciclo iniciado correctamente");
+      toast.success("Temporada iniciada");
       router.push(`/${tenantSlug}/reproduccion/${data.id}`);
       router.refresh();
     },
     onError: (error) => {
-      toast.error(error.message || "Error al iniciar el ciclo");
+      toast.error(error.message || "Error al iniciar la temporada");
     },
   });
 
@@ -79,11 +79,8 @@ export default function NuevoCicloPage() {
               Volver a reproducción
             </Link>
           </Button>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center border border-pink-200">
-              <Baby weight="duotone" className="h-6 w-6" />
-            </div>
-            Iniciar Ciclo Reproductivo
+          <h1 className="text-2xl font-bold text-foreground sm:text-[28px]">
+            Iniciar temporada reproductiva
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
             Abre un nuevo cuaderno de parideras para una yegua en esta temporada.

@@ -70,7 +70,7 @@ export function CreateCoveringDialog({ cycleId }: CreateCoveringDialogProps) {
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
       method: "NATURAL",
-      date: format(new Date(), "yyyy-MM-dd"),
+      date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
     },
   });
 
@@ -117,9 +117,9 @@ export function CreateCoveringDialog({ cycleId }: CreateCoveringDialogProps) {
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fecha</FormLabel>
+                    <FormLabel>Fecha y hora</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="datetime-local" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

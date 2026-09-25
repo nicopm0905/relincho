@@ -3,9 +3,9 @@ import { invoiceLabel } from "@/lib/invoice-label";
 import { createTRPCRouter, tenantProcedure } from "../init";
 import { allowedHorseIds } from "../access";
 import { withTenant } from "@/server/db/prisma";
-import { gestation, mareState, nextCheckpoint } from "@/lib/reproduction";
+import { buildReproOverview } from "@/server/services/reproduction/overview";
 
-export type CalendarKind = "health" | "task" | "check" | "foaling" | "invoice" | "event";
+export type CalendarKind = "health" | "task" | "heat" | "check" | "foaling" | "invoice" | "event";
 
 export type CalendarItem = {
   id: string;
@@ -130,59 +130,49 @@ export const calendarRouter = createTRPCRouter({
           });
         }
 
-        // Reproduccion: ciclos de esta temporada y la anterior (un parto de
-        // febrero viene de una cubricion del año pasado).
-        const year = new Date().getFullYear();
-        const cycles = await tx.reproductionCycle.findMany({
-          where: {
-            tenantId: ctx.tenantId,
-            season: { in: [year - 1, year] },
-            ...(ids ? { mareId: { in: ids } } : {}),
-          },
-          select: {
-            id: true,
-            mare: { select: { name: true } },
-            coverings: {
-              orderBy: { date: "desc" },
-              take: 1,
-              select: {
-                date: true,
-                foaling: { select: { id: true } },
-                pregnancyChecks: { orderBy: { date: "desc" }, take: 1, select: { date: true, result: true } },
-                _count: { select: { pregnancyChecks: true } },
-              },
-            },
-          },
-        });
-        for (const cycle of cycles) {
-          const covering = cycle.coverings[0];
-          if (!covering) continue;
-          const state = mareState(covering);
-          if (state === "PREGNANT" || state === "TWINS") {
-            const g = gestation(covering.date);
-            if (g.expected >= from && g.expected < to) {
-              items.push({
-                id: `foaling-${cycle.id}`,
-                date: g.expected,
-                kind: "foaling",
-                title: `Parto previsto · ${cycle.mare.name}`,
-                subtitle: "Ventana normal de 335 a 342 días",
-                path: `reproduccion/${cycle.id}`,
-              });
-            }
+        // Reproduccion, del mismo motor que la pantalla de Reproduccion. Incluye
+        // las gestaciones de la temporada anterior (un parto de febrero viene
+        // de una cubricion del año pasado).
+        const repro = await buildReproOverview(
+          tx,
+          ctx.tenantId,
+          new Date().getFullYear(),
+          ids ? { id: { in: ids } } : {},
+        );
+        const inRange = (d: Date) => d >= from && d < to;
+        const dm = (d: Date) => d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+        for (const m of repro.tracked) {
+          const i = m.insight;
+          const path = `reproduccion/${m.cycle?.id ?? m.latestCycleId ?? ""}`;
+          const push = (key: string, date: Date, kind: CalendarKind, title: string, subtitle: string) =>
+            inRange(date) &&
+            items.push({ id: `${key}-${m.mare.id}`, date, kind, title: `${title} · ${m.mare.name}`, subtitle, path });
+          if (i.gestation) {
+            push(
+              "foaling",
+              i.gestation.expected,
+              "foaling",
+              "Parto previsto",
+              `Probable entre el ${dm(i.gestation.windowFrom)} y el ${dm(i.gestation.windowTo)}`,
+            );
           }
-          if (state === "COVERED" || state === "PREGNANT" || state === "TWINS") {
-            const next = nextCheckpoint(covering.date, covering._count.pregnancyChecks);
-            if (next && next.due >= from && next.due < to) {
-              items.push({
-                id: `check-${cycle.id}`,
-                date: next.due,
-                kind: "check",
-                title: `${next.label} · ${cycle.mare.name}`,
-                subtitle: `Días ${next.from}-${next.to} tras la cubrición`,
-                path: `reproduccion/${cycle.id}`,
-              });
-            }
+          if (i.nextCheck) {
+            push("check", i.nextCheck.due, "check", i.nextCheck.label, `Días ${i.nextCheck.from}-${i.nextCheck.to} tras la cubrición`);
+          }
+          if (i.breeding) {
+            push("breed", i.breeding.from, "heat", "Ventana de cubrición", `Hasta el ${dm(i.breeding.to)}`);
+          }
+          if (i.nextEstrus) {
+            push(
+              "estrus",
+              i.nextEstrus.estrusFrom,
+              "heat",
+              "Celo previsto",
+              i.nextEstrus.extrapolated ? "Estimado sin exploraciones recientes" : `Ovulación ~${dm(i.nextEstrus.ovulation)}`,
+            );
+          }
+          if (i.foalHeat) {
+            push("foalheat", i.foalHeat.from, "heat", "Celo del potro", `Hasta el ${dm(i.foalHeat.to)}`);
           }
         }
 

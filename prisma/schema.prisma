@@ -97,6 +97,7 @@ model Tenant {
   tasks             Task[]
   documents         Document[]
   verifactuRecords VerifactuRecord[]
+  reproSettings    ReproSettings?
 }
 
 model User {
@@ -208,6 +209,8 @@ model Horse {
   events           Event[]
   nutritionBaseline NutritionBaseline?
   nutritionPrescriptions NutritionPrescription[]
+  reproExams       ReproExam[]
+  reproProfile     MareReproProfile?
   createdAt        DateTime            @default(now())
 
   @@index([tenantId])
@@ -365,14 +368,21 @@ model Movement {
   @@index([tenantId, horseId])
 }
 
+/// Temporada reproductiva de una yegua (una por año). Dentro caben varios
+/// ciclos estrales: se deducen de las exploraciones (`ReproExam`), no se
+/// guardan aparte.
 model ReproductionCycle {
-  id        String     @id @default(uuid())
+  id        String      @id @default(uuid())
   tenantId  String
   mareId    String
   season    Int
+  /// Categoria de la yegua al empezar la temporada (MAIDEN, BARREN, FOALING,
+  /// SLIPPED, RESTED). Null = se deduce del historial.
+  category  String?
   notes     String?
-  mare      Horse      @relation(fields: [mareId], references: [id], onDelete: Cascade)
+  mare      Horse       @relation(fields: [mareId], references: [id], onDelete: Cascade)
   coverings Covering[]
+  exams     ReproExam[]
 
   @@index([tenantId, mareId])
 }
@@ -384,8 +394,10 @@ model Covering {
   mareId                String
   stallionId            String?
   method                CoveringMethod
+  /// Fecha y hora: la ventana de inseminacion se cuenta en horas.
   date                  DateTime
   result                String?
+  notes                 String?
   ancceServiceRequestId String?
   cycle                 ReproductionCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
   mare                  Horse             @relation("CoveringMare", fields: [mareId], references: [id])
@@ -398,15 +410,23 @@ model Covering {
 
 model PregnancyCheck {
   id             String   @id @default(uuid())
+  tenantId       String
   coveringId     String
   date           DateTime
   result         String
   dayOfPregnancy Int?
+  /// Diametro de la vesicula embrionaria (mm).
+  vesicleMm      Int?
+  heartbeat      Boolean?
+  notes          String?
   covering       Covering @relation(fields: [coveringId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
 
 model Foaling {
   id         String   @id @default(uuid())
+  tenantId   String
   coveringId String   @unique
   foalId     String?
   date       DateTime
@@ -414,6 +434,76 @@ model Foaling {
   alive      Boolean  @default(true)
   notes      String?
   covering   Covering @relation(fields: [coveringId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+/// Exploracion ginecologica: recela, ecografia de ovarios y utero, y los
+/// tratamientos hormonales de ese momento. Es lo que alimenta la prediccion de
+/// celo y ovulacion.
+model ReproExam {
+  id              String            @id @default(uuid())
+  tenantId        String
+  cycleId         String
+  mareId          String
+  /// Fecha y hora: la ovulacion se predice en horas.
+  date            DateTime
+  /// Recela: 0 rechaza el semental ... 4 celo franco.
+  teasingScore    Int?
+  /// Foliculo dominante de cada ovario (mm).
+  leftFollicleMm  Int?
+  rightFollicleMm Int?
+  /// Cuerpo luteo: NONE | LEFT | RIGHT | BOTH.
+  corpusLuteum    String?
+  /// Edema uterino (0-3).
+  uterineEdema    Int?
+  /// Liquido intrauterino (mm de la mayor bolsa; 0 = sin liquido).
+  uterineFluidMm  Int?
+  /// Cervix: CLOSED | RELAXING | OPEN.
+  cervix          String?
+  /// Ovulacion detectada en esta exploracion.
+  ovulated        Boolean           @default(false)
+  ovulationSide   String?
+  /// HCG, DESLORELIN, PGF2A, ALTRENOGEST, OXYTOCIN, UTERINE_LAVAGE, ANTIBIOTIC, OTHER.
+  treatments      String[]          @default([])
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime          @default(now())
+  cycle           ReproductionCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  mare            Horse             @relation(fields: [mareId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, mareId, date])
+  @@index([cycleId])
+}
+
+/// Lo propio de cada yegua. Los valores numericos son correcciones manuales:
+/// si estan vacios se aprenden del historial o se usan los de la yeguada.
+model MareReproProfile {
+  id                     String   @id @default(uuid())
+  tenantId               String
+  horseId                String   @unique
+  cycleLengthDays        Int?
+  estrusLengthDays       Int?
+  gestationDays          Int?
+  preovulatoryFollicleMm Int?
+  /// Antecedentes: ENDOMETRITIS, FLUID_POST_BREEDING, RETAINED_PLACENTA,
+  /// TWINNING, DYSTOCIA, CERVICAL_ISSUE, OTHER.
+  conditions             String[] @default([])
+  notes                  String?
+  horse                  Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  updatedAt              DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+/// Parametros reproductivos de la yeguada. `config` se valida con
+/// `reproSettingsSchema` (src/lib/repro-settings.ts), que rellena los valores
+/// por defecto: añadir un parametro no necesita migracion.
+model ReproSettings {
+  tenantId  String   @id
+  config    Json     @default("{}")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
 }
 
 model BoardingContract {
