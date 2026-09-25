@@ -15,6 +15,7 @@ import {
 import { Plus, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/react";
+import { EXEMPTION_CAUSES, type ExemptionCause } from "@/lib/invoice-rules";
 
 type Option = { id: string; name: string };
 type SeriesOption = { id: string; code: string; prefix: string; year: number; isDefault: boolean };
@@ -25,10 +26,12 @@ interface LineDraft {
   unitPrice: string;
   vatRate: string;
   horseId: string;
+  /** E1-E6; solo con IVA 0 %. */
+  exemptionCause: string;
 }
 
 function emptyLine(): LineDraft {
-  return { description: "", quantity: "1", unitPrice: "0", vatRate: "21", horseId: "" };
+  return { description: "", quantity: "1", unitPrice: "0", vatRate: "21", horseId: "", exemptionCause: "" };
 }
 
 function addDaysISO(iso: string, days: number): string {
@@ -125,6 +128,7 @@ export function NewInvoiceEditor({
         unitPrice: parseFloat(l.unitPrice) || 0,
         vatRate: parseFloat(l.vatRate) || 0,
         horseId: l.horseId || undefined,
+        exemptionCause: (parseFloat(l.vatRate) || 0) === 0 && l.exemptionCause ? l.exemptionCause : undefined,
       }));
     if (cleanLines.length === 0) return toast.error("Añade al menos una línea");
     if (cleanLines.some((l) => l.quantity <= 0))
@@ -264,7 +268,7 @@ export function NewInvoiceEditor({
                     type="number"
                     step="0.01"
                     value={line.vatRate}
-                    onChange={(e) => updateLine(idx, { vatRate: e.target.value })}
+                    onChange={(e) => updateLine(idx, { vatRate: e.target.value, ...(parseFloat(e.target.value) === 0 ? {} : { exemptionCause: "" }) })}
                     className="rounded-lg bg-white font-mono"
                   />
                 </div>
@@ -300,6 +304,28 @@ export function NewInvoiceEditor({
                     <Trash weight="bold" className="h-4 w-4" />
                   </Button>
                 </div>
+                {(parseFloat(line.vatRate) || 0) === 0 && (
+                  <div className="col-span-12 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Causa de exención (obligatoria con IVA 0 %)</Label>
+                    <Select
+                      value={line.exemptionCause}
+                      onValueChange={(v) => updateLine(idx, { exemptionCause: v || "" })}
+                    >
+                      <SelectTrigger className="rounded-lg bg-white">
+                        <SelectValue placeholder="Elige por qué no lleva IVA">
+                          {(v: string) => (v ? `${v} · ${EXEMPTION_CAUSES[v as ExemptionCause]}` : "")}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(Object.keys(EXEMPTION_CAUSES) as ExemptionCause[]).map((key) => (
+                          <SelectItem key={key} value={key}>
+                            {key} · {EXEMPTION_CAUSES[key]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             );
           })}

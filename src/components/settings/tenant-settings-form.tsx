@@ -10,6 +10,7 @@ import { Buildings, CircleNotch, WarningCircle } from "@phosphor-icons/react";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { isValidNif } from "@/lib/nif";
+import { formatIban } from "@/lib/iban";
 
 interface TenantSettingsFormProps {
   tenant: {
@@ -21,6 +22,8 @@ interface TenantSettingsFormProps {
     postalCode: string | null;
     city: string | null;
     province: string | null;
+    iban: string | null;
+    paymentTerms: string | null;
     regaCode: string | null;
   };
 }
@@ -32,6 +35,8 @@ const FIELDS = [
   { key: "postalCode", label: "Código postal", placeholder: "11400" },
   { key: "city", label: "Municipio", placeholder: "Jerez de la Frontera" },
   { key: "province", label: "Provincia", placeholder: "Cádiz" },
+  { key: "iban", label: "IBAN de cobro", placeholder: "ES91 2100 0418 4502 0005 1332" },
+  { key: "paymentTerms", label: "Condiciones de pago", placeholder: "Pago a 30 días por transferencia" },
   { key: "regaCode", label: "Código REGA", placeholder: "ES110200000123" },
 ] as const;
 type FieldKey = (typeof FIELDS)[number]["key"];
@@ -48,6 +53,8 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
     postalCode: tenant.postalCode ?? "",
     city: tenant.city ?? "",
     province: tenant.province ?? "",
+    iban: tenant.iban ? formatIban(tenant.iban) : "",
+    paymentTerms: tenant.paymentTerms ?? "",
     regaCode: tenant.regaCode ?? "",
   });
 
@@ -102,8 +109,8 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
           {FIELDS.map((field) => (
             <div key={field.key} className="flex justify-between items-center gap-4 py-3 border-b border-border/50 last:border-0">
               <span className="text-muted-foreground">{field.label}</span>
-              <span className={`text-right font-medium ${field.key === "regaCode" ? "font-mono text-xs" : ""}`}>
-                {tenant[field.key] || "—"}
+              <span className={`text-right font-medium ${field.key === "regaCode" || field.key === "iban" ? "font-mono text-xs" : ""}`}>
+                {field.key === "iban" && tenant.iban ? formatIban(tenant.iban) : tenant[field.key] || "—"}
               </span>
             </div>
           ))}
@@ -133,7 +140,7 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {FIELDS.map((field) => (
-              <div key={field.key} className={`space-y-1.5 ${field.key === "address" ? "sm:col-span-2" : ""}`}>
+              <div key={field.key} className={`space-y-1.5 ${field.key === "address" || field.key === "paymentTerms" ? "sm:col-span-2" : ""}`}>
                 <Label htmlFor={field.key}>{field.label}</Label>
                 <Input
                   id={field.key}

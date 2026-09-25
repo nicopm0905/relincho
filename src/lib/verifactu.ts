@@ -204,7 +204,7 @@ export type AltaXmlInput = AltaInput & {
   description: string;
   recipient: { name: string; nif: string } | null;
   /** Una linea por tipo impositivo. */
-  breakdown: { vatRate: number; base: number; vat: number }[];
+  breakdown: { vatRate: number; base: number; vat: number; exemption?: string | null }[];
   hash: string;
   prev: PreviousRecord;
   software: SoftwareInfo;
@@ -260,17 +260,27 @@ export function buildAltaXml(r: AltaXmlInput) {
         ].join("")
       : "",
     "<sum1:Desglose>",
+    // Exenta: se declara con su causa (E1-E6) y sin tipo ni cuota; el resto, como sujeta y no exenta (S1).
     ...r.breakdown.map((b) =>
-      [
-        "<sum1:DetalleDesglose>",
-        "<sum1:Impuesto>01</sum1:Impuesto>",
-        "<sum1:ClaveRegimen>01</sum1:ClaveRegimen>",
-        "<sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>",
-        `<sum1:TipoImpositivo>${aeatAmount(b.vatRate)}</sum1:TipoImpositivo>`,
-        `<sum1:BaseImponibleOimporteNoSujeto>${aeatAmount(b.base)}</sum1:BaseImponibleOimporteNoSujeto>`,
-        `<sum1:CuotaRepercutida>${aeatAmount(b.vat)}</sum1:CuotaRepercutida>`,
-        "</sum1:DetalleDesglose>",
-      ].join(""),
+      b.exemption
+        ? [
+            "<sum1:DetalleDesglose>",
+            "<sum1:Impuesto>01</sum1:Impuesto>",
+            "<sum1:ClaveRegimen>01</sum1:ClaveRegimen>",
+            `<sum1:OperacionExenta>${xml(b.exemption)}</sum1:OperacionExenta>`,
+            `<sum1:BaseImponibleOimporteNoSujeto>${aeatAmount(b.base)}</sum1:BaseImponibleOimporteNoSujeto>`,
+            "</sum1:DetalleDesglose>",
+          ].join("")
+        : [
+            "<sum1:DetalleDesglose>",
+            "<sum1:Impuesto>01</sum1:Impuesto>",
+            "<sum1:ClaveRegimen>01</sum1:ClaveRegimen>",
+            "<sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>",
+            `<sum1:TipoImpositivo>${aeatAmount(b.vatRate)}</sum1:TipoImpositivo>`,
+            `<sum1:BaseImponibleOimporteNoSujeto>${aeatAmount(b.base)}</sum1:BaseImponibleOimporteNoSujeto>`,
+            `<sum1:CuotaRepercutida>${aeatAmount(b.vat)}</sum1:CuotaRepercutida>`,
+            "</sum1:DetalleDesglose>",
+          ].join(""),
     ),
     "</sum1:Desglose>",
     `<sum1:CuotaTotal>${aeatAmount(r.vatTotal)}</sum1:CuotaTotal>`,

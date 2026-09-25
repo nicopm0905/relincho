@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { EXEMPTION_CAUSES, type ExemptionCause } from "@/lib/invoice-rules";
 import {
   Select,
   SelectContent,
@@ -25,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Line = { description: string; quantity: string; unitPrice: string; vatRate: string };
+type Line = { description: string; quantity: string; unitPrice: string; vatRate: string; exemptionCause: string };
 
 const MODES = {
   cancel: "Anular el importe entero",
@@ -65,7 +66,7 @@ export function InvoiceActions({
     clientEmail: string | null;
     /** Las rectificativas la dejan a cero: ya no hay nada que rectificar. */
     voided: boolean;
-    lines: { description: string; quantity: number; unitPrice: number; vatRate: number }[];
+    lines: { description: string; quantity: number; unitPrice: number; vatRate: number; exemptionCause: string | null }[];
   };
 }) {
   const { router, onError } = useMutationHandlers();
@@ -272,7 +273,7 @@ function RectifyDialog({
 }: {
   tenantSlug: string;
   invoiceId: string;
-  originalLines: { description: string; quantity: number; unitPrice: number; vatRate: number }[];
+  originalLines: { description: string; quantity: number; unitPrice: number; vatRate: number; exemptionCause: string | null }[];
   onClose: () => void;
 }) {
   const { router, onError } = useMutationHandlers();
@@ -285,6 +286,7 @@ function RectifyDialog({
       quantity: String(l.quantity),
       unitPrice: String(sign * l.unitPrice),
       vatRate: String(l.vatRate),
+      exemptionCause: l.exemptionCause ?? "",
     }));
   const [lines, setLines] = useState<Line[]>(toLines(1));
 
@@ -300,7 +302,7 @@ function RectifyDialog({
   const changeMode = (next: Mode) => {
     setMode(next);
     // Por diferencias se parte de cero lineas; por sustitucion, de la factura actual.
-    setLines(next === "replace" ? toLines(1) : [{ description: "", quantity: "1", unitPrice: "", vatRate: "21" }]);
+    setLines(next === "replace" ? toLines(1) : [{ description: "", quantity: "1", unitPrice: "", vatRate: "21", exemptionCause: "" }]);
   };
   const updateLine = (index: number, field: keyof Line, value: string) =>
     setLines((prev) => prev.map((l, i) => (i === index ? { ...l, [field]: value } : l)));
@@ -321,6 +323,7 @@ function RectifyDialog({
               quantity: Number(l.quantity),
               unitPrice: Number(l.unitPrice),
               vatRate: Number(l.vatRate),
+              exemptionCause: Number(l.vatRate) === 0 && l.exemptionCause ? l.exemptionCause : undefined,
             })),
     });
   };
@@ -438,13 +441,29 @@ function RectifyDialog({
                   >
                     <X weight="bold" />
                   </Button>
+                  {Number(line.vatRate) === 0 && (
+                    <select
+                      aria-label="Causa de exención"
+                      required
+                      value={line.exemptionCause}
+                      onChange={(e) => updateLine(index, "exemptionCause", e.target.value)}
+                      className="col-span-5 h-9 rounded-lg border border-input bg-transparent px-2 text-sm"
+                    >
+                      <option value="">Causa de exención…</option>
+                      {(Object.keys(EXEMPTION_CAUSES) as ExemptionCause[]).map((key) => (
+                        <option key={key} value={key}>
+                          {key} · {EXEMPTION_CAUSES[key]}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               ))}
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setLines((prev) => [...prev, { description: "", quantity: "1", unitPrice: "", vatRate: "21" }])}
+                onClick={() => setLines((prev) => [...prev, { description: "", quantity: "1", unitPrice: "", vatRate: "21", exemptionCause: "" }])}
               >
                 <Plus weight="bold" />
                 Añadir línea

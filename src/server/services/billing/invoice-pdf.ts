@@ -3,7 +3,8 @@ import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import type { Prisma } from "@prisma/client";
 import { invoiceLabel } from "@/lib/invoice-label";
-import { breakdownByRate } from "@/lib/invoice-rules";
+import { EXEMPTION_CAUSES, breakdownByRate, isExemptionCause } from "@/lib/invoice-rules";
+import { formatIban } from "@/lib/iban";
 
 /** Lo que hace falta de la factura para dibujarla. Lo comparten la ruta del PDF y el envio por email. */
 export const invoicePdfInclude = {
@@ -126,7 +127,7 @@ export async function renderInvoicePdf(invoice: InvoiceForPdf): Promise<{ buffer
     doc.text(line.description, 50, y, { width: 235 });
     doc.text(Number(line.quantity).toString(), 290, y, { width: 40, align: "right" });
     doc.text(euro(Number(line.unitPrice)), 335, y, { width: 65, align: "right" });
-    doc.text(`${Number(line.vatRate)}%`, 405, y, { width: 40, align: "right" });
+    doc.text(line.exemptionCause ? `Exento ${line.exemptionCause}` : `${Number(line.vatRate)}%`, 400, y, { width: 45, align: "right" });
     doc.text(euro(base), 450, y, { width: 80, align: "right" });
     y += Math.max(18, height + 6);
   }
@@ -139,6 +140,7 @@ export async function renderInvoicePdf(invoice: InvoiceForPdf): Promise<{ buffer
       quantity: Number(l.quantity),
       unitPrice: Number(l.unitPrice),
       vatRate: Number(l.vatRate),
+      exemptionCause: l.exemptionCause,
     })),
   ).sort((a, b) => b.vatRate - a.vatRate);
   y += 16;
@@ -148,7 +150,12 @@ export async function renderInvoicePdf(invoice: InvoiceForPdf): Promise<{ buffer
   }
   doc.font("Helvetica").fontSize(10);
   for (const b of breakdown) {
-    doc.text(`Base al ${b.vatRate}%: ${euro(b.base)}  ·  Cuota: ${euro(b.vat)}`, 250, y, { width: 280, align: "right" });
+    doc.text(
+      b.exemption ? `Base exenta (${b.exemption}): ${euro(b.base)}` : `Base al ${b.vatRate}%: ${euro(b.base)}  ·  Cuota: ${euro(b.vat)}`,
+      250,
+      y,
+      { width: 280, align: "right" },
+    );
     y += 16;
   }
   y += 4;
@@ -161,6 +168,29 @@ export async function renderInvoicePdf(invoice: InvoiceForPdf): Promise<{ buffer
   y += 20;
   doc.fontSize(13).text("Total:", 330, y, { width: 110, align: "right" });
   doc.text(euro(Number(invoice.total)), 440, y, { width: 90, align: "right" });
+  doc.font("Helvetica").fontSize(8).fillColor("#555555");
+
+  // Motivo de cada exencion: la factura tiene que decir por que no lleva IVA.
+  const causes = [...new Set(breakdown.map((b) => b.exemption).filter(isExemptionCause))];
+  for (const cause of causes) {
+    y += 14;
+    doc.text(`${cause}: ${EXEMPTION_CAUSES[cause]}`, 50, y + 8, { width: 480 });
+  }
+  doc.fillColor("#000000");
+
+  // Como pagar: solo en una factura viva (ni borrador, ni anulada, ni rectificativa).
+  const payable = !draft && invoice.status !== "CANCELLED" && !invoice.rectifiesId;
+  if (payable && (t.iban || t.paymentTerms)) {
+    y += 34;
+    if (y + 50 > PAGE_BOTTOM) {
+      doc.addPage();
+      y = PAGE_TOP;
+    }
+    doc.font("Helvetica-Bold").fontSize(10).text("Forma de pago", 50, y);
+    doc.font("Helvetica").fontSize(9);
+    if (t.iban) doc.text(`Transferencia a la cuenta ${formatIban(t.iban)} (indica el número de factura)`, 50, y + 14, { width: 480 });
+    if (t.paymentTerms) doc.text(t.paymentTerms, 50, y + (t.iban ? 27 : 14), { width: 480 });
+  }
 
   // QR tributario (Veri*Factu): solo en facturas emitidas con registro.
   if (!draft && invoice.verifactuQrUrl) {

@@ -85,6 +85,7 @@ export default async function EditarBorradorPage({ params }: PageProps) {
               unitPrice: String(Number(l.unitPrice)),
               vatRate: String(Number(l.vatRate)),
               horseId: l.horseId ?? "",
+              exemptionCause: l.exemptionCause ?? "",
             })),
           }}
         />

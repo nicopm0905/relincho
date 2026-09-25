@@ -24,7 +24,7 @@ test("el desglose agrupa por tipo y suma lo mismo que los totales", () => {
   ];
   const breakdown = breakdownByRate(lines);
   assert.equal(breakdown.length, 3);
-  assert.deepEqual(breakdown.find((b) => b.vatRate === 21), { vatRate: 21, base: 400, vat: 84 });
+  assert.deepEqual(breakdown.find((b) => b.vatRate === 21), { vatRate: 21, exemption: null, base: 400, vat: 84 });
   const t = computeTotals(lines);
   assert.equal(breakdown.reduce((s, b) => s + b.base, 0), t.subtotal);
   assert.equal(breakdown.reduce((s, b) => s + b.vat, 0), t.vatTotal);
@@ -43,4 +43,24 @@ test("rectificativa conserva su clave R1-R4 y cae a R4 si no es valida", () => {
   assert.deepEqual(classifyInvoice({ ...base, storedType: "R1" }), { type: "R1" });
   assert.deepEqual(classifyInvoice({ ...base, storedType: "F1" }), { type: "R4" });
   assert.deepEqual(classifyInvoice({ ...base, storedType: null }), { type: "R4" });
+});
+
+test("IVA 0 % exige causa de exencion y la causa exige IVA 0 %", async () => {
+  const { exemptionProblem } = await import("../src/lib/invoice-rules");
+  assert.equal(exemptionProblem({ vatRate: 21 }), null);
+  assert.equal(exemptionProblem({ vatRate: 0, exemptionCause: "E1" }), null);
+  assert.match(exemptionProblem({ vatRate: 0 }) ?? "", /causa de exención/);
+  assert.match(exemptionProblem({ vatRate: 21, exemptionCause: "E1" }) ?? "", /IVA 0/);
+  assert.match(exemptionProblem({ vatRate: 0, exemptionCause: "E9" }) ?? "", /no válida/);
+});
+
+test("el desglose separa cada causa de exencion", () => {
+  const b = breakdownByRate([
+    { quantity: 1, unitPrice: 100, vatRate: 21 },
+    { quantity: 1, unitPrice: 50, vatRate: 0, exemptionCause: "E1" },
+    { quantity: 1, unitPrice: 30, vatRate: 0, exemptionCause: "E1" },
+    { quantity: 1, unitPrice: 10, vatRate: 0, exemptionCause: "E6" },
+  ]);
+  assert.equal(b.length, 3);
+  assert.deepEqual(b.find((x) => x.exemption === "E1"), { vatRate: 0, exemption: "E1", base: 80, vat: 0 });
 });

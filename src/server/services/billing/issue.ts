@@ -2,7 +2,7 @@ import "server-only";
 import { TRPCError } from "@trpc/server";
 import type { PrismaClient } from "@/server/db/prisma";
 import { isValidNif, normalizeNif } from "@/lib/nif";
-import { breakdownByRate, classifyInvoice } from "@/lib/invoice-rules";
+import { breakdownByRate, classifyInvoice, exemptionProblem } from "@/lib/invoice-rules";
 import {
   aeatTimestamp,
   altaHash,
@@ -130,13 +130,18 @@ export async function issueInvoice(tx: PrismaClient, tenantId: string, invoiceId
   const issueDate = new Date();
   const numSerie = invoiceNumSerie(invoice.series, number);
 
-  const breakdown = breakdownByRate(
-    invoice.lines.map((l) => ({
-      quantity: Number(l.quantity),
-      unitPrice: Number(l.unitPrice),
-      vatRate: Number(l.vatRate),
-    })),
-  );
+  const lineData = invoice.lines.map((l) => ({
+    description: l.description,
+    quantity: Number(l.quantity),
+    unitPrice: Number(l.unitPrice),
+    vatRate: Number(l.vatRate),
+    exemptionCause: l.exemptionCause,
+  }));
+  for (const l of lineData) {
+    const problem = exemptionProblem(l);
+    if (problem) bad(`«${l.description}»: ${problem}`);
+  }
+  const breakdown = breakdownByRate(lineData);
 
   const prev = await previousRecord(tx, tenantId);
   if (prev) prev.issuerNif = issuerNif;

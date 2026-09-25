@@ -50,3 +50,14 @@ test("un borrador se renderiza (con marca de agua) sin numero", async () => {
   assert.equal(label, "Borrador");
   assert.equal(pages(buffer), 1);
 });
+
+test("una factura con exencion e IBAN se renderiza", async () => {
+  const inv = fake("ISSUED", 2);
+  (inv.tenant as unknown as Record<string, unknown>).iban = "ES9121000418450200051332";
+  (inv.tenant as unknown as Record<string, unknown>).paymentTerms = "Pago a 30 días";
+  (inv.lines[0] as unknown as Record<string, unknown>).exemptionCause = "E1";
+  (inv.lines[0] as unknown as Record<string, unknown>).vatRate = 0;
+  const { buffer } = await renderInvoicePdf(inv);
+  assert.equal(buffer.subarray(0, 5).toString(), "%PDF-");
+  assert.equal(pages(buffer), 1);
+});

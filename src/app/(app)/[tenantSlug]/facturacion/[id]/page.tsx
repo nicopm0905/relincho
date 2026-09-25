@@ -89,6 +89,7 @@ export default async function FacturaDetallePage({ params }: PageProps) {
             quantity: Number(l.quantity),
             unitPrice: Number(l.unitPrice),
             vatRate: Number(l.vatRate),
+            exemptionCause: l.exemptionCause,
           })),
         }}
       />
@@ -108,6 +109,11 @@ export default async function FacturaDetallePage({ params }: PageProps) {
                     {invoiceLabel(invoice.rectifies)}
                   </Link>
                   {invoice.rectificationReason ? ` · ${invoice.rectificationReason}` : ""}
+                </p>
+              )}
+              {invoice.emailedAt && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Enviada por email el {formatDate(invoice.emailedAt)}
                 </p>
               )}
               {invoice.rectifiedBy.length > 0 && (

@@ -3,6 +3,7 @@ import { createTRPCRouter, roleProcedure } from "../init";
 import { prisma } from "@/server/db/prisma";
 import { isValidNif, normalizeNif } from "@/lib/nif";
 import { isValidRega, normalizeCode } from "@/lib/identifiers";
+import { isValidIban, normalizeIban } from "@/lib/iban";
 
 const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
@@ -42,6 +43,15 @@ export const tenantRouter = createTRPCRouter({
           .refine((value) => !value || /^\d{5}$/.test(value), { message: "El código postal tiene 5 dígitos" }),
         city: text(120),
         province: text(120),
+        iban: z
+          .string()
+          .trim()
+          .optional()
+          .transform((value) => (value === undefined ? undefined : value ? normalizeIban(value) : null))
+          .refine((value) => !value || isValidIban(value), {
+            message: "El IBAN no es válido: debe ser una cuenta española (ES + 22 dígitos) con su control correcto",
+          }),
+        paymentTerms: text(300),
         regaCode: z
           .string()
           .trim()

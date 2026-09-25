@@ -69,6 +69,8 @@ export default async function AjustesPage({ params }: PageProps) {
         postalCode: tenant.postalCode,
         city: tenant.city,
         province: tenant.province,
+        iban: tenant.iban,
+        paymentTerms: tenant.paymentTerms,
         regaCode: tenant.regaCode,
       }} />
 

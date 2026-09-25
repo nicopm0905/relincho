@@ -114,3 +114,29 @@ test("el XML lleva la huella, el encadenamiento y escapa los textos", () => {
   assert.ok(xml.includes("Yeguada &lt;Los Álamos&gt; &amp; Hijos"));
   assert.ok(!xml.includes("<Los"));
 });
+
+test("una linea exenta se declara con su causa y sin tipo ni cuota", () => {
+  const xml = buildAltaXml({
+    issuerNif: "B12345674",
+    issuerName: "Yeguada",
+    numSerie: "2026-0003",
+    issueDate: JAN_1_2024,
+    invoiceType: "F1",
+    vatTotal: 21,
+    total: 171,
+    prevHash: null,
+    generatedAt: "2024-01-01T19:20:35+01:00",
+    hash: SECOND,
+    description: "Mixto",
+    recipient: { name: "Cliente", nif: "12345678Z" },
+    breakdown: [
+      { vatRate: 21, base: 100, vat: 21 },
+      { vatRate: 0, base: 50, vat: 0, exemption: "E1" },
+    ],
+    prev: null,
+    software: { producerName: "Relincho", producerNif: "B12345674", systemName: "Relincho", systemId: "RL", version: "1.0", installation: "1" },
+  });
+  assert.match(xml, /<sum1:OperacionExenta>E1<\/sum1:OperacionExenta>/);
+  assert.equal((xml.match(/<sum1:CalificacionOperacion>S1</g) ?? []).length, 1);
+  assert.equal((xml.match(/<sum1:CuotaRepercutida>/g) ?? []).length, 1);
+});

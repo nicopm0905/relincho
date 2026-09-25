@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { invoiceLabel } from "@/lib/invoice-label";
 import { invoiceBalance, round2 } from "@/lib/invoice-balance";
-import { computeTotals } from "@/lib/invoice-rules";
+import { computeTotals, isExemptionCause } from "@/lib/invoice-rules";
 import { createTRPCRouter, roleProcedure, staffProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
 import { InvoiceStatus } from "@prisma/client";
@@ -47,6 +47,11 @@ const lineInput = z.object({
   unitPrice: z.number(),
   vatRate: z.number().min(0),
   horseId: z.string().uuid().optional(),
+  /** E1-E6. Solo con IVA 0 %; sin causa, una linea a 0 % no se puede emitir. */
+  exemptionCause: z.string().optional(),
+}).refine((l) => !l.exemptionCause || (isExemptionCause(l.exemptionCause) && l.vatRate === 0), {
+  message: "La causa de exención solo cabe en una línea con IVA 0 %.",
+  path: ["exemptionCause"],
 });
 
 function addDays(date: Date, days: number): Date {
@@ -376,6 +381,7 @@ export const invoicesRouter = createTRPCRouter({
                 unitPrice: l.unitPrice.toFixed(2),
                 vatRate: l.vatRate.toFixed(2),
                 horseId: l.horseId,
+                exemptionCause: l.exemptionCause || null,
               })),
             },
           },
@@ -433,6 +439,7 @@ export const invoicesRouter = createTRPCRouter({
                 unitPrice: l.unitPrice.toFixed(2),
                 vatRate: l.vatRate.toFixed(2),
                 horseId: l.horseId,
+                exemptionCause: l.exemptionCause || null,
               })),
             },
           },
@@ -496,6 +503,9 @@ export const invoicesRouter = createTRPCRouter({
       if (!result.ok) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "No se pudo enviar el email. Inténtalo de nuevo." });
       }
+      await withTenant(ctx.tenantId, (tx) =>
+        tx.invoice.update({ where: { id: input.id }, data: { emailedAt: new Date() } }),
+      );
       return { sentTo: input.to };
     }),
 
@@ -594,6 +604,7 @@ export const invoicesRouter = createTRPCRouter({
             unitPrice: -Number(l.unitPrice),
             vatRate: Number(l.vatRate),
             horseId: l.horseId ?? undefined,
+            exemptionCause: l.exemptionCause ?? undefined,
           }));
         } else if (input.lines && input.lines.length > 0) {
           lines = input.lines;
@@ -641,6 +652,7 @@ export const invoicesRouter = createTRPCRouter({
                 unitPrice: l.unitPrice.toFixed(2),
                 vatRate: l.vatRate.toFixed(2),
                 horseId: l.horseId,
+                exemptionCause: l.exemptionCause || null,
               })),
             },
           },
