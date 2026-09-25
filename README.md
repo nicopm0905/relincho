@@ -115,7 +115,23 @@ almacenamiento no está configurado.
 ### Stripe
 
 1. Crea cuenta en [stripe.com](https://stripe.com)
-2. Crea 3 precios (Starter, Pro, Enterprise)
+2. Crea los precios de Stripe (una vez, en modo real) con estas cifras, sin IVA, y
+   pon sus ids en el `.env`. Toda la lógica de precios vive en `src/lib/pricing.ts`:
+   si cambia una cifra, se cambia allí y en Stripe.
+
+   | Variable | Precio |
+   | --- | --- |
+   | `STRIPE_PRICE_CUADRA_MONTH` / `_YEAR` | 69 €/mes · 690 €/año |
+   | `STRIPE_PRICE_RENDIMIENTO_MONTH` / `_YEAR` | 149 €/mes · 1.490 €/año |
+   | `STRIPE_PRICE_YEGUADA_MONTH` / `_YEAR` | 349 €/mes · 3.490 €/año (desde) |
+   | `STRIPE_PRICE_ADDON_BILLING_MONTH` / `_YEAR` | 39 €/mes · 390 €/año (Pupilaje y Facturación) |
+   | `STRIPE_PRICE_ADDON_HORSES_MONTH` / `_YEAR` | 25 €/mes · 250 €/año por bloque de 10 caballos (cantidad = bloques) |
+   | `STRIPE_PRICE_MIGRATION` | 149 € pago único |
+   | `STRIPE_COUPON_FOUNDER` | cupón 40 %, duración *forever* (precio de fundador) |
+   | `STRIPE_PRICE_PRO` | heredado: solo si hay yeguadas de la beta que ya pagaban 79 € |
+
+   El plan Cuaderno (gratis, 5 caballos) no necesita precio. Las yeguadas de la
+   beta con `plan = "starter"` conservan su límite de 15 caballos.
 3. Configura el webhook: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
 4. Añade las variables `STRIPE_*` al `.env`
 
