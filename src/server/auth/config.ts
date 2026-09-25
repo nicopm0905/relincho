@@ -28,6 +28,12 @@ export const authConfig: NextAuthConfig = {
           Google({
             clientId: googleClientId!,
             clientSecret: googleClientSecret!,
+            // Un usuario invitado por email (Ajustes > Equipo) o que entro por
+            // enlace magico existe sin cuenta de Google: sin esto, al entrar
+            // con Google recibia OAuthAccountNotLinked. Google solo entrega
+            // emails verificados, y quien controla ese correo ya podia entrar
+            // con un enlace magico, asi que vincular por email no abre nada.
+            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -38,6 +44,11 @@ export const authConfig: NextAuthConfig = {
     error: "/login/error",
   },
   callbacks: {
+    /** La vinculacion por email solo es segura con emails verificados por Google. */
+    signIn({ account, profile }) {
+      if (account?.provider === "google") return profile?.email_verified === true;
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
