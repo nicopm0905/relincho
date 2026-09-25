@@ -2,6 +2,9 @@ import { z } from "zod";
 import { invoiceLabel } from "@/lib/invoice-label";
 import { invoiceBalance, round2 } from "@/lib/invoice-balance";
 import { computeTotals, isExemptionCause } from "@/lib/invoice-rules";
+import { inPeriod, periodRange, type Quarter } from "@/lib/invoice-period";
+import { summarizeInvoices } from "@/lib/invoice-summary";
+import { ledgerRow } from "@/lib/invoice-ledger";
 import { createTRPCRouter, roleProcedure, staffProcedure } from "../init";
 import { withTenant } from "@/server/db/prisma";
 import { InvoiceStatus } from "@prisma/client";
@@ -105,25 +108,112 @@ export const invoicesRouter = createTRPCRouter({
   list: staffProcedure
     .input(
       z
-        .object({ status: z.nativeEnum(InvoiceStatus).optional() })
+        .object({
+          status: z.nativeEnum(InvoiceStatus).optional(),
+          /** Cliente o numero de factura. */
+          q: z.string().trim().max(80).optional(),
+          year: z.number().int().min(2000).max(2100).optional(),
+          quarter: z.number().int().min(1).max(4).optional(),
+          page: z.number().int().min(1).default(1),
+          pageSize: z.number().int().min(5).max(100).default(25),
+        })
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      return withTenant(ctx.tenantId, (tx) =>
+      const page = input?.page ?? 1;
+      const pageSize = input?.pageSize ?? 25;
+      const range = input?.year ? periodRange(input.year, (input.quarter as Quarter | undefined) ?? null) : null;
+      const q = input?.q;
+      const asNumber = q && /^\d{1,9}$/.test(q) ? Number(q) : null;
+
+      const all = await withTenant(ctx.tenantId, (tx) =>
         tx.invoice.findMany({
           where: {
             tenantId: ctx.tenantId,
-            ...(input?.status ? { status: input.status } : {}),
+            // Ventana ancha en UTC; el corte exacto se hace en hora de Madrid.
+            ...(range
+              ? {
+                  issueDate: {
+                    gte: new Date(new Date(`${range.from}T00:00:00Z`).getTime() - 864e5),
+                    lte: new Date(new Date(`${range.to}T23:59:59Z`).getTime() + 864e5),
+                  },
+                }
+              : {}),
+            ...(q
+              ? {
+                  OR: [
+                    { client: { name: { contains: q, mode: "insensitive" } } },
+                    { series: { contains: q, mode: "insensitive" } },
+                    ...(asNumber != null ? [{ number: asNumber }] : []),
+                  ],
+                }
+              : {}),
           },
-          include: {
+          select: {
+            id: true,
+            series: true,
+            number: true,
+            status: true,
+            issueDate: true,
+            dueDate: true,
+            total: true,
+            rectifiesId: true,
             client: { select: { id: true, name: true } },
-            lines: true,
             payments: { select: { amount: true } },
             rectifiedBy: rectifiersForBalance,
           },
-          orderBy: { issueDate: "desc" },
+          orderBy: [{ issueDate: "desc" }, { number: "desc" }],
         }),
       );
+
+      const inRange = range ? all.filter((inv) => inPeriod(inv.issueDate, range)) : all;
+      // Los totales no dependen del estado elegido: los filtros de estado no los vacian.
+      const summary = summarizeInvoices(inRange);
+      const filtered = input?.status ? inRange.filter((inv) => inv.status === input.status) : inRange;
+      const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+      const current = Math.min(page, pageCount);
+      return {
+        items: filtered.slice((current - 1) * pageSize, current * pageSize),
+        total: filtered.length,
+        page: current,
+        pageCount,
+        summary,
+      };
+    }),
+
+  /** Libro de facturas emitidas de un periodo, para la gestoria. */
+  ledger: managerProcedure
+    .input(
+      z.object({
+        year: z.number().int().min(2000).max(2100),
+        quarter: z.number().int().min(1).max(4).optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const range = periodRange(input.year, (input.quarter as Quarter | undefined) ?? null);
+      const found = await withTenant(ctx.tenantId, (tx) =>
+        tx.invoice.findMany({
+          where: {
+            tenantId: ctx.tenantId,
+            // Los borradores no tienen numero ni valor fiscal.
+            status: { in: ["ISSUED", "PAID", "OVERDUE", "CANCELLED"] },
+            number: { not: null },
+            issueDate: {
+              gte: new Date(new Date(`${range.from}T00:00:00Z`).getTime() - 864e5),
+              lte: new Date(new Date(`${range.to}T23:59:59Z`).getTime() + 864e5),
+            },
+          },
+          include: {
+            client: { select: { name: true, nif: true } },
+            lines: { select: { quantity: true, unitPrice: true, vatRate: true, exemptionCause: true } },
+            rectifies: { select: { series: true, number: true } },
+          },
+          orderBy: [{ issueDate: "asc" }, { number: "asc" }],
+        }),
+      );
+      return found
+        .filter((inv) => inv.number != null && inPeriod(inv.issueDate, range))
+        .map((inv) => ledgerRow({ ...inv, number: inv.number as number }));
     }),
 
   byId: staffProcedure

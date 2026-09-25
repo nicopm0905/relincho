@@ -1,21 +1,24 @@
 import { createServerCaller } from "@/lib/trpc/server";
 import { invoiceLabel } from "@/lib/invoice-label";
-import { Receipt, FilePdf, ListNumbers, Plus } from "@phosphor-icons/react/dist/ssr";
+import { CaretLeft, CaretRight, DownloadSimple, Receipt, FilePdf, ListNumbers, Plus } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { invoiceBalance } from "@/lib/invoice-balance";
-import { formatDate } from "@/lib/formatters";
+import { formatCurrency, formatDate } from "@/lib/formatters";
+import { getSession } from "@/server/auth";
+import { getTenantAccess } from "@/server/tenant-access";
+import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { GenerateInvoicesButton } from "@/components/facturacion/generate-invoices-button";
-import { InvoiceStatusFilter } from "@/components/facturacion/invoice-status-filter";
+import { InvoiceFilters } from "@/components/facturacion/invoice-filters";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InvoiceStatus } from "@prisma/client";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; year?: string; quarter?: string; page?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -33,15 +36,42 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 
 export default async function FacturacionPage({ params, searchParams }: PageProps) {
   const { tenantSlug } = await params;
-  const { status } = await searchParams;
+  const sp = await searchParams;
   const caller = await createServerCaller(tenantSlug);
 
   const statusFilter =
-    status && status in InvoiceStatus ? (status as InvoiceStatus) : undefined;
+    sp.status && sp.status in InvoiceStatus ? (sp.status as InvoiceStatus) : undefined;
+  const thisYear = new Date().getFullYear();
+  const yearParam = Number(sp.year);
+  const year = Number.isInteger(yearParam) && yearParam >= 2000 && yearParam <= 2100 ? yearParam : undefined;
+  const quarterParam = Number(sp.quarter);
+  const quarter = year && [1, 2, 3, 4].includes(quarterParam) ? quarterParam : undefined;
+  const q = sp.q?.trim().slice(0, 80) || undefined;
+  const pageParam = Number(sp.page);
+  const page = Number.isInteger(pageParam) && pageParam >= 1 ? pageParam : 1;
 
-  const invoices = await caller.invoices.list(
-    statusFilter ? { status: statusFilter } : undefined,
-  );
+  const result = await caller.invoices.list({ status: statusFilter, q, year, quarter, page });
+  const { items: invoices, summary } = result;
+
+  const session = await getSession();
+  const { membership } = await getTenantAccess(tenantSlug, session?.user?.id);
+  const canExport = membership?.role === "OWNER" || membership?.role === "MANAGER";
+  const exportHref = `/api/invoices/export?tenant=${encodeURIComponent(tenantSlug)}&year=${year ?? thisYear}${
+    quarter ? `&quarter=${quarter}` : ""
+  }`;
+  const periodLabel = year ? (quarter ? `T${quarter} ${year}` : String(year)) : "todo el histórico";
+
+  // Enlaces del paginador: conservan el resto de filtros.
+  const pageHref = (target: number) => {
+    const params = new URLSearchParams();
+    if (statusFilter) params.set("status", statusFilter);
+    if (q) params.set("q", q);
+    if (year) params.set("year", String(year));
+    if (quarter) params.set("quarter", String(quarter));
+    if (target > 1) params.set("page", String(target));
+    const qs = params.toString();
+    return `/${tenantSlug}/facturacion${qs ? `?${qs}` : ""}`;
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in-0 duration-500">
@@ -50,7 +80,6 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
         description="Facturas emitidas a tus clientes, incluidos pupilaje y servicios"
         actions={
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <InvoiceStatusFilter current={statusFilter} />
             <Button asChild variant="ghost">
               <Link href={`/${tenantSlug}/facturacion/series`}>
                 <ListNumbers weight="bold" className="mr-2 h-4 w-4" />
@@ -63,10 +92,39 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
                 Nueva factura
               </Link>
             </Button>
+            {canExport && (
+              <Button asChild variant="ghost">
+                <a href={exportHref} download>
+                  <DownloadSimple weight="bold" className="mr-2 h-4 w-4" />
+                  Libro CSV
+                </a>
+              </Button>
+            )}
             <GenerateInvoicesButton />
           </div>
         }
       />
+
+      <InvoiceFilters
+        years={[thisYear, thisYear - 1, thisYear - 2, thisYear - 3]}
+        current={{ q, status: statusFilter, year, quarter }}
+      />
+
+      <section aria-label={`Resumen de ${periodLabel}`} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Facturado" value={formatCurrency(summary.billed)} hint={`Neto emitido · ${periodLabel}`} />
+        <StatCard label="Cobrado" value={formatCurrency(summary.collected)} hint="Cobros registrados" />
+        <StatCard
+          label="Pendiente de cobro"
+          value={formatCurrency(summary.pending)}
+          hint={summary.overdue > 0 ? `${formatCurrency(summary.overdue)} ya vencido` : "Nada vencido"}
+          emphasis={summary.overdue > 0}
+        />
+        <StatCard
+          label="A devolver"
+          value={formatCurrency(summary.toRefund)}
+          hint="Cobrado de más tras rectificar"
+        />
+      </section>
 
       <Card className="overflow-hidden shadow-bento">
         <div className="p-0">
@@ -74,8 +132,12 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
             <EmptyState
               variant="plain"
               icon={<Receipt />}
-              title="Sin facturas"
-              description="Genera las facturas de pupilaje del mes o crea una factura manual."
+              title={q || statusFilter || year ? "Ninguna factura coincide" : "Sin facturas"}
+              description={
+                q || statusFilter || year
+                  ? "Prueba con otro cliente, periodo o estado."
+                  : "Genera las facturas de pupilaje del mes o crea una factura manual."
+              }
             />
           ) : (
             <div className="no-scrollbar overflow-x-auto">
@@ -171,6 +233,32 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
           )}
         </div>
       </Card>
+
+      {result.pageCount > 1 && (
+        <nav aria-label="Paginación" className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            {result.total} facturas · página {result.page} de {result.pageCount}
+          </span>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm" className={result.page <= 1 ? "pointer-events-none opacity-50" : undefined}>
+              <Link href={pageHref(result.page - 1)} aria-disabled={result.page <= 1} tabIndex={result.page <= 1 ? -1 : undefined}>
+                <CaretLeft weight="bold" className="mr-1 h-4 w-4" />
+                Anterior
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className={result.page >= result.pageCount ? "pointer-events-none opacity-50" : undefined}>
+              <Link
+                href={pageHref(result.page + 1)}
+                aria-disabled={result.page >= result.pageCount}
+                tabIndex={result.page >= result.pageCount ? -1 : undefined}
+              >
+                Siguiente
+                <CaretRight weight="bold" className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
