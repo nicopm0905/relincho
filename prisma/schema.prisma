@@ -179,6 +179,10 @@ model Horse {
   breed            String?
   birthDate        DateTime?
   hierro           String?
+  /// Pasaporte, Sección II parte II: declarado "no destinado al sacrificio
+  /// para consumo humano". Si es false, el caballo cuenta como animal de
+  /// producción y los tiempos de espera de los medicamentos le aplican.
+  excludedFromFoodChain Boolean          @default(false)
   status           HorseStatus         @default(ACTIVE)
   boxLocation      String?
   photoUrl         String?
@@ -264,11 +268,27 @@ model HealthEvent {
   cost          Decimal?        @db.Decimal(10, 2)
   notes         String?
   attachmentUrl String?
+  // Libro de registro de tratamientos veterinarios (RD 666/2023, art. 41).
+  // `name` es la denominación del medicamento y `dose` la cantidad
+  // administrada; `date` es la fecha de la primera administración.
+  /// Nº de la receta veterinaria.
+  prescriptionNumber String?
+  /// Tiempo de espera para carne, en días. 0 también se anota.
+  withdrawalDays     Int?
+  /// Duración del tratamiento, en días.
+  durationDays       Int?
+  /// Proveedor: nombre o razón social y dirección.
+  supplier           String?
+  /// Prueba de compra: nº de factura o albarán.
+  purchaseReference  String?
+  /// Lote del medicamento (obligatorio en el pasaporte para vacunas).
+  batchNumber        String?
   horse         Horse           @relation(fields: [horseId], references: [id], onDelete: Cascade)
   createdAt     DateTime        @default(now())
 
   @@index([tenantId, horseId])
   @@index([tenantId, nextDueDate])
+  @@index([tenantId, date])
 }
 
 model TrainingSession {

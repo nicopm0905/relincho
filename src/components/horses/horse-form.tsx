@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -57,7 +58,9 @@ interface FormState {
 interface HorseFormProps {
   tenantSlug: string;
   tenantId: string;
-  defaultValues?: Partial<FormState & { id: string; photoUrl?: string }>;
+  defaultValues?: Partial<
+    FormState & { id: string; photoUrl?: string; excludedFromFoodChain?: boolean }
+  >;
 }
 
 export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProps) {
@@ -66,6 +69,9 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(defaultValues?.photoUrl);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [excludedFromFoodChain, setExcludedFromFoodChain] = useState(
+    defaultValues?.excludedFromFoodChain ?? false,
+  );
   const fileRef = useRef<HTMLInputElement>(null);
   
   const updateHorse = trpc.horses.update.useMutation();
@@ -167,6 +173,7 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
         currentOwnerId: form.currentOwnerId || (defaultValues?.id ? null : undefined),
         breederId: form.breederId || (defaultValues?.id ? null : undefined),
         lgNumber: form.lgNumber || undefined,
+        excludedFromFoodChain,
       };
       if (defaultValues?.id) {
         await updateHorse.mutateAsync({ id: defaultValues.id, ...payload });
@@ -354,6 +361,28 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
                 onChange={(e) => set("boxLocation", e.target.value)}
                 placeholder="Box 3"
               />
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/30 p-4">
+            <Checkbox
+              id="excludedFromFoodChain"
+              checked={excludedFromFoodChain}
+              onCheckedChange={(checked) => setExcludedFromFoodChain(checked === true)}
+              className="mt-0.5"
+            />
+            <div className="space-y-1">
+              <label
+                htmlFor="excludedFromFoodChain"
+                className="cursor-pointer text-sm font-medium text-foreground"
+              >
+                Excluido de consumo humano
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Márcalo si en el pasaporte (Sección II, parte II) figura como «no destinado al
+                sacrificio para consumo humano». Si no, los tiempos de espera de los
+                medicamentos le aplican. Esta decisión no tiene vuelta atrás en el pasaporte.
+              </p>
             </div>
           </div>
 
