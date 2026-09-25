@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { NativeSelect } from "@/components/ui/native-select";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import {
@@ -184,27 +185,27 @@ export function ReproSettingsForm({ initial, canEdit }: { initial: ReproSettings
             <div className="space-y-1.5">
               <Label htmlFor="rs-season-start">Temporada de cubriciones</Label>
               <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-                <select
+                <NativeSelect
                   id="rs-season-start"
-                  className="h-9 rounded-lg border border-input bg-background px-2 text-foreground"
+                  containerClassName="w-24"
                   value={s.breedingSeasonStartMonth}
                   onChange={(e) => set("breedingSeasonStartMonth", Number(e.target.value))}
                 >
                   {monthLabels.map((m, i) => (
                     <option key={m} value={i + 1}>{m}</option>
                   ))}
-                </select>
+                </NativeSelect>
                 a
-                <select
+                <NativeSelect
                   aria-label="Fin de la temporada de cubriciones"
-                  className="h-9 rounded-lg border border-input bg-background px-2 text-foreground"
+                  containerClassName="w-24"
                   value={s.breedingSeasonEndMonth}
                   onChange={(e) => set("breedingSeasonEndMonth", Number(e.target.value))}
                 >
                   {monthLabels.map((m, i) => (
                     <option key={m} value={i + 1}>{m}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             </div>
           </div>
@@ -363,16 +364,16 @@ export function ReproSettingsForm({ initial, canEdit }: { initial: ReproSettings
                     value={m.label}
                     onChange={(e) => setM({ label: e.target.value })}
                   />
-                  <select
+                  <NativeSelect
                     aria-label="Tipo de hito"
-                    className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
+                    containerClassName="w-auto"
                     value={m.kind}
                     onChange={(e) => setM({ kind: e.target.value as typeof m.kind })}
                   >
                     {MILESTONE_KINDS.map((k) => (
                       <option key={k} value={k}>{milestoneKindLabels[k]}</option>
                     ))}
-                  </select>
+                  </NativeSelect>
                   <Input
                     aria-label="Días"
                     type="number"
@@ -380,15 +381,15 @@ export function ReproSettingsForm({ initial, canEdit }: { initial: ReproSettings
                     value={m.day}
                     onChange={(e) => setM({ day: Number(e.target.value) })}
                   />
-                  <select
+                  <NativeSelect
                     aria-label="Referencia"
-                    className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
+                    containerClassName="w-auto"
                     value={m.anchor}
                     onChange={(e) => setM({ anchor: e.target.value as typeof m.anchor })}
                   >
                     <option value="COVERING">días tras la cubrición</option>
                     <option value="FOALING">días antes del parto</option>
-                  </select>
+                  </NativeSelect>
                   <Button
                     type="button"
                     variant="ghost"

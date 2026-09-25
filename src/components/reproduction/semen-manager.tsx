@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { NativeSelect } from "@/components/ui/native-select";
 import { trpc } from "@/lib/trpc/react";
 
 export const semenTypeLabels: Record<string, string> = {
@@ -38,7 +39,6 @@ export type SemenBatchRow = {
   coverings: { id: string; date: Date; dosesUsed: number | null; cycleId: string; mare: { name: string } }[];
 };
 
-const selectClass = "h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm text-foreground";
 const EXTERNAL = "__external__";
 
 function BatchDialog({
@@ -96,15 +96,15 @@ function BatchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{batch ? "Editar lote de semen" : "Nuevo lote de semen"}</DialogTitle>
         </DialogHeader>
-        <form className="space-y-4" onSubmit={submit}>
+        <form className="space-y-5" onSubmit={submit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="sb-stallion">Semental</Label>
-              <select id="sb-stallion" className={selectClass} value={stallion} onChange={(e) => setStallion(e.target.value)} required>
+              <NativeSelect id="sb-stallion" value={stallion} onChange={(e) => setStallion(e.target.value)} required>
                 <option value="" disabled>
                   Selecciona…
                 </option>
@@ -114,53 +114,72 @@ function BatchDialog({
                   </option>
                 ))}
                 <option value={EXTERNAL}>De fuera de la yeguada…</option>
-              </select>
+              </NativeSelect>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="sb-type">Tipo</Label>
-              <select id="sb-type" className={selectClass} value={type} onChange={(e) => setType(e.target.value)}>
+              <Label htmlFor="sb-type">Tipo de semen</Label>
+              <NativeSelect id="sb-type" value={type} onChange={(e) => setType(e.target.value)}>
                 {Object.entries(semenTypeLabels).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
+            {stallion === EXTERNAL && (
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="sb-external">Nombre del semental</Label>
+                <Input id="sb-external" value={external} onChange={(e) => setExternal(e.target.value)} required />
+              </div>
+            )}
           </div>
-          {stallion === EXTERNAL && (
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="sb-external">Nombre del semental</Label>
-              <Input id="sb-external" value={external} onChange={(e) => setExternal(e.target.value)} required />
-            </div>
-          )}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="sb-doses">Dosis / pajuelas</Label>
-              <Input id="sb-doses" type="number" min={1} value={doses} onChange={(e) => setDoses(e.target.value)} required />
+              <Label htmlFor="sb-doses">Dosis o pajuelas</Label>
+              <Input id="sb-doses" type="number" inputMode="numeric" min={1} value={doses} onChange={(e) => setDoses(e.target.value)} required />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="sb-cost">Coste por dosis (€)</Label>
-              <Input id="sb-cost" type="number" min={0} step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} />
+              <Label htmlFor="sb-cost">Coste por dosis</Label>
+              <div className="relative">
+                <Input
+                  id="sb-cost"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="0.01"
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value)}
+                  placeholder="Opcional"
+                  className="pr-8"
+                />
+                <span className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-sm text-muted-foreground">€</span>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="sb-collected">Fecha de recogida</Label>
               <Input id="sb-collected" type="date" value={collected} onChange={(e) => setCollected(e.target.value)} />
             </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="sb-provider">Proveedor / centro</Label>
-              <Input id="sb-provider" value={provider} onChange={(e) => setProvider(e.target.value)} />
+              <Label htmlFor="sb-location">Ubicación</Label>
+              <Input
+                id="sb-location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Tanque 1 · canastilla 3"
+              />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="sb-location">Ubicación (tanque, canastilla)</Label>
-              <Input id="sb-location" value={location} onChange={(e) => setLocation(e.target.value)} />
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="sb-provider">Proveedor o centro de sementales</Label>
+              <Input id="sb-provider" value={provider} onChange={(e) => setProvider(e.target.value)} placeholder="Opcional" />
             </div>
           </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="sb-notes">Notas</Label>
             <Textarea id="sb-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
+
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             {batch ? (
               <Button

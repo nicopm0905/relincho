@@ -10,11 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { NativeSelect } from "@/components/ui/native-select";
 import { trpc } from "@/lib/trpc/react";
 import { methodLabels } from "@/lib/repro-labels";
 import { COVERING_METHODS, type CoveringMethodKey } from "@/lib/repro-settings";
 
-const selectClass = "h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm text-foreground";
 const EXTERNAL = "__external__";
 
 /** Tipo de semen de un lote que corresponde a cada metodo. */
@@ -109,9 +109,8 @@ export function CreateCoveringDialog({ cycleId }: { cycleId: string }) {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="cov-method">Método</Label>
-                <select
+                <NativeSelect
                   id="cov-method"
-                  className={selectClass}
                   value={method}
                   onChange={(e) => {
                     setMethod(e.target.value as CoveringMethodKey);
@@ -123,22 +122,22 @@ export function CreateCoveringDialog({ cycleId }: { cycleId: string }) {
                       {methodLabels[m]}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             </div>
 
             {batches.length > 0 && method !== "NATURAL" && (
-              <div className="grid gap-4 sm:grid-cols-[1fr_110px]">
+              <div className="grid items-end gap-4 sm:grid-cols-[1fr_120px]">
                 <div className="space-y-1.5">
                   <Label htmlFor="cov-batch">Lote de semen</Label>
-                  <select id="cov-batch" className={selectClass} value={batchId} onChange={(e) => pickBatch(e.target.value)}>
+                  <NativeSelect id="cov-batch" value={batchId} onChange={(e) => pickBatch(e.target.value)}>
                     <option value="">Sin lote registrado</option>
                     {batches.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.stallionName} · {b.dosesLeft} dosis{b.location ? ` · ${b.location}` : ""}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
                 {batchId && (
                   <div className="space-y-1.5">
@@ -151,7 +150,7 @@ export function CreateCoveringDialog({ cycleId }: { cycleId: string }) {
 
             <div className="space-y-1.5">
               <Label htmlFor="cov-stallion">Semental</Label>
-              <select id="cov-stallion" className={selectClass} value={stallion} onChange={(e) => setStallion(e.target.value)}>
+              <NativeSelect id="cov-stallion" value={stallion} onChange={(e) => setStallion(e.target.value)}>
                 <option value="">Sin indicar</option>
                 {stallions.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -159,7 +158,7 @@ export function CreateCoveringDialog({ cycleId }: { cycleId: string }) {
                   </option>
                 ))}
                 <option value={EXTERNAL}>De fuera de la yeguada…</option>
-              </select>
+              </NativeSelect>
             </div>
             {stallion === EXTERNAL && (
               <div className="space-y-1.5">
