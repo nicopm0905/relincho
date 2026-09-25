@@ -6,13 +6,11 @@ import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/formatters";
-import { CalendarCheck, Plus } from "@phosphor-icons/react/dist/ssr";
+import { BookOpenText, CalendarCheck, Plus } from "@phosphor-icons/react/dist/ssr";
 import { MassHealthDialog } from "@/components/sanidad/mass-health-dialog";
 import { PageHeader, SectionHeading } from "@/components/layout/page-header";
-import {
-  HealthEventsList,
-  healthTypeLabels,
-} from "@/components/sanidad/health-events-list";
+import { HealthEventsList } from "@/components/sanidad/health-events-list";
+import { healthTypeLabels } from "@/lib/health-types";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface PageProps {
@@ -48,6 +46,12 @@ async function SanidadContent({ params }: PageProps) {
         description="Control veterinario y sanitario de tus caballos"
         actions={
           <>
+            <Button asChild variant="outline" size="lg" className="shadow-sm">
+              <Link href={`/${tenantSlug}/sanidad/libro`}>
+                <BookOpenText weight="bold" />
+                Libro de tratamientos
+              </Link>
+            </Button>
             <MassHealthDialog horses={horses} tenantSlug={tenantSlug} />
             <Button asChild>
               <Link href={`/${tenantSlug}/sanidad/nuevo`}>

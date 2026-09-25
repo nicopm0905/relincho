@@ -1,6 +1,7 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { trpc } from "@/lib/trpc/react";
@@ -12,6 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarBlank, CurrencyEur } from "@phosphor-icons/react";
 import { HealthEventType } from "@prisma/client";
+import { isMedicinal } from "@/lib/treatments";
+import {
+  MedicationFields,
+  emptyMedication,
+  medicationPayload,
+} from "@/components/sanidad/medication-fields";
 
 const healthEventSchema = z.object({
   horseId: z.string().uuid(),
@@ -19,7 +26,12 @@ const healthEventSchema = z.object({
   name: z.string().min(1, "Requerido"),
   date: z.string().min(1, "Requerido"),
   nextDueDate: z.string().optional(),
-  cost: z.number().positive("El coste debe ser mayor a 0").optional().or(z.literal("").transform(() => undefined)),
+  // El campo vacío llega como `undefined` (ver `setValueAs`): con
+  // `valueAsNumber` llegaba NaN y el formulario no dejaba guardar sin coste.
+  cost: z
+    .number({ error: "Escribe un número" })
+    .positive("El coste debe ser mayor a 0")
+    .optional(),
   notes: z.string().optional(),
 });
 
@@ -29,7 +41,7 @@ type FormData = z.output<typeof healthEventSchema>;
 interface HealthEventFormProps {
   tenantSlug: string;
   defaultHorseId?: string;
-  horses: { id: string; name: string }[];
+  horses: { id: string; name: string; excludedFromFoodChain?: boolean }[];
 }
 
 const typeLabels: Record<HealthEventType, string> = {
@@ -46,7 +58,8 @@ const typeLabels: Record<HealthEventType, string> = {
 export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEventFormProps) {
   const router = useRouter();
   
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<
+  const [medication, setMedication] = useState(emptyMedication);
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<
     FormInput,
     unknown,
     FormData
@@ -58,6 +71,10 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEv
       type: "VACCINE",
     }
   });
+
+  const selectedType = useWatch({ control, name: "type" });
+  const selectedHorseId = useWatch({ control, name: "horseId" });
+  const selectedHorse = horses.find((h) => h.id === selectedHorseId);
 
   const createMutation = trpc.health.create.useMutation({
     onSuccess: () => {
@@ -79,6 +96,8 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEv
       ...data,
       date: new Date(data.date),
       nextDueDate: data.nextDueDate ? new Date(data.nextDueDate) : undefined,
+      // Los datos del medicamento solo se guardan si el tipo lo es.
+      ...(isMedicinal(data.type) ? medicationPayload(medication) : {}),
     });
   };
 
@@ -130,15 +149,30 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEv
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="healthName" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Tratamiento / Descripción</Label>
+        <Label htmlFor="healthName" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">
+          {isMedicinal(selectedType) ? "Medicamento (nombre comercial)" : "Tratamiento / Descripción"}
+        </Label>
         <Input 
           id="healthName"
           {...register("name")} 
-          placeholder="Ej: Vacuna Tétanos, Herrador completo..." 
+          placeholder={
+            isMedicinal(selectedType)
+              ? "Como figura en la caja, ej: Equest Pramox"
+              : "Ej: Herrador completo, revisión dental..."
+          }
           className="h-12 rounded-xl text-base"
         />
         {errors.name && <p role="alert" className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
+
+      {isMedicinal(selectedType) && (
+        <MedicationFields
+          values={medication}
+          onChange={setMedication}
+          type={selectedType}
+          foodChainExcluded={selectedHorse?.excludedFromFoodChain ?? false}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -153,7 +187,10 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEv
           <Label htmlFor="healthCost" className="text-muted-foreground font-semibold uppercase text-xs tracking-wider">Coste (€) (Opcional)</Label>
           <div className="relative">
             <CurrencyEur className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-            <Input id="healthCost" type="number" step="0.01" {...register("cost", { valueAsNumber: true })} className="h-12 pl-10 rounded-xl text-base" placeholder="0.00" />
+            <Input id="healthCost" type="number" step="0.01" {...register("cost", {
+              setValueAs: (value) =>
+                value === "" || value === null || value === undefined ? undefined : Number(value),
+            })} className="h-12 pl-10 rounded-xl text-base" placeholder="0.00" />
           </div>
           {errors.cost && <p role="alert" className="text-sm text-destructive">{errors.cost.message}</p>}
         </div>

@@ -73,13 +73,22 @@ model Tenant {
   postalCode        String?
   country           String             @default("ES")
   regaCode          String?
-  plan              String             @default("starter")
+  /// cuaderno | cuadra | rendimiento | yeguada (ver `src/lib/pricing.ts`).
+  /// Las yeguadas de la beta conservan "starter" (15 caballos), "pro" y
+  /// "enterprise": no se renombran para no quitarles su límite.
+  plan              String             @default("cuaderno")
   stripeCustomerId  String?
   stripePriceId     String?
   /// Estado de la suscripcion en Stripe (active, past_due, canceled...). Sirve
   /// para avisar de un pago pendiente sin depender de una llamada a la API.
   stripeStatus      String?
   stripeCurrentPeriodEnd DateTime?
+  /// Bloques de 10 caballos extra contratados por encima del límite del plan.
+  extraHorseBlocks  Int                @default(0)
+  /// Módulo de Pupilaje y Facturación Veri*Factu contratado aparte.
+  billingModule     Boolean            @default(false)
+  /// Entró en el programa de fundadores (-40 % de por vida, 30 plazas).
+  founder           Boolean            @default(false)
   verifactuMode     VerifactuMode      @default(NO_VERIFACTU)
   /// De donde vino esta yeguada (flyer, feria, boca a boca). Se rellena en el
   /// alta a partir del primer toque con `?src=`.
@@ -171,6 +180,10 @@ model Horse {
   breed            String?
   birthDate        DateTime?
   hierro           String?
+  /// Pasaporte, Sección II parte II: declarado "no destinado al sacrificio
+  /// para consumo humano". Si es false, el caballo cuenta como animal de
+  /// producción y los tiempos de espera de los medicamentos le aplican.
+  excludedFromFoodChain Boolean          @default(false)
   status           HorseStatus         @default(ACTIVE)
   boxLocation      String?
   photoUrl         String?
@@ -259,11 +272,27 @@ model HealthEvent {
   cost          Decimal?        @db.Decimal(10, 2)
   notes         String?
   attachmentUrl String?
+  // Libro de registro de tratamientos veterinarios (RD 666/2023, art. 41).
+  // `name` es la denominación del medicamento y `dose` la cantidad
+  // administrada; `date` es la fecha de la primera administración.
+  /// Nº de la receta veterinaria.
+  prescriptionNumber String?
+  /// Tiempo de espera para carne, en días. 0 también se anota.
+  withdrawalDays     Int?
+  /// Duración del tratamiento, en días.
+  durationDays       Int?
+  /// Proveedor: nombre o razón social y dirección.
+  supplier           String?
+  /// Prueba de compra: nº de factura o albarán.
+  purchaseReference  String?
+  /// Lote del medicamento (obligatorio en el pasaporte para vacunas).
+  batchNumber        String?
   horse         Horse           @relation(fields: [horseId], references: [id], onDelete: Cascade)
   createdAt     DateTime        @default(now())
 
   @@index([tenantId, horseId])
   @@index([tenantId, nextDueDate])
+  @@index([tenantId, date])
 }
 
 model TrainingSession {

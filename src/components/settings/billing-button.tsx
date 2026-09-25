@@ -1,30 +1,47 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { createCheckoutSession, createPortalSession } from "@/server/actions/stripe";
 import { ArrowSquareOut } from "@phosphor-icons/react";
+import {
+  founderPrice,
+  formatEuro,
+  planPrice,
+  type BillingInterval,
+  type PlanKey,
+} from "@/lib/pricing";
+
+export interface BillingPlanOption {
+  key: PlanKey;
+  name: string;
+  /** Precios de Stripe configurados para cada intervalo. */
+  purchasable: { month: boolean; year: boolean };
+}
 
 interface BillingButtonProps {
   tenantId: string;
   hasSubscription: boolean;
   /** Solo el propietario puede mover el cobro de la yeguada. */
   canManage: boolean;
-  /** true si el plan de pago está configurado en Stripe y se puede contratar. */
-  purchasable: boolean;
-  /** Precio mensual en texto, para no repetirlo en cada idioma. */
-  priceLabel: string;
+  /** Planes de autoservicio que se pueden ofrecer (Cuadra, Rendimiento). */
+  plans: BillingPlanOption[];
+  /** La oferta de fundador sigue abierta. */
+  founderOpen: boolean;
 }
 
 export function BillingButton({
   tenantId,
   hasSubscription,
   canManage,
-  purchasable,
-  priceLabel,
+  plans,
+  founderOpen,
 }: BillingButtonProps) {
   const t = useTranslations("settings.billing");
   const sales = useTranslations("legal.contact.sales");
+  const [interval, setInterval] = useState<BillingInterval>("month");
 
   if (!canManage) {
     return <p className="text-xs text-muted-foreground">{t("ownerOnly")}</p>;
@@ -41,9 +58,11 @@ export function BillingButton({
     );
   }
 
-  // Sin precio configurado en Stripe el boton solo puede acabar en un error
-  // («Plan inválido»), asi que en su lugar se ofrece escribirnos.
-  if (!purchasable) {
+  // Sin precios configurados en Stripe el boton solo puede acabar en un error,
+  // asi que en su lugar se ofrece escribirnos.
+  const available = plans.filter((plan) => plan.purchasable[interval]);
+  const anyPurchasable = plans.some((plan) => plan.purchasable.month || plan.purchasable.year);
+  if (!anyPurchasable) {
     const href = `mailto:${sales("email")}?subject=${encodeURIComponent(
       sales("emailSubject"),
     )}`;
@@ -58,8 +77,51 @@ export function BillingButton({
   }
 
   return (
-    <form action={createCheckoutSession.bind(null, tenantId, "pro")}>
-      <Button type="submit">{t("upgrade", { price: priceLabel })}</Button>
-    </form>
+    <div className="space-y-3">
+      <div role="group" className="inline-flex rounded-full border border-border/60 p-1">
+        {(["month", "year"] as const).map((value) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={interval === value}
+            onClick={() => setInterval(value)}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+              interval === value
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {value === "month" ? t("monthly") : t("annual")}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        {available.map((plan) => {
+          const price = founderOpen
+            ? founderPrice(plan.key, interval)
+            : planPrice(plan.key, interval);
+          const suffix = interval === "year" ? "/año" : "/mes";
+          return (
+            <form
+              key={plan.key}
+              action={createCheckoutSession.bind(null, tenantId, plan.key, {
+                interval,
+                founder: founderOpen,
+              })}
+            >
+              <Button type="submit" variant={plan.key === "rendimiento" ? "default" : "outline"}>
+                {t("upgrade", { plan: plan.name, price: `${formatEuro(price)}${suffix}` })}
+              </Button>
+            </form>
+          );
+        })}
+      </div>
+
+      {founderOpen && <p className="text-xs text-muted-foreground">{t("founderNote")}</p>}
+      <Link href="/precios" className="text-xs text-primary-ink underline underline-offset-2">
+        {t("seePlans")}
+      </Link>
+    </div>
   );
 }

@@ -1,10 +1,12 @@
 import { getSession } from "@/server/auth";
 import { getTenantAccess } from "@/server/tenant-access";
+import { prisma } from "@/server/db/prisma";
 import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BillingButton } from "@/components/settings/billing-button";
-import { planHorseLimit, planLabel, isPlanPurchasable } from "@/lib/stripe";
+import { planHorseLimit, planLabel, isPlanPurchasable, founderCouponId } from "@/lib/stripe";
+import { FREE_PLAN, isFounderOfferOpen, normalizePlanKey } from "@/lib/pricing";
 import { CreditCard, UsersThree, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { formatDate } from "@/lib/formatters";
 
@@ -28,9 +30,6 @@ interface PageProps {
   params: Promise<{ tenantSlug: string }>;
 }
 
-/** El precio vive en un solo sitio para no repetirlo por idioma. */
-const PRO_PRICE_LABEL = "79 €/mes";
-
 export default async function AjustesPage({ params }: PageProps) {
   const { tenantSlug } = await params;
   const session = await getSession();
@@ -44,6 +43,12 @@ export default async function AjustesPage({ params }: PageProps) {
   if (!membership) notFound();
 
   const isOwner = membership.role === "OWNER";
+  const horseLimit = planHorseLimit(tenant.plan, tenant.extraHorseBlocks);
+  const isFreePlan =
+    normalizePlanKey(tenant.plan) === FREE_PLAN;
+  const foundersTaken = await prisma.tenant.count({ where: { founder: true } });
+  const founderOpen =
+    !tenant.founder && Boolean(founderCouponId()) && isFounderOfferOpen(foundersTaken);
   // Un impago deja el plan intacto unos dias: se avisa sin cortar el acceso.
   const paymentPending =
     tenant.stripeStatus === "past_due" || tenant.stripeStatus === "unpaid";
@@ -112,7 +117,9 @@ export default async function AjustesPage({ params }: PageProps) {
             <div>
               <p className="font-semibold text-foreground">{planLabel(tenant.plan)}</p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Hasta {planHorseLimit(tenant.plan)} caballos
+                {horseLimit === null ? "Caballos sin límite" : `Hasta ${horseLimit} caballos`}
+                {tenant.extraHorseBlocks > 0 &&
+                  ` (incluye ${tenant.extraHorseBlocks * 10} extra)`}
               </p>
               {tenant.stripeCurrentPeriodEnd && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -120,7 +127,7 @@ export default async function AjustesPage({ params }: PageProps) {
                 </p>
               )}
             </div>
-            <Badge variant={tenant.plan === "starter" ? "secondary" : "success"}>
+            <Badge variant={isFreePlan ? "secondary" : "success"}>
               {tenant.plan.toUpperCase()}
             </Badge>
           </div>
@@ -129,8 +136,15 @@ export default async function AjustesPage({ params }: PageProps) {
             tenantId={tenant.id}
             hasSubscription={!!tenant.stripeCustomerId}
             canManage={isOwner}
-            purchasable={isPlanPurchasable("pro")}
-            priceLabel={PRO_PRICE_LABEL}
+            founderOpen={founderOpen}
+            plans={(["cuadra", "rendimiento"] as const).map((key) => ({
+              key,
+              name: key === "cuadra" ? "Cuadra" : "Rendimiento",
+              purchasable: {
+                month: isPlanPurchasable(key, "month"),
+                year: isPlanPurchasable(key, "year"),
+              },
+            }))}
           />
         </CardContent>
       </Card>

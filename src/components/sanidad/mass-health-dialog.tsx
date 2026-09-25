@@ -23,6 +23,12 @@ import {
 import { Heartbeat, CheckCircle, WarningCircle } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { trpc } from "@/lib/trpc/react"
+import { isMedicinal } from "@/lib/treatments"
+import {
+  MedicationFields,
+  emptyMedication,
+  medicationPayload,
+} from "./medication-fields"
 
 type MassType = "VACCINE" | "DEWORMING" | "FARRIER" | "DENTAL" | "VET_CHECKUP" | "TREATMENT"
 
@@ -65,7 +71,7 @@ function suggestNextDate(type: MassType, from: string) {
 export function MassHealthDialog({
   horses,
 }: {
-  horses: { id: string; name: string }[]
+  horses: { id: string; name: string; excludedFromFoodChain?: boolean }[]
   tenantSlug: string
 }) {
   const router = useRouter()
@@ -77,6 +83,12 @@ export function MassHealthDialog({
   const [nextDueDate, setNextDueDate] = useState(() => suggestNextDate("DEWORMING", today))
   const [name, setName] = useState("")
   const [dose, setDose] = useState("")
+  const [medication, setMedication] = useState(emptyMedication)
+  const medicinal = isMedicinal(type)
+  // El aviso de "no aplica" solo si TODOS los elegidos están excluidos.
+  const allExcluded =
+    selectedHorses.length > 0 &&
+    selectedHorses.every((id) => horses.find((h) => h.id === id)?.excludedFromFoodChain)
 
   const reset = () => {
     setSelectedHorses([])
@@ -85,6 +97,7 @@ export function MassHealthDialog({
     setNextDueDate(suggestNextDate("DEWORMING", today))
     setName("")
     setDose("")
+    setMedication(emptyMedication)
   }
 
   const createMany = trpc.health.createMany.useMutation({
@@ -129,7 +142,7 @@ export function MassHealthDialog({
       name: name.trim(),
       date: new Date(`${date}T12:00:00`),
       nextDueDate: nextDueDate ? new Date(`${nextDueDate}T12:00:00`) : undefined,
-      dose: dose.trim() || undefined,
+      ...(medicinal ? medicationPayload(medication) : { dose: dose.trim() || undefined }),
     })
   }
 
@@ -145,7 +158,7 @@ export function MassHealthDialog({
         <Heartbeat weight="bold" className="mr-2 h-4 w-4" />
         Tratamiento Múltiple
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden bg-white rounded-3xl">
+      <DialogContent className="sm:max-w-[550px] p-0 max-h-[92dvh] overflow-y-auto bg-white rounded-3xl">
         <div className="p-6 pb-0">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold font-heading text-foreground flex items-center gap-2">
@@ -191,9 +204,11 @@ export function MassHealthDialog({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={medicinal ? "space-y-4" : "grid grid-cols-2 gap-4"}>
               <div className="space-y-2">
-                <Label htmlFor="mass-name">Producto / Descripción</Label>
+                <Label htmlFor="mass-name">
+                  {medicinal ? "Medicamento (nombre comercial)" : "Producto / Descripción"}
+                </Label>
                 <Input
                   id="mass-name"
                   required
@@ -203,16 +218,25 @@ export function MassHealthDialog({
                   className="rounded-xl border-border/50 bg-muted/20"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="mass-dose">Dosis (opcional)</Label>
-                <Input
-                  id="mass-dose"
-                  value={dose}
-                  onChange={(e) => setDose(e.target.value)}
-                  placeholder="Ej. 1 jeringa"
-                  className="rounded-xl border-border/50 bg-muted/20"
+              {medicinal ? (
+                <MedicationFields
+                  values={medication}
+                  onChange={setMedication}
+                  type={type}
+                  foodChainExcluded={allExcluded}
                 />
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="mass-dose">Dosis (opcional)</Label>
+                  <Input
+                    id="mass-dose"
+                    value={dose}
+                    onChange={(e) => setDose(e.target.value)}
+                    placeholder="Ej. 1 jeringa"
+                    className="rounded-xl border-border/50 bg-muted/20"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

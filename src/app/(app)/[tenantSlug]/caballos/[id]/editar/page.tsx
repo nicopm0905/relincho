@@ -64,6 +64,7 @@ export default async function EditarCaballoPage({ params }: PageProps) {
           currentOwnerId: horse.currentOwnerId || "",
           breederId: horse.breederId || "",
           lgNumber: horse.lgNumber || "",
+          excludedFromFoodChain: horse.excludedFromFoodChain,
         }} 
       />
       <DeleteHorseButton horseId={horse.id} horseName={horse.name} tenantSlug={tenantSlug} />

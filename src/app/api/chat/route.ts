@@ -146,8 +146,14 @@ Como el chat está dentro de la ficha de un caballo específico, usa el contexto
             name: z.string().describe("Nombre o título del evento (ej: Vacuna de la Gripe, Revisión dental, Chequeo veterinario general)"),
             date: z.string().describe("Fecha del evento en formato YYYY-MM-DD"),
             notes: z.string().optional().describe("Notas adicionales o instrucciones del veterinario"),
+            // Libro de tratamientos (RD 666/2023). Solo si el usuario lo dice:
+            // nunca inventar un tiempo de espera o un nº de receta.
+            dose: z.string().optional().describe("Cantidad administrada, tal como la diga el usuario (ej: 10 ml, 1 jeringa)"),
+            durationDays: z.number().int().min(1).max(365).optional().describe("Duración del tratamiento en días, solo si el usuario la indica"),
+            withdrawalDays: z.number().int().min(0).max(3650).optional().describe("Tiempo de espera en días, solo si el usuario lo indica expresamente. Nunca lo supongas"),
+            prescriptionNumber: z.string().optional().describe("Número de receta veterinaria, solo si el usuario lo dicta"),
           }),
-          execute: async ({ type, name, date, notes }: { type: string, name: string, date: string, notes?: string }) => {
+          execute: async ({ type, name, date, notes, dose, durationDays, withdrawalDays, prescriptionNumber }: { type: string, name: string, date: string, notes?: string, dose?: string, durationDays?: number, withdrawalDays?: number, prescriptionNumber?: string }) => {
             if (!horseId) return "No se proporcionó ID de caballo.";
             const eventDate = new Date(date);
             await prisma.healthEvent.create({
@@ -157,7 +163,11 @@ Como el chat está dentro de la ficha de un caballo específico, usa el contexto
                 type: type as HealthEventType,
                 name,
                 date: eventDate,
-                notes: notes || null
+                notes: notes || null,
+                dose: dose?.trim() || null,
+                durationDays: durationDays ?? null,
+                withdrawalDays: withdrawalDays ?? null,
+                prescriptionNumber: prescriptionNumber?.trim() || null,
               }
             });
             return `Evento de salud '${name}' de tipo '${type}' registrado con éxito en la base de datos para la fecha ${eventDate.toLocaleDateString()}.`;

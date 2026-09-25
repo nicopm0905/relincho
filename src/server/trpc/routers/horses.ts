@@ -39,6 +39,8 @@ const horseInput = z.object({
     .optional()
     .transform((value) => (value ? value.toUpperCase() : undefined)),
   breederId: z.string().uuid().nullish(),
+  /** Pasaporte, Sección II parte II: no destinado a consumo humano. */
+  excludedFromFoodChain: z.boolean().optional(),
 });
 
 /**
@@ -127,6 +129,7 @@ export const horsesRouter = createTRPCRouter({
             photoUrl: true,
             uelnCode: true,
             boxLocation: true,
+            excludedFromFoodChain: true,
           },
           orderBy: { name: "asc" },
         }),

@@ -19,16 +19,39 @@
       "title": "Relincho — Gestión equina para yeguadas PRE",
       "description": "Software de gestión para yeguadas y picaderos en Andalucía. Sanidad, reproducción, pupilaje, facturación y rendimiento deportivo."
     },
-    "contact": { "title": "Contacto - Relincho" },
-    "privacy": { "title": "Política de Privacidad - Relincho" },
-    "terms": { "title": "Términos y Condiciones - Relincho" },
-    "cookies": { "title": "Política de Cookies - Relincho" },
-    "login": { "title": "Iniciar sesión — Relincho" },
-    "verify": { "title": "Revisa tu correo — Relincho" },
-    "authError": { "title": "Error de acceso — Relincho" },
-    "onboarding": { "title": "Crear tu finca — Relincho" },
-    "demo": { "title": "Demo — Relincho" },
-    "founders": { "title": "Fundadores — Relincho" }
+    "contact": {
+      "title": "Contacto - Relincho"
+    },
+    "privacy": {
+      "title": "Política de Privacidad - Relincho"
+    },
+    "terms": {
+      "title": "Términos y Condiciones - Relincho"
+    },
+    "cookies": {
+      "title": "Política de Cookies - Relincho"
+    },
+    "login": {
+      "title": "Iniciar sesión — Relincho"
+    },
+    "verify": {
+      "title": "Revisa tu correo — Relincho"
+    },
+    "authError": {
+      "title": "Error de acceso — Relincho"
+    },
+    "onboarding": {
+      "title": "Crear tu finca — Relincho"
+    },
+    "demo": {
+      "title": "Demo — Relincho"
+    },
+    "founders": {
+      "title": "Fundadores — Relincho"
+    },
+    "pricing": {
+      "title": "Precios - Relincho"
+    }
   },
   "common": {
     "back": "Atrás",
@@ -150,54 +173,116 @@
         },
         {
           "question": "¿Puedo probar Relincho antes de suscribirme?",
-          "answer": "¡Por supuesto! El plan Gratis no tiene coste ni tarjeta: creas tu cuenta y empiezas a meter tus caballos. Cuando la cuadra crezca, pasas a Pro y desbloqueas rendimiento, pupilaje y facturación."
+          "answer": "¡Por supuesto! El plan Cuaderno no tiene coste ni tarjeta: creas tu cuenta y empiezas a meter hasta 5 caballos. Cuando la cuadra crezca, pasas a Cuadra (reproducción, voz y nutrición) o a Rendimiento (periodización y alertas de tendón), desde 69 €/mes sin IVA."
         }
       ]
     },
     "pricing": {
       "title": "Precios simples. Sin sorpresas.",
-      "subtitle": "Empieza gratis y sube de plan cuando crezca tu cuadra. Puedes cambiar de plan o cancelar en cualquier momento.",
+      "subtitle": "Empieza gratis y sube de plan cuando crezca tu cuadra. Pagas por cuadra y por caballo, nunca por la persona que apunta los datos.",
       "recommended": "Recomendado",
       "perMonth": "/mes",
+      "perYear": "/año",
+      "monthly": "Mensual",
+      "annual": "Anual",
+      "annualNote": "Paga 10 meses, usa 12",
+      "from": "desde",
+      "perHorse": "{price} por caballo y mes con el plan lleno",
+      "equivalent": "equivale a {price}/mes",
+      "vatNote": "Precios sin IVA. Cancela cuando quieras, sin permanencia.",
+      "includesAll": "Todo lo de {plan}, más:",
+      "limits": {
+        "horses": "Hasta {n} caballos",
+        "horsesUnlimited": "Caballos sin límite",
+        "users": "{n, plural, one {# usuario} other {# usuarios}}",
+        "usersUnlimited": "Usuarios sin límite"
+      },
+      "founder": {
+        "badge": "Precio de fundador",
+        "title": "−40 % de por vida y gratis hasta el 1 de enero de 2027",
+        "body": "Solo {slots} plazas. Te avisamos 30 días antes del primer cobro, sin permanencia. El descuento se mantiene aunque suba el precio de lista mientras no canceles.",
+        "left": "Quedan {n} plazas",
+        "price": "{price}/mes de por vida"
+      },
       "plans": {
-        "free": {
-          "name": "Gratis",
-          "description": "Para empezar a digitalizar la cuadra sin pagar nada.",
-          "price": "0",
-          "cta": "Empezar gratis",
-          "features": [
-            "Hasta 15 caballos",
-            "Sanidad con recordatorios y reproducción",
-            "Fichas, documentos y tareas",
-            "Sin tarjeta de crédito"
-          ]
+        "cuaderno": {
+          "name": "Cuaderno",
+          "description": "Para dejar el cuaderno de papel.",
+          "cta": "Empezar gratis"
         },
-        "pro": {
-          "name": "Pro",
-          "description": "Para yeguadas y picaderos que ya trabajan en serio.",
-          "price": "79",
-          "cta": "Ver Relincho en acción",
-          "features": [
-            "Hasta 60 caballos",
-            "Rendimiento y prevención de lesiones",
-            "Pupilaje, dietas y contratos",
-            "Facturación, cuotas y SEPA",
-            "Soporte prioritario"
-          ]
+        "cuadra": {
+          "name": "Cuadra",
+          "description": "Para la cuadra que quiere tener el día a día en orden.",
+          "cta": "Elegir Cuadra"
         },
-        "enterprise": {
+        "rendimiento": {
+          "name": "Rendimiento",
+          "description": "Para cuidar el rendimiento y frenar la lesión antes de que llegue.",
+          "cta": "Elegir Rendimiento"
+        },
+        "yeguada": {
           "name": "Yeguada",
-          "description": "Para explotaciones grandes y centros con varios empleados.",
-          "priceNote": "A medida",
-          "cta": "Hablar con nosotros",
-          "features": [
-            "Caballos ilimitados",
-            "Equipo con permisos por rol",
-            "Onboarding asistido",
-            "Soporte directo por teléfono"
-          ]
+          "description": "Para explotaciones grandes y varias fincas.",
+          "cta": "Hablar con nosotros"
         }
-      }
+      },
+      "features": {
+        "fichas": "Fichas y genealogía",
+        "documentos": "Gestor de documentos",
+        "sanidad": "Sanidad con recordatorios",
+        "tareas": "Tareas",
+        "importExcel": "Importar desde Excel",
+        "reproduccion": "Reproducción completa",
+        "voz": "Diario por voz con IA",
+        "nutricion": "Nutrición básica",
+        "movimientos": "Movimientos de caballos",
+        "qr": "Carteles QR por caballo",
+        "fichaVenta": "Ficha de venta en PDF",
+        "periodizacion": "Periodización y microciclos",
+        "cargaInterna": "Carga interna (UA)",
+        "alertasTendon": "Alertas de tendón",
+        "racionDinamica": "Ración dinámica",
+        "informeSemanal": "Informe semanal al propietario",
+        "panelVeterinario": "Panel veterinario compartible",
+        "nfc": "Búsqueda por microchip",
+        "roles": "Equipo con roles",
+        "pupilajeFacturacion": "Pupilaje y Facturación Veri*Factu incluidos",
+        "multiFinca": "Multi-finca",
+        "comparativas": "Comparativas entre caballos y fincas",
+        "vetExterno": "Acceso de veterinario externo",
+        "onboarding": "Onboarding asistido",
+        "soportePrioritario": "Soporte prioritario",
+        "soporteTelefono": "Soporte por teléfono"
+      },
+      "addons": {
+        "title": "Módulos y extras",
+        "subtitle": "Solo pagas lo que usas. Nunca bloqueamos el alta de un caballo: te avisamos al llegar al 80 % de tu límite.",
+        "billing": {
+          "name": "Pupilaje y Facturación Veri*Factu",
+          "description": "Contratos de pupilaje, cuotas, facturas legales y SEPA. Incluido en Yeguada.",
+          "price": "{price}/mes"
+        },
+        "extraHorses": {
+          "name": "Caballos adicionales",
+          "description": "Por cada bloque de 10 caballos sobre el límite de tu plan.",
+          "price": "{price}/mes por bloque"
+        },
+        "migration": {
+          "name": "Migración “Trae tu Excel”",
+          "description": "Volcamos tu Excel o tu cuaderno a Relincho. Gratis en plan anual y en Yeguada.",
+          "price": "{price} una vez"
+        },
+        "qr": {
+          "name": "Carteles QR impresos",
+          "description": "Un cartel por caballo para colgar en el box, a precio de coste.",
+          "price": "{price} por caballo"
+        }
+      },
+      "principle": {
+        "title": "Cobramos por cuadra, no por usuario",
+        "body": "Si el mayoral tuviera que costar una licencia, nadie apuntaría nada y la cuadra se quedaría sin el dato que hace útil la app. Por eso todos los planes incluyen a tu equipo."
+      },
+      "comingSoon": "Próximamente"
     },
     "showcase": {
       "eyebrow": "Así se ve por dentro",
@@ -219,7 +304,7 @@
     "ctaPrimary": "Crear cuenta gratis",
     "ctaSecondary": "Hablar con nosotros",
     "tryNow": "Probar sin registro",
-    "ctaNote": "El plan Gratis no pide tarjeta: hasta 15 caballos.",
+    "ctaNote": "El plan Cuaderno no pide tarjeta: hasta 5 caballos.",
     "performance": {
       "eyebrow": "Lo que no vas a encontrar en otro sitio",
       "title": "Rendimiento y prevención de lesiones",
@@ -426,9 +511,13 @@
     "billing": {
       "ownerOnly": "Solo el propietario de la yeguada puede gestionar la suscripción.",
       "manage": "Gestionar suscripción",
-      "upgrade": "Actualizar a Pro — {price}",
+      "upgrade": "Contratar {plan} — {price}",
       "contactToUpgrade": "Quiero cambiar de plan",
-      "notConfigured": "El pago en línea todavía no está activo. Escríbenos y lo activamos contigo."
+      "notConfigured": "El pago en línea todavía no está activo. Escríbenos y lo activamos contigo.",
+      "monthly": "Mensual",
+      "annual": "Anual (paga 10, usa 12)",
+      "founderNote": "Precio de fundador aplicado: −40 % de por vida.",
+      "seePlans": "Ver todos los planes"
     }
   },
   "auth": {

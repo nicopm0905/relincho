@@ -19,16 +19,39 @@
       "title": "Relincho — Equine management for PRE studs",
       "description": "Management software for stud farms and riding centres in Andalusia. Health, breeding, boarding, invoicing and training performance."
     },
-    "contact": { "title": "Contact - Relincho" },
-    "privacy": { "title": "Privacy Policy - Relincho" },
-    "terms": { "title": "Terms and Conditions - Relincho" },
-    "cookies": { "title": "Cookie Policy - Relincho" },
-    "login": { "title": "Sign in — Relincho" },
-    "verify": { "title": "Check your email — Relincho" },
-    "authError": { "title": "Sign-in error — Relincho" },
-    "onboarding": { "title": "Create your farm — Relincho" },
-    "demo": { "title": "Demo — Relincho" },
-    "founders": { "title": "Founders — Relincho" }
+    "contact": {
+      "title": "Contact - Relincho"
+    },
+    "privacy": {
+      "title": "Privacy Policy - Relincho"
+    },
+    "terms": {
+      "title": "Terms and Conditions - Relincho"
+    },
+    "cookies": {
+      "title": "Cookie Policy - Relincho"
+    },
+    "login": {
+      "title": "Sign in — Relincho"
+    },
+    "verify": {
+      "title": "Check your email — Relincho"
+    },
+    "authError": {
+      "title": "Sign-in error — Relincho"
+    },
+    "onboarding": {
+      "title": "Create your farm — Relincho"
+    },
+    "demo": {
+      "title": "Demo — Relincho"
+    },
+    "founders": {
+      "title": "Founders — Relincho"
+    },
+    "pricing": {
+      "title": "Pricing - Relincho"
+    }
   },
   "common": {
     "back": "Back",
@@ -150,54 +173,116 @@
         },
         {
           "question": "Can I try Relincho before subscribing?",
-          "answer": "Of course! The Free plan costs nothing and needs no card: create your account and start adding your horses. When the yard grows, you move up to Pro and unlock performance, boarding and invoicing."
+          "answer": "Of course! The Cuaderno plan costs nothing and needs no card: create your account and add up to 5 horses. When the yard grows, move up to Cuadra (breeding, voice and nutrition) or Rendimiento (periodisation and tendon alerts), from €69/mo excl. VAT."
         }
       ]
     },
     "pricing": {
       "title": "Simple pricing. No surprises.",
-      "subtitle": "Start for free and move up when your yard grows. You can change plan or cancel at any time.",
+      "subtitle": "Start for free and move up when your yard grows. You pay per yard and per horse, never per person entering the data.",
       "recommended": "Recommended",
       "perMonth": "/mo",
+      "perYear": "/yr",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "annualNote": "Pay 10 months, use 12",
+      "from": "from",
+      "perHorse": "{price} per horse per month with a full plan",
+      "equivalent": "works out at {price}/mo",
+      "vatNote": "Prices exclude VAT. Cancel anytime, no lock-in.",
+      "includesAll": "Everything in {plan}, plus:",
+      "limits": {
+        "horses": "Up to {n} horses",
+        "horsesUnlimited": "Unlimited horses",
+        "users": "{n, plural, one {# user} other {# users}}",
+        "usersUnlimited": "Unlimited users"
+      },
+      "founder": {
+        "badge": "Founder pricing",
+        "title": "40% off for life and free until 1 January 2027",
+        "body": "Only {slots} spots. We notify you 30 days before the first charge, no lock-in. The discount stays even if list prices rise, as long as you don't cancel.",
+        "left": "{n} spots left",
+        "price": "{price}/mo for life"
+      },
       "plans": {
-        "free": {
-          "name": "Free",
-          "description": "To start digitising your yard without paying a thing.",
-          "price": "0",
-          "cta": "Start for free",
-          "features": [
-            "Up to 15 horses",
-            "Health with reminders and breeding",
-            "Horse records, documents and tasks",
-            "No credit card"
-          ]
+        "cuaderno": {
+          "name": "Cuaderno",
+          "description": "To retire the paper notebook.",
+          "cta": "Start for free"
         },
-        "pro": {
-          "name": "Pro",
-          "description": "For stud farms and yards that are already working seriously.",
-          "price": "79",
-          "cta": "See Relincho in action",
-          "features": [
-            "Up to 60 horses",
-            "Performance and injury prevention",
-            "Boarding, diets and contracts",
-            "Invoicing, fees and SEPA",
-            "Priority support"
-          ]
+        "cuadra": {
+          "name": "Cuadra",
+          "description": "For the yard that wants its day-to-day in order.",
+          "cta": "Choose Cuadra"
         },
-        "enterprise": {
-          "name": "Stud",
-          "description": "For large operations and centres with several staff members.",
-          "priceNote": "Tailored",
-          "cta": "Talk to us",
-          "features": [
-            "Unlimited horses",
-            "Team with role-based permissions",
-            "Assisted onboarding",
-            "Direct phone support"
-          ]
+        "rendimiento": {
+          "name": "Rendimiento",
+          "description": "To protect performance and stop the injury before it arrives.",
+          "cta": "Choose Rendimiento"
+        },
+        "yeguada": {
+          "name": "Yeguada",
+          "description": "For large operations and multiple sites.",
+          "cta": "Talk to us"
         }
-      }
+      },
+      "features": {
+        "fichas": "Horse records and pedigree",
+        "documentos": "Document manager",
+        "sanidad": "Health with reminders",
+        "tareas": "Tasks",
+        "importExcel": "Import from Excel",
+        "reproduccion": "Full breeding module",
+        "voz": "AI voice diary",
+        "nutricion": "Basic nutrition",
+        "movimientos": "Horse movements",
+        "qr": "QR signs per horse",
+        "fichaVenta": "Sales sheet PDF",
+        "periodizacion": "Periodisation and microcycles",
+        "cargaInterna": "Internal load (AU)",
+        "alertasTendon": "Tendon alerts",
+        "racionDinamica": "Dynamic ration",
+        "informeSemanal": "Weekly owner report",
+        "panelVeterinario": "Shareable vet panel",
+        "nfc": "Microchip lookup",
+        "roles": "Team with roles",
+        "pupilajeFacturacion": "Boarding and Veri*Factu invoicing included",
+        "multiFinca": "Multi-site",
+        "comparativas": "Horse and site comparisons",
+        "vetExterno": "External vet access",
+        "onboarding": "Assisted onboarding",
+        "soportePrioritario": "Priority support",
+        "soporteTelefono": "Phone support"
+      },
+      "addons": {
+        "title": "Modules and extras",
+        "subtitle": "You only pay for what you use. We never block adding a horse: we warn you at 80% of your limit.",
+        "billing": {
+          "name": "Boarding and Veri*Factu invoicing",
+          "description": "Boarding contracts, fees, legal invoices and SEPA. Included in Yeguada.",
+          "price": "{price}/mo"
+        },
+        "extraHorses": {
+          "name": "Extra horses",
+          "description": "Per block of 10 horses above your plan limit.",
+          "price": "{price}/mo per block"
+        },
+        "migration": {
+          "name": "“Bring your Excel” migration",
+          "description": "We move your Excel or notebook into Relincho. Free on annual plans and Yeguada.",
+          "price": "{price} one-off"
+        },
+        "qr": {
+          "name": "Printed QR signs",
+          "description": "One sign per horse to hang on the stall, at cost.",
+          "price": "{price} per horse"
+        }
+      },
+      "principle": {
+        "title": "We charge per yard, not per user",
+        "body": "If the stable manager cost a licence, nobody would log anything and the yard would lose the data that makes the app useful. That's why every plan includes your team."
+      },
+      "comingSoon": "Coming soon"
     },
     "showcase": {
       "eyebrow": "A look inside",
@@ -219,7 +304,7 @@
     "ctaPrimary": "Create a free account",
     "ctaSecondary": "Talk to us",
     "tryNow": "Try it without signing up",
-    "ctaNote": "The Free plan asks for no card: up to 15 horses.",
+    "ctaNote": "The Cuaderno plan needs no card: up to 5 horses.",
     "performance": {
       "eyebrow": "What you will not find anywhere else",
       "title": "Performance and injury prevention",
@@ -426,9 +511,13 @@
     "billing": {
       "ownerOnly": "Only the stud farm owner can manage the subscription.",
       "manage": "Manage subscription",
-      "upgrade": "Upgrade to Pro — {price}",
+      "upgrade": "Choose {plan} — {price}",
       "contactToUpgrade": "I want to change plan",
-      "notConfigured": "Online payment is not active yet. Write to us and we will set it up with you."
+      "notConfigured": "Online payment is not active yet. Write to us and we will set it up with you.",
+      "monthly": "Monthly",
+      "annual": "Annual (pay 10, use 12)",
+      "founderNote": "Founder price applied: 40% off for life.",
+      "seePlans": "See all plans"
     }
   },
   "auth": {
