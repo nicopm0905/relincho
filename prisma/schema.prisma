@@ -73,13 +73,22 @@ model Tenant {
   postalCode        String?
   country           String             @default("ES")
   regaCode          String?
-  plan              String             @default("starter")
+  /// cuaderno | cuadra | rendimiento | yeguada (ver `src/lib/pricing.ts`).
+  /// Las yeguadas de la beta conservan "starter" (15 caballos), "pro" y
+  /// "enterprise": no se renombran para no quitarles su límite.
+  plan              String             @default("cuaderno")
   stripeCustomerId  String?
   stripePriceId     String?
   /// Estado de la suscripcion en Stripe (active, past_due, canceled...). Sirve
   /// para avisar de un pago pendiente sin depender de una llamada a la API.
   stripeStatus      String?
   stripeCurrentPeriodEnd DateTime?
+  /// Bloques de 10 caballos extra contratados por encima del límite del plan.
+  extraHorseBlocks  Int                @default(0)
+  /// Módulo de Pupilaje y Facturación Veri*Factu contratado aparte.
+  billingModule     Boolean            @default(false)
+  /// Entró en el programa de fundadores (-40 % de por vida, 30 plazas).
+  founder           Boolean            @default(false)
   verifactuMode     VerifactuMode      @default(NO_VERIFACTU)
   /// De donde vino esta yeguada (flyer, feria, boca a boca). Se rellena en el
   /// alta a partir del primer toque con `?src=`.

@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, stripeConfigured, planForPriceId } from "@/lib/stripe";
+import {
+  stripe,
+  stripeConfigured,
+  planForPriceIdOrNull,
+  addonKindForPriceId,
+} from "@/lib/stripe";
+import { FREE_PLAN } from "@/lib/pricing";
 import { prisma } from "@/server/db/prisma";
 import {
   sendPaymentFailed,
@@ -53,12 +59,35 @@ async function applySubscription(sub: Stripe.Subscription) {
     return;
   }
 
-  const item = sub.items.data[0];
-  const priceId = item?.price.id ?? null;
+  // Una suscripcion puede llevar varias lineas: el plan y, opcionalmente, el
+  // modulo de facturacion y los bloques de caballos extra. Se separan por el
+  // precio de cada una; el orden en que Stripe las devuelve no importa.
+  const items = sub.items.data;
+  const planItem = items.find((i) => planForPriceIdOrNull(i.price.id));
+  const priceId = planItem?.price.id ?? null;
+  const active = KEEPS_PLAN.has(sub.status);
+
+  if (active && !planItem) {
+    // Un precio que no es de ningun plan no debe ascender ni degradar a nadie.
+    await reportError("Suscripción sin ningún precio de plan reconocido", {
+      scope: "stripe.webhook",
+      subscriptionId: sub.id,
+      priceIds: items.map((i) => i.price.id).join(","),
+    });
+    return;
+  }
+
   // Un impago no quita el acceso el primer dia: se mantiene el plan y se avisa.
-  const plan = KEEPS_PLAN.has(sub.status) ? planForPriceId(priceId) : "starter";
+  const plan = active && priceId ? (planForPriceIdOrNull(priceId) as string) : FREE_PLAN;
+  const billingModule =
+    active && items.some((i) => addonKindForPriceId(i.price.id) === "billing");
+  const extraHorseBlocks = active
+    ? items
+        .filter((i) => addonKindForPriceId(i.price.id) === "extraHorses")
+        .reduce((sum, i) => sum + (i.quantity ?? 0), 0)
+    : 0;
   const periodEnd = (
-    item as unknown as { current_period_end?: number } | undefined
+    planItem as unknown as { current_period_end?: number } | undefined
   )?.current_period_end;
 
   await prisma.tenant.update({
@@ -68,6 +97,9 @@ async function applySubscription(sub: Stripe.Subscription) {
       stripeStatus: sub.status,
       stripePriceId: priceId,
       stripeCurrentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+      billingModule,
+      extraHorseBlocks,
+      ...(sub.metadata?.founder === "1" ? { founder: true } : {}),
       ...(customerIdOf(sub.customer)
         ? { stripeCustomerId: customerIdOf(sub.customer)! }
         : {}),
@@ -176,10 +208,14 @@ export async function POST(req: NextRequest) {
           await prisma.tenant.update({
             where: { id: tenantId },
             data: {
-              plan: "starter",
+              plan: FREE_PLAN,
               stripeStatus: "canceled",
               stripePriceId: null,
               stripeCurrentPeriodEnd: null,
+              billingModule: false,
+              extraHorseBlocks: 0,
+              // El descuento de fundador dura mientras no se cancele.
+              founder: false,
             },
           });
           logEvent("billing.subscription_canceled", { tenantId });
