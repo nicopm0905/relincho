@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 import { prisma, withTenant } from "@/server/db/prisma";
 import { syncGestationTasks } from "@/server/services/reproduction/overview";
 import { dayWindowUtc } from "@/lib/day-window";
+import { invoiceBalance } from "@/lib/invoice-balance";
 import {
   sendHealthReminder,
   isEmailConfigured,
@@ -25,12 +26,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Marca como vencidas las facturas emitidas cuyo vencimiento ya paso.
-  const overdue = await prisma.invoice.updateMany({
-    where: {
-      status: "ISSUED",
-      dueDate: { lt: new Date() },
+  // Marca como vencidas las facturas emitidas cuyo vencimiento ya paso. Se
+  // saltan las rectificativas (no se cobran) y las que ya no se deben: anuladas
+  // por una rectificativa o cobradas del todo en cobros parciales.
+  const overdueCandidates = await prisma.invoice.findMany({
+    where: { status: "ISSUED", dueDate: { lt: new Date() }, rectifiesId: null },
+    select: {
+      id: true,
+      total: true,
+      payments: { select: { amount: true } },
+      rectifiedBy: { select: { status: true, total: true, rectificationKind: true }, orderBy: { number: "asc" } },
     },
+  });
+  const dueIds = overdueCandidates
+    .filter((inv) => invoiceBalance({ total: inv.total, payments: inv.payments, rectifiers: inv.rectifiedBy }).pending > 0)
+    .map((inv) => inv.id);
+  const overdue = await prisma.invoice.updateMany({
+    where: { id: { in: dueIds }, status: "ISSUED" },
     data: { status: "OVERDUE" },
   });
 

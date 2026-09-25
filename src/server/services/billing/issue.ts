@@ -2,6 +2,7 @@ import "server-only";
 import { TRPCError } from "@trpc/server";
 import type { PrismaClient } from "@/server/db/prisma";
 import { isValidNif, normalizeNif } from "@/lib/nif";
+import { breakdownByRate, classifyInvoice } from "@/lib/invoice-rules";
 import {
   aeatTimestamp,
   altaHash,
@@ -15,12 +16,6 @@ import {
   type SoftwareInfo,
 } from "@/lib/verifactu";
 
-/** Hasta este total se admite factura simplificada sin NIF del cliente (art. 4 RD 1619/2012). */
-const SIMPLIFIED_LIMIT = 400;
-
-function round2(n: number) {
-  return Math.round((n + Number.EPSILON) * 100) / 100;
-}
 
 export function verifactuEnv(): "test" | "prod" {
   return process.env.VERIFACTU_ENV === "prod" ? "prod" : "test";
@@ -111,17 +106,14 @@ export async function issueInvoice(tx: PrismaClient, tenantId: string, invoiceId
   const clientNif = invoice.client.nif ? normalizeNif(invoice.client.nif) : "";
   const hasClientNif = clientNif !== "" && isValidNif(clientNif);
 
-  let invoiceType: InvoiceType;
-  if (invoice.rectifiesId) {
-    invoiceType = (invoice.invoiceType as InvoiceType) ?? "R4";
-    if (!/^R[1-4]$/.test(invoiceType)) invoiceType = "R4";
-  } else if (hasClientNif) {
-    invoiceType = "F1";
-  } else if (total <= SIMPLIFIED_LIMIT) {
-    invoiceType = "F2"; // simplificada: no exige identificar al cliente
-  } else {
-    bad(`El cliente no tiene NIF válido: por encima de ${SIMPLIFIED_LIMIT} € la factura tiene que identificarlo.`);
-  }
+  const classified = classifyInvoice({
+    isRectification: Boolean(invoice.rectifiesId),
+    storedType: invoice.invoiceType,
+    hasClientNif,
+    total,
+  });
+  if ("error" in classified) bad(classified.error);
+  const invoiceType: InvoiceType = classified.type;
   if (invoiceType.startsWith("R") && !hasClientNif && !invoice.rectifies) {
     bad("Rectificativa sin factura original");
   }
@@ -138,17 +130,13 @@ export async function issueInvoice(tx: PrismaClient, tenantId: string, invoiceId
   const issueDate = new Date();
   const numSerie = invoiceNumSerie(invoice.series, number);
 
-  // Desglose por tipo impositivo, como se declara.
-  const byRate = new Map<number, { base: number; vat: number }>();
-  for (const line of invoice.lines) {
-    const rate = Number(line.vatRate);
-    const base = round2(Number(line.quantity) * Number(line.unitPrice));
-    const acc = byRate.get(rate) ?? { base: 0, vat: 0 };
-    acc.base = round2(acc.base + base);
-    acc.vat = round2(acc.vat + round2(base * (rate / 100)));
-    byRate.set(rate, acc);
-  }
-  const breakdown = [...byRate.entries()].map(([vatRate, v]) => ({ vatRate, ...v }));
+  const breakdown = breakdownByRate(
+    invoice.lines.map((l) => ({
+      quantity: Number(l.quantity),
+      unitPrice: Number(l.unitPrice),
+      vatRate: Number(l.vatRate),
+    })),
+  );
 
   const prev = await previousRecord(tx, tenantId);
   if (prev) prev.issuerNif = issuerNif;

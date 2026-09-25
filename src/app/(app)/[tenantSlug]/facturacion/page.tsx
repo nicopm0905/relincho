@@ -1,8 +1,9 @@
 import { createServerCaller } from "@/lib/trpc/server";
 import { invoiceLabel } from "@/lib/invoice-label";
-import { Receipt, FilePdf, Plus } from "@phosphor-icons/react/dist/ssr";
+import { Receipt, FilePdf, ListNumbers, Plus } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { invoiceBalance } from "@/lib/invoice-balance";
 import { formatDate } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -50,6 +51,12 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
         actions={
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <InvoiceStatusFilter current={statusFilter} />
+            <Button asChild variant="ghost">
+              <Link href={`/${tenantSlug}/facturacion/series`}>
+                <ListNumbers weight="bold" className="mr-2 h-4 w-4" />
+                Series
+              </Link>
+            </Button>
             <Button asChild variant="outline">
               <Link href={`/${tenantSlug}/facturacion/nueva`}>
                 <Plus weight="bold" className="mr-2 h-4 w-4" />
@@ -87,9 +94,18 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {invoices.map((inv) => {
-                    const paid = inv.payments.reduce((s, p) => s + Number(p.amount), 0);
-                    const balance = Math.round((Number(inv.total) - paid) * 100) / 100;
-                    const badge = STATUS_BADGE[inv.status] ?? {
+                    const { pending: balance, voided } = invoiceBalance({
+                      total: inv.total,
+                      payments: inv.payments,
+                      rectifiers: inv.rectifiedBy,
+                    });
+                    // La rectificativa ajusta la original: su importe no se cobra.
+                    const isRectifier = Boolean(inv.rectifiesId);
+                    const badge = voided
+                      ? { label: "Anulada (rectif.)", className: "bg-muted text-muted-foreground" }
+                      : isRectifier && inv.status !== "DRAFT" && inv.status !== "CANCELLED"
+                        ? { label: "Rectificativa", className: "bg-sky-50 text-sky-700 border-sky-200" }
+                        : STATUS_BADGE[inv.status] ?? {
                       label: inv.status,
                       className: "bg-muted text-muted-foreground",
                     };
@@ -117,10 +133,18 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
                         </td>
                         <td
                           className={`px-6 py-4 text-right font-mono whitespace-nowrap ${
-                            balance <= 0 ? "text-emerald-600" : "text-rose-600"
+                            isRectifier || inv.status === "DRAFT"
+                              ? "text-muted-foreground"
+                              : balance === 0
+                                ? "text-emerald-600"
+                                : balance < 0
+                                  ? "text-amber-700"
+                                  : "text-rose-600"
                           }`}
                         >
-                          {balance.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €
+                          {isRectifier || inv.status === "DRAFT"
+                            ? "—"
+                            : `${balance.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €`}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <Badge variant="outline" className={badge.className}>

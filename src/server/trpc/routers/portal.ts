@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, roleProcedure } from "../init";
 import { inSequence, withTenant } from "@/server/db/prisma";
 import { withDownloadUrls } from "@/server/services/documents";
+import { invoiceBalance } from "@/lib/invoice-balance";
 import type { PrismaClient } from "@prisma/client";
 
 /**
@@ -65,6 +66,7 @@ async function myInvoices(
     where: { tenantId, OR: or },
     include: {
       payments: true,
+      rectifiedBy: { select: { status: true, total: true, rectificationKind: true }, orderBy: { number: "asc" } },
       client: { select: { id: true, name: true } },
       lines: { include: { horse: { select: { id: true, name: true } } } },
     },
@@ -191,11 +193,14 @@ export const portalRouter = createTRPCRouter({
       let balance = 0;
       for (const inv of invoices) {
         if (inv.status !== "ISSUED" && inv.status !== "OVERDUE") continue;
-        const paid = inv.payments.reduce(
-          (sum, p) => sum + Number(p.amount),
-          0,
-        );
-        balance += Number(inv.total) - paid;
+        // La rectificativa ya ajusta la original: no se suma por separado.
+        if (inv.rectifiesId) continue;
+        const { pending } = invoiceBalance({
+          total: inv.total,
+          payments: inv.payments,
+          rectifiers: inv.rectifiedBy,
+        });
+        balance += Math.max(pending, 0);
       }
       return Math.round(balance * 100) / 100;
     });

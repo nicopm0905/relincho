@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { invoiceLabel } from "@/lib/invoice-label";
+import { invoiceBalance } from "@/lib/invoice-balance";
 import { Role } from "@prisma/client";
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
@@ -46,12 +47,24 @@ export async function createInvoiceCheckoutSession(formData: FormData) {
 
   const invoice = await prisma.invoice.findFirst({
     where: { id: invoiceId, tenantId: tenant.id },
-    include: { lines: { select: { horseId: true } } },
+    include: {
+      lines: { select: { horseId: true } },
+      payments: { select: { amount: true } },
+      rectifiedBy: { select: { status: true, total: true, rectificationKind: true }, orderBy: { number: "asc" } },
+    },
   });
   if (!invoice) throw new Error("Factura no encontrada");
   if (invoice.status !== "ISSUED" && invoice.status !== "OVERDUE") {
     throw new Error("Esta factura no admite pago");
   }
+  if (invoice.rectifiesId) throw new Error("Esta factura no admite pago");
+  // Se cobra lo que falta (cobros parciales y rectificativas incluidos), no el total.
+  const { pending } = invoiceBalance({
+    total: invoice.total,
+    payments: invoice.payments,
+    rectifiers: invoice.rectifiedBy,
+  });
+  if (pending <= 0) throw new Error("Esta factura no tiene nada pendiente");
 
   // Comprobación de propiedad: la factura es de un caballo del miembro, o su
   // cliente es un Contact con el email del usuario.
@@ -85,7 +98,7 @@ export async function createInvoiceCheckoutSession(formData: FormData) {
     throw new Error("El pago online todavía no está disponible");
   }
 
-  const amountCents = Math.round(Number(invoice.total) * 100);
+  const amountCents = Math.round(pending * 100);
   const invoiceRef = invoiceLabel(invoice);
 
   const checkout = await stripe.checkout.sessions.create({

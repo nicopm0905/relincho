@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowCounterClockwise, PaperPlaneTilt, Plus, Prohibit, Trash, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, PaperPlaneTilt, PencilSimple, Plus, Prohibit, Trash, X } from "@phosphor-icons/react";
 import { trpc } from "@/lib/trpc/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +62,8 @@ export function InvoiceActions({
     hasNumber: boolean;
     isRectification: boolean;
     hasPayments: boolean;
+    /** Las rectificativas la dejan a cero: ya no hay nada que rectificar. */
+    voided: boolean;
     lines: { description: string; quantity: number; unitPrice: number; vatRate: number }[];
   };
 }) {
@@ -104,6 +107,12 @@ export function InvoiceActions({
             <PaperPlaneTilt weight="bold" />
             Emitir
           </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/${tenantSlug}/facturacion/${invoice.id}/editar`}>
+              <PencilSimple weight="bold" />
+              Editar
+            </Link>
+          </Button>
           {!invoice.hasNumber && (
             <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setConfirm("delete")}>
               <Trash weight="bold" />
@@ -112,7 +121,7 @@ export function InvoiceActions({
           )}
         </>
       )}
-      {issued && !invoice.isRectification && (
+      {issued && !invoice.isRectification && !invoice.voided && (
         <Button variant="outline" onClick={() => setRectifying(true)}>
           <ArrowCounterClockwise weight="bold" />
           Rectificar

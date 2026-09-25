@@ -6,6 +6,7 @@ import {
   addonKindForPriceId,
 } from "@/lib/stripe";
 import { FREE_PLAN } from "@/lib/pricing";
+import { invoiceBalance } from "@/lib/invoice-balance";
 import { prisma } from "@/server/db/prisma";
 import {
   sendPaymentFailed,
@@ -254,9 +255,15 @@ export async function POST(req: NextRequest) {
           const tenantId = session.metadata.tenantId;
           if (!invoiceId || !tenantId) break;
 
+          // Stripe cobra tambien los pagos asincronos: solo cuenta el dinero ya recibido.
+          if (session.payment_status !== "paid") break;
+
           const invoice = await prisma.invoice.findFirst({
             where: { id: invoiceId, tenantId },
-            include: { payments: true },
+            include: {
+              payments: true,
+              rectifiedBy: { select: { status: true, total: true, rectificationKind: true }, orderBy: { number: "asc" } },
+            },
           });
           if (!invoice) break;
 
@@ -265,24 +272,28 @@ export async function POST(req: NextRequest) {
           // Idempotencia: Stripe puede reintentar el webhook.
           if (invoice.payments.some((p) => p.reference === reference)) break;
 
+          // El dinero ya se cobro: se registra siempre, para que la contabilidad
+          // cuadre con Stripe. Si la factura ya no admitia pago (anulada,
+          // cobrada, rectificada) se avisa para devolverlo a mano.
+          const amount = (session.amount_total ?? 0) / 100;
+          const before = invoiceBalance({ total: invoice.total, payments: invoice.payments, rectifiers: invoice.rectifiedBy });
           await prisma.payment.create({
-            data: {
-              invoiceId: invoice.id,
-              amount: (session.amount_total ?? 0) / 100,
-              method: "STRIPE",
-              reference,
-              date: new Date(),
-            },
+            data: { invoiceId: invoice.id, amount, method: "STRIPE", reference, date: new Date() },
           });
 
-          const paid =
-            invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0) +
-            (session.amount_total ?? 0) / 100;
-          if (paid >= Number(invoice.total)) {
-            await prisma.invoice.update({
-              where: { id: invoice.id },
-              data: { status: "PAID" },
+          const payable = (invoice.status === "ISSUED" || invoice.status === "OVERDUE") && !invoice.rectifiesId;
+          if (!payable || amount > before.pending) {
+            await reportError("Cobro de Stripe sobre una factura que no lo admitía: revisar y devolver", {
+              scope: "stripe.webhook",
+              invoiceId: invoice.id,
+              status: invoice.status,
+              amount,
+              pending: before.pending,
+              paymentIntent: reference,
             });
+          }
+          if (payable && amount >= before.pending) {
+            await prisma.invoice.update({ where: { id: invoice.id }, data: { status: "PAID" } });
           }
           break;
         }

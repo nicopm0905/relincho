@@ -62,8 +62,11 @@ export default async function NuevaFacturaPage({ params }: PageProps) {
 
         {series.length === 0 ? (
           <p className="text-sm text-muted-foreground bg-amber-50 border border-amber-200 rounded-xl p-4">
-            No hay ninguna serie de facturación. Genera primero las facturas del mes
-            (crea la serie por defecto) o crea una serie desde el módulo de facturación.
+            No hay ninguna serie de facturación.{" "}
+            <Link className="font-medium underline" href={`/${tenantSlug}/facturacion/series`}>
+              Crea una serie
+            </Link>{" "}
+            para poder numerar las facturas.
           </p>
         ) : (
           <NewInvoiceEditor

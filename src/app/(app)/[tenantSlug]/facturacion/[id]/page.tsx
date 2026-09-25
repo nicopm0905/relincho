@@ -8,6 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/formatters";
 import { PaymentForm } from "@/components/facturacion/payment-form";
+import { invoiceBalance } from "@/lib/invoice-balance";
 import { InvoiceActions } from "@/components/facturacion/invoice-actions";
 
 interface PageProps {
@@ -47,8 +48,14 @@ export default async function FacturaDetallePage({ params }: PageProps) {
   }
 
   const total = Number(invoice.total);
-  const paid = invoice.payments.reduce((s, p) => s + Number(p.amount), 0);
-  const balance = Math.round((total - paid) * 100) / 100;
+  const { pending: balance, effectiveTotal, rectified, voided } = invoiceBalance({
+    total: invoice.total,
+    payments: invoice.payments,
+    rectifiers: invoice.rectifiedBy,
+  });
+  const isRectifier = Boolean(invoice.rectifiesId);
+  // La rectificativa ajusta la original: no lleva cobros propios.
+  const showPayments = !isRectifier && invoice.status !== "DRAFT" && invoice.status !== "CANCELLED";
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in-0 duration-500 w-full">
@@ -75,6 +82,7 @@ export default async function FacturaDetallePage({ params }: PageProps) {
           hasNumber: invoice.number != null,
           isRectification: Boolean(invoice.rectifiesId),
           hasPayments: invoice.payments.length > 0,
+          voided,
           lines: invoice.lines.map((l) => ({
             description: l.description,
             quantity: Number(l.quantity),
@@ -115,7 +123,13 @@ export default async function FacturaDetallePage({ params }: PageProps) {
                 </p>
               )}
             </div>
-            <Badge variant="outline">{STATUS_LABEL[invoice.status] ?? invoice.status}</Badge>
+            <Badge variant="outline">
+              {voided
+                ? "Anulada por rectificativa"
+                : isRectifier && invoice.status !== "DRAFT"
+                  ? "Emitida"
+                  : (STATUS_LABEL[invoice.status] ?? invoice.status)}
+            </Badge>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
             <div>
@@ -133,6 +147,11 @@ export default async function FacturaDetallePage({ params }: PageProps) {
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Total</p>
               <p className="font-medium font-mono">{total.toFixed(2)} €</p>
+              {rectified && !voided && (
+                <p className="text-xs text-amber-700">
+                  Tras rectificativas: <span className="font-mono">{effectiveTotal.toFixed(2)} €</span>
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -217,6 +236,7 @@ export default async function FacturaDetallePage({ params }: PageProps) {
         </Card>
       )}
 
+      {showPayments && (
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center justify-between">
@@ -224,13 +244,15 @@ export default async function FacturaDetallePage({ params }: PageProps) {
               Pagos
             </h2>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground">Saldo pendiente</p>
+              <p className="text-xs text-muted-foreground">
+                {balance < 0 ? "A devolver al cliente" : "Saldo pendiente"}
+              </p>
               <p
                 className={`font-mono font-bold ${
-                  balance <= 0 ? "text-emerald-600" : "text-rose-600"
+                  balance === 0 ? "text-emerald-600" : balance < 0 ? "text-amber-700" : "text-rose-600"
                 }`}
               >
-                {balance.toFixed(2)} €
+                {Math.abs(balance).toFixed(2)} €
               </p>
             </div>
           </div>
@@ -255,13 +277,14 @@ export default async function FacturaDetallePage({ params }: PageProps) {
             </ul>
           )}
 
-          {invoice.status !== "CANCELLED" && invoice.status !== "DRAFT" && balance > 0 && (
+          {balance !== 0 && (
             <div className="border-t border-border/40 pt-4">
               <PaymentForm invoiceId={invoice.id} balance={balance} />
             </div>
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

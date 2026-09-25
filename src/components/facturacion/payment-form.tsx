@@ -32,7 +32,9 @@ export function PaymentForm({
 }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
-  const [amount, setAmount] = useState(balance > 0 ? balance.toFixed(2) : "0");
+  // Saldo negativo: la yeguada debe devolver dinero (tras una rectificativa).
+  const refund = balance < 0;
+  const [amount, setAmount] = useState(balance.toFixed(2));
   const [date, setDate] = useState(today);
   const [method, setMethod] = useState("TRANSFER");
   const [reference, setReference] = useState("");
@@ -40,7 +42,7 @@ export function PaymentForm({
   const addPayment = trpc.invoices.addPayment.useMutation({
     onSuccess: (res) => {
       toast.success(
-        res.fullyPaid ? "Pago registrado. Factura cobrada." : "Pago registrado.",
+        refund ? "Devolución registrada." : res.fullyPaid ? "Pago registrado. Factura cobrada." : "Pago registrado.",
       );
       setReference("");
       router.refresh();
@@ -51,7 +53,9 @@ export function PaymentForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const value = parseFloat(amount);
-    if (!value || value <= 0) return toast.error("Importe no válido");
+    if (!value || (refund ? value >= 0 : value <= 0)) {
+      return toast.error(refund ? "Indica la devolución en negativo" : "Importe no válido");
+    }
     addPayment.mutate({
       invoiceId,
       amount: value,
@@ -109,7 +113,7 @@ export function PaymentForm({
           disabled={addPayment.isPending}
           className="h-10 px-5"
         >
-          {addPayment.isPending ? "Registrando..." : "Registrar pago"}
+          {addPayment.isPending ? "Registrando..." : refund ? "Registrar devolución" : "Registrar pago"}
         </Button>
       </div>
     </form>

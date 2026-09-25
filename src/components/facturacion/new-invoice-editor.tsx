@@ -37,27 +37,43 @@ function addDaysISO(iso: string, days: number): string {
   return d.toISOString().split("T")[0];
 }
 
+/** Borrador que se edita: sin esto, el editor crea una factura nueva. */
+export interface InvoiceDraftInitial {
+  id: string;
+  clientId: string;
+  /** Una rectificativa es siempre del cliente de la original. */
+  lockClient: boolean;
+  /** Etiqueta de la serie, solo informativa (no se cambia al editar). */
+  seriesLabel: string;
+  issueDate: string;
+  dueDate: string;
+  lines: LineDraft[];
+}
+
 export function NewInvoiceEditor({
   tenantSlug,
   clients,
   horses,
   series,
+  initial,
 }: {
   tenantSlug: string;
   clients: Option[];
   horses: Option[];
   series: SeriesOption[];
+  initial?: InvoiceDraftInitial;
 }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
 
-  const [clientId, setClientId] = useState("");
+  const editing = Boolean(initial);
+  const [clientId, setClientId] = useState(initial?.clientId ?? "");
   const [seriesId, setSeriesId] = useState(
     series.find((s) => s.isDefault)?.id ?? series[0]?.id ?? "",
   );
-  const [issueDate, setIssueDate] = useState(today);
-  const [dueDate, setDueDate] = useState(addDaysISO(today, 30));
-  const [lines, setLines] = useState<LineDraft[]>([emptyLine()]);
+  const [issueDate, setIssueDate] = useState(initial?.issueDate ?? today);
+  const [dueDate, setDueDate] = useState(initial?.dueDate ?? addDaysISO(today, 30));
+  const [lines, setLines] = useState<LineDraft[]>(initial?.lines ?? [emptyLine()]);
 
   const create = trpc.invoices.create.useMutation({
     onSuccess: (inv) => {
@@ -67,6 +83,16 @@ export function NewInvoiceEditor({
     },
     onError: (err) => toast.error(err.message || "No se pudo crear la factura"),
   });
+
+  const update = trpc.invoices.update.useMutation({
+    onSuccess: (inv) => {
+      toast.success("Borrador guardado");
+      router.push(`/${tenantSlug}/facturacion/${inv.id}`);
+      router.refresh();
+    },
+    onError: (err) => toast.error(err.message || "No se pudo guardar el borrador"),
+  });
+  const pending = create.isPending || update.isPending;
 
   const totals = useMemo(() => {
     let subtotal = 0;
@@ -90,7 +116,7 @@ export function NewInvoiceEditor({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!clientId) return toast.error("Selecciona un cliente");
-    if (!seriesId) return toast.error("Selecciona una serie");
+    if (!editing && !seriesId) return toast.error("Selecciona una serie");
     const cleanLines = lines
       .filter((l) => l.description.trim())
       .map((l) => ({
@@ -104,6 +130,15 @@ export function NewInvoiceEditor({
     if (cleanLines.some((l) => l.quantity <= 0))
       return toast.error("Las cantidades deben ser mayores que 0");
 
+    if (initial) {
+      return update.mutate({
+        id: initial.id,
+        clientId: clientId || undefined,
+        issueDate: new Date(issueDate),
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        lines: cleanLines,
+      });
+    }
     create.mutate({
       clientId,
       seriesId,
@@ -118,7 +153,7 @@ export function NewInvoiceEditor({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Cliente</Label>
-          <Select value={clientId} onValueChange={(v) => setClientId(v || "")}>
+          <Select value={clientId} onValueChange={(v) => setClientId(v || "")} disabled={initial?.lockClient}>
             <SelectTrigger className="rounded-xl bg-muted/20">
               <SelectValue placeholder={clients.length === 0 ? "No hay clientes" : "Selecciona un cliente"} />
             </SelectTrigger>
@@ -131,6 +166,9 @@ export function NewInvoiceEditor({
         </div>
         <div className="space-y-2">
           <Label>Serie</Label>
+          {initial ? (
+            <p className="flex h-9 items-center rounded-xl bg-muted/20 px-3 font-mono text-sm">{initial.seriesLabel}</p>
+          ) : (
           <Select value={seriesId} onValueChange={(v) => setSeriesId(v || "")}>
             <SelectTrigger className="rounded-xl bg-muted/20">
               <SelectValue placeholder={series.length === 0 ? "Crea una serie en Ajustes" : "Selecciona una serie"} />
@@ -143,6 +181,7 @@ export function NewInvoiceEditor({
               ))}
             </SelectContent>
           </Select>
+          )}
         </div>
         <div className="space-y-2">
           <Label>Fecha prevista</Label>
@@ -285,10 +324,10 @@ export function NewInvoiceEditor({
       <div className="flex justify-end gap-3">
         <Button
           type="submit"
-          disabled={create.isPending}
+          disabled={pending}
           className="h-10 px-5"
         >
-          {create.isPending ? "Creando..." : "Crear borrador"}
+          {pending ? "Guardando..." : editing ? "Guardar borrador" : "Crear borrador"}
         </Button>
       </div>
     </form>
