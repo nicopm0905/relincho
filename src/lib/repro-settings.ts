@@ -16,6 +16,11 @@ import { z } from "zod";
  * - Celo del potro: ovulacion media dia 10 (7-15); mejor si ovula >= dia 10: eXtension.
  * - Ecografias: vesicula dia 10-11, gemelos antes de la fijacion (~16), latido 28-36: Colorado State ERL.
  * - Gestacion media ~340 d, normal 320-365; < 320 prematuro: KER.
+ * - EHV-1 en los meses 5, 7 y 9; refuerzos 4-6 semanas antes del parto;
+ *   desparasitar ~1 mes antes: Merck Animal Health (vacunacion de la yegua).
+ * - Calcio en leche >= 200 ppm (40 mg/dl): parto en ~24-72 h: UW-Madison.
+ * - Regla 1-2-3 del potro (de pie 1 h, mama 2 h, placenta 3 h) e IgG a las
+ *   24 h (< 400 mg/dl fallo, 400-800 parcial): AAEP / Vetlexicon.
  * No hay datos publicados especificos del PRE para estos parametros: son los
  * generales de la especie, y por eso cada yegua aprende los suyos.
  */
@@ -38,6 +43,31 @@ export const DEFAULT_CHECKPOINTS = [
   { key: "heartbeat", label: "Eco de latido", from: 28, to: 35 },
   { key: "confirmation", label: "Eco de confirmación", from: 45, to: 60 },
 ];
+
+export const MILESTONE_KINDS = ["VACCINATION", "DEWORMING", "MANAGEMENT", "CHECK"] as const;
+export type MilestoneKind = (typeof MILESTONE_KINDS)[number];
+
+/**
+ * Hito de la gestacion. `anchor` COVERING: `day` dias despues de la cubricion.
+ * FOALING: `day` dias antes del parto previsto de esa yegua.
+ */
+const milestone = z.object({
+  key: z.string().min(1).max(40),
+  label: z.string().min(1).max(80),
+  kind: z.enum(MILESTONE_KINDS),
+  anchor: z.enum(["COVERING", "FOALING"]),
+  day: z.number().int().min(0).max(380),
+});
+
+export const DEFAULT_MILESTONES = [
+  { key: "ehv-5", label: "Vacuna rinoneumonitis (EHV-1), 5.º mes", kind: "VACCINATION", anchor: "COVERING", day: 150 },
+  { key: "ehv-7", label: "Vacuna rinoneumonitis (EHV-1), 7.º mes", kind: "VACCINATION", anchor: "COVERING", day: 210 },
+  { key: "ehv-9", label: "Vacuna rinoneumonitis (EHV-1), 9.º mes", kind: "VACCINATION", anchor: "COVERING", day: 270 },
+  { key: "boosters", label: "Refuerzos preparto (tétanos, gripe)", kind: "VACCINATION", anchor: "FOALING", day: 35 },
+  { key: "deworm", label: "Desparasitación preparto", kind: "DEWORMING", anchor: "FOALING", day: 30 },
+  { key: "foaling-box", label: "Pasar al box o cercado de partos", kind: "MANAGEMENT", anchor: "FOALING", day: 21 },
+  { key: "watch", label: "Empezar vigilancia de ubre y calcio en leche", kind: "CHECK", anchor: "FOALING", day: 20 },
+] satisfies z.input<typeof milestone>[];
 
 export const reproSettingsSchema = z.object({
   // Ciclo estral
@@ -92,6 +122,19 @@ export const reproSettingsSchema = z.object({
   gestationMaxDays: z.number().int().min(320).max(400).default(365),
   /** Dias antes del inicio de la ventana de parto en que la yegua pasa a "parto próximo". */
   foalingWatchDays: z.number().int().min(0).max(60).default(20),
+
+  /** Hitos que se convierten en tareas: vacunas, desparasitacion, manejo. */
+  gestationMilestones: z.array(milestone).max(15).default(DEFAULT_MILESTONES),
+  /** Con cuantos dias de antelacion se crea la tarea de cada hito. */
+  milestoneTaskLeadDays: z.number().int().min(0).max(60).default(14),
+
+  // Preparto y neonato
+  milkCalciumAlertPpm: z.number().int().min(100).max(500).default(200),
+  foalStandMaxMinutes: z.number().int().min(15).max(240).default(60),
+  foalSuckleMaxMinutes: z.number().int().min(30).max(360).default(120),
+  placentaMaxMinutes: z.number().int().min(60).max(600).default(180),
+  iggFailureMgDl: z.number().int().min(100).max(1000).default(400),
+  iggAdequateMgDl: z.number().int().min(200).max(2000).default(800),
 
   // Aprendizaje por yegua
   learnFromHistory: z.boolean().default(true),

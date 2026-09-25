@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Role } from "@prisma/client";
-import { prisma } from "@/server/db/prisma";
+import { prisma, withTenant } from "@/server/db/prisma";
+import { syncGestationTasks } from "@/server/services/reproduction/overview";
 import { dayWindowUtc } from "@/lib/day-window";
 import {
   sendHealthReminder,
@@ -12,7 +13,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 /**
- * Recordatorios sanitarios y marcado de facturas vencidas.
+ * Recordatorios sanitarios, marcado de facturas vencidas y tareas de los
+ * hitos de gestacion (vacunas, desparasitacion, box de partos).
  *
  * Ojo con la hora: Vercel Cron programa en UTC, asi que la expresion `0 8 * * *`
  * de vercel.json son las 10:00 de Espana en horario de verano.
@@ -31,6 +33,26 @@ export async function GET(req: NextRequest) {
     },
     data: { status: "OVERDUE" },
   });
+
+  // Hitos de gestacion -> tareas. Solo yeguadas con cubriciones en los dos
+  // ultimos años; un fallo en una no para al resto.
+  const since = new Date(new Date().getFullYear() - 2, 0, 1);
+  const breeders = await prisma.covering.findMany({
+    where: { date: { gte: since } },
+    select: { tenantId: true },
+    distinct: ["tenantId"],
+  });
+  const gestationTasks = { tenants: breeders.length, created: 0, removed: 0, failed: 0 };
+  for (const { tenantId } of breeders) {
+    try {
+      const r = await withTenant(tenantId, (tx) => syncGestationTasks(tx, tenantId), { timeout: 60_000 });
+      gestationTasks.created += r.created;
+      gestationTasks.removed += r.removed;
+    } catch (error) {
+      gestationTasks.failed++;
+      console.error("[cron] tareas de gestación", tenantId, error);
+    }
+  }
 
   // Dos avisos por vencimiento: una semana antes y el mismo dia. Cada ventana
   // es un dia natural completo (ver `dayWindowUtc`); antes mezclaba la hora de
@@ -87,6 +109,7 @@ export async function GET(req: NextRequest) {
       note: "Falta RESEND_API_KEY o EMAIL_FROM: no se ha enviado ningún recordatorio.",
       events: events.length,
       invoicesMarkedOverdue: overdue.count,
+      gestationTasks,
       sent: 0,
       failed: 0,
       skipped: 0,
@@ -128,5 +151,6 @@ export async function GET(req: NextRequest) {
     failed,
     events: events.length,
     invoicesMarkedOverdue: overdue.count,
+    gestationTasks,
   });
 }

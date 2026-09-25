@@ -14,10 +14,12 @@ import { cn } from "@/lib/utils";
 import {
   COVERING_METHODS,
   DEFAULT_REPRO_SETTINGS as D,
+  MILESTONE_KINDS,
   type CoveringMethodKey,
   type ReproSettings,
 } from "@/lib/repro-settings";
 import { methodLabels, monthLabels } from "@/lib/repro-labels";
+import { milestoneKindLabels } from "@/lib/repro-gestation";
 
 type NumericKey = {
   [K in keyof ReproSettings]: ReproSettings[K] extends number ? K : never;
@@ -339,6 +341,98 @@ export function ReproSettingsForm({ initial, canEdit }: { initial: ReproSettings
                 <Plus /> Añadir ecografía
               </Button>
             )}
+          </div>
+        </Section>
+
+        <Section
+          title="Hitos de la gestación"
+          description="Cada hito se convierte en una tarea para la yegua gestante unos días antes. Vacunas de rinoneumonitis (EHV-1) en los meses 5, 7 y 9; refuerzos 4-6 semanas antes del parto; desparasitar un mes antes."
+        >
+          <div className="space-y-2">
+            {s.gestationMilestones.map((m, i) => {
+              const setM = (patch: Partial<typeof m>) =>
+                set(
+                  "gestationMilestones",
+                  s.gestationMilestones.map((x, j) => (j === i ? { ...x, ...patch } : x)),
+                );
+              return (
+                <div key={m.key} className="flex flex-wrap items-center gap-2 rounded-xl border border-border p-2">
+                  <Input
+                    aria-label="Nombre del hito"
+                    className="min-w-0 flex-1 basis-56"
+                    value={m.label}
+                    onChange={(e) => setM({ label: e.target.value })}
+                  />
+                  <select
+                    aria-label="Tipo de hito"
+                    className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
+                    value={m.kind}
+                    onChange={(e) => setM({ kind: e.target.value as typeof m.kind })}
+                  >
+                    {MILESTONE_KINDS.map((k) => (
+                      <option key={k} value={k}>{milestoneKindLabels[k]}</option>
+                    ))}
+                  </select>
+                  <Input
+                    aria-label="Días"
+                    type="number"
+                    className="w-20"
+                    value={m.day}
+                    onChange={(e) => setM({ day: Number(e.target.value) })}
+                  />
+                  <select
+                    aria-label="Referencia"
+                    className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
+                    value={m.anchor}
+                    onChange={(e) => setM({ anchor: e.target.value as typeof m.anchor })}
+                  >
+                    <option value="COVERING">días tras la cubrición</option>
+                    <option value="FOALING">días antes del parto</option>
+                  </select>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Quitar ${m.label}`}
+                    onClick={() => set("gestationMilestones", s.gestationMilestones.filter((_, j) => j !== i))}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })}
+            {s.gestationMilestones.length < 15 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  set("gestationMilestones", [
+                    ...s.gestationMilestones,
+                    { key: `custom-${Date.now()}`, label: "Nuevo hito", kind: "MANAGEMENT", anchor: "FOALING", day: 30 },
+                  ])
+                }
+              >
+                <Plus /> Añadir hito
+              </Button>
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {num("milestoneTaskLeadDays", "Crear la tarea con", "días de antelación")}
+          </div>
+        </Section>
+
+        <Section
+          title="Preparto y potro"
+          description="Calcio en leche ≥ 200 ppm: parto probable en 24-72 h. Regla 1-2-3 del potro e IgG a las 12-24 h (< 400 mg/dl, fallo de transferencia)."
+        >
+          <div className="grid gap-4 sm:grid-cols-3">
+            {num("milkCalciumAlertPpm", "Aviso de calcio en leche", "ppm")}
+            {num("foalStandMaxMinutes", "Potro de pie antes de", "min")}
+            {num("foalSuckleMaxMinutes", "Potro mamando antes de", "min")}
+            {num("placentaMaxMinutes", "Placenta fuera antes de", "min")}
+            {num("iggFailureMgDl", "IgG: fallo por debajo de", "mg/dl")}
+            {num("iggAdequateMgDl", "IgG: adecuada desde", "mg/dl")}
           </div>
         </Section>
 

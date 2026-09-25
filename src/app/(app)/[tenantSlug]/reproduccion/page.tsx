@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Egg, GearSix } from "@phosphor-icons/react/dist/ssr";
+import { Plus, Egg, GearSix, ChartBar, Drop } from "@phosphor-icons/react/dist/ssr";
 import { createServerCaller } from "@/lib/trpc/server";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
@@ -39,22 +39,31 @@ export default async function ReproductionPage({ params }: PageProps) {
         title="Reproducción"
         description={`Temporada ${season} · ${tracked.length} ${tracked.length === 1 ? "yegua" : "yeguas"} en seguimiento`}
         actions={
-          <>
-            <Button asChild variant="outline">
-              <Link href={`/${tenantSlug}/reproduccion/ajustes`}>
-                <GearSix />
-                Parámetros
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href={`/${tenantSlug}/reproduccion/nuevo-ciclo`}>
-                <Plus weight="bold" />
-                Nueva temporada
-              </Link>
-            </Button>
-          </>
+          <Button asChild>
+            <Link href={`/${tenantSlug}/reproduccion/nuevo-ciclo`}>
+              <Plus weight="bold" />
+              Nueva temporada
+            </Link>
+          </Button>
         }
       />
+
+      <nav aria-label="Reproducción" className="-mt-2 flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-medium text-muted-foreground">
+        {[
+          { href: "estadisticas", label: "Estadísticas", Icon: ChartBar },
+          { href: "semen", label: "Semen", Icon: Drop },
+          { href: "ajustes", label: "Parámetros", Icon: GearSix },
+        ].map(({ href, label, Icon }) => (
+          <Link
+            key={href}
+            href={`/${tenantSlug}/reproduccion/${href}`}
+            className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </Link>
+        ))}
+      </nav>
 
       {untracked.length > 0 && (
         <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">

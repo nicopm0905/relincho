@@ -44,6 +44,19 @@ import { ExamDialog } from "@/components/reproduction/exam-dialog";
 import { MareProfileDialog } from "@/components/reproduction/mare-profile-dialog";
 import { FollicleChart } from "@/components/reproduction/follicle-chart";
 import { PhaseBadge } from "@/components/reproduction/phase-badge";
+import {
+  DeleteWatchButton,
+  FoalingWatchDialog,
+  NeonatalDialog,
+  RegisterFoalDialog,
+  SyncTasksButton,
+} from "@/components/reproduction/gestation-dialogs";
+import {
+  assessNeonatal,
+  complicationLabels,
+  milestoneKindLabels,
+  udderLabels,
+} from "@/lib/repro-gestation";
 
 const CreateCoveringDialog = dynamic(() => import("@/components/reproduction/create-covering-dialog").then((module) => module.CreateCoveringDialog), { loading: () => <div className="h-10 w-40 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
 const PregnancyCheckDialog = dynamic(() => import("@/components/reproduction/pregnancy-check-dialog").then((module) => module.PregnancyCheckDialog), { loading: () => <div className="h-9 w-28 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
@@ -269,6 +282,33 @@ export default async function CycleDetailPage({ params }: PageProps) {
         )}
       </section>
 
+      {insight.gestation && insight.milestones.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Hitos de la gestación</h2>
+            <SyncTasksButton />
+          </div>
+          <p className="text-[13px] text-muted-foreground">
+            Se convierten en tareas {settings.milestoneTaskLeadDays} días antes (cada mañana, automáticamente).
+            Se configuran en Parámetros.
+          </p>
+          <ol className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+            {insight.milestones.map((m) => {
+              const past = new Date(m.due) < now;
+              return (
+                <li key={m.key} className={cn("flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-[13px]", past && "text-muted-foreground")}>
+                  <span className="flex items-center gap-2">
+                    <Badge variant="outline">{milestoneKindLabels[m.kind]}</Badge>
+                    <span className={cn(!past && "font-medium text-foreground")}>{m.label}</span>
+                  </span>
+                  <span className="tabular-nums">{when(m.due, false)}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
       {/* Parametros de la yegua */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">Parámetros de la yegua</h2>
@@ -405,8 +445,25 @@ export default async function CycleDetailPage({ params }: PageProps) {
                       </div>
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground uppercase tracking-wider">Semental</p>
-                        <p className="font-medium">{covering.stallion?.name || "—"}</p>
+                        <p className="font-medium">
+                          {covering.stallion?.name || covering.externalStallionName || "—"}
+                          {!covering.stallion && covering.externalStallionName && (
+                            <span className="font-normal text-muted-foreground"> (de fuera)</span>
+                          )}
+                        </p>
                       </div>
+                      {covering.semenBatch && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider">Semen</p>
+                          <p className="font-medium">
+                            {covering.dosesUsed ?? 1} dosis
+                            {covering.semenBatch.location ? ` · ${covering.semenBatch.location}` : ""}
+                          </p>
+                        </div>
+                      )}
+                      {covering.notes && (
+                        <p className="col-span-2 text-[13px] text-muted-foreground">{covering.notes}</p>
+                      )}
                     </div>
 
                     {!covering.foaling && (() => {
@@ -503,6 +560,42 @@ export default async function CycleDetailPage({ params }: PageProps) {
                       </div>
                     )}
 
+                    {/* Vigilancia preparto */}
+                    {!covering.foaling && isPregnantResult(coveringResult(covering.pregnancyChecks)) && (
+                      <div className="space-y-2 border-t border-border/50 pt-4">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Vigilancia preparto
+                          </p>
+                          <FoalingWatchDialog coveringId={covering.id} />
+                        </div>
+                        {covering.foalingWatch.length === 0 ? (
+                          <p className="text-[13px] text-muted-foreground">
+                            Sin registros. Empieza a vigilar ubre, cera y calcio en leche unas 3 semanas antes del parto.
+                          </p>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            {covering.foalingWatch.map((w) => (
+                              <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/50 px-3 py-2 text-[13px]">
+                                <span className="font-medium">{when(w.date)}</span>
+                                <span className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                                  {w.udderScore !== null && <span>Ubre {udderLabels[w.udderScore]}</span>}
+                                  {w.wax && <Badge variant="destructive">Cera</Badge>}
+                                  {w.relaxation && <span>Relajada</span>}
+                                  {w.milkCalciumPpm !== null && (
+                                    <Badge variant={w.milkCalciumPpm >= settings.milkCalciumAlertPpm ? "destructive" : "secondary"}>
+                                      Ca {w.milkCalciumPpm} ppm
+                                    </Badge>
+                                  )}
+                                  <DeleteWatchButton id={w.id} />
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
                     {/* Foaling */}
                     {covering.foaling && (
                       <div className="border-t border-border/50 pt-4">
@@ -549,6 +642,59 @@ export default async function CycleDetailPage({ params }: PageProps) {
                               {covering.foaling.notes}
                             </p>
                           )}
+                          {(() => {
+                            const f = covering.foaling;
+                            const facts = [
+                              f.foalStoodMinutes !== null ? `De pie ${f.foalStoodMinutes} min` : null,
+                              f.foalSuckledMinutes !== null ? `mama ${f.foalSuckledMinutes} min` : null,
+                              f.placentaMinutes !== null ? `placenta ${f.placentaMinutes} min` : null,
+                              f.foalIggMgDl !== null ? `IgG ${f.foalIggMgDl} mg/dl` : null,
+                              f.birthWeightKg !== null ? `${f.birthWeightKg} kg` : null,
+                              f.meconiumPassed === true ? "meconio expulsado" : f.meconiumPassed === false ? "meconio no expulsado" : null,
+                            ].filter(Boolean);
+                            const neonatal = assessNeonatal(f, settings);
+                            return (
+                              <div className="mt-3 space-y-2">
+                                {facts.length > 0 && <p className="text-[13px] text-muted-foreground">{facts.join(" · ")}</p>}
+                                {f.complications.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {f.complications.map((c) => (
+                                      <Badge key={c} variant="warning">{complicationLabels[c] ?? c}</Badge>
+                                    ))}
+                                  </div>
+                                )}
+                                {neonatal.map((a) => (
+                                  <p
+                                    key={a.key}
+                                    className={cn(
+                                      "flex items-start gap-2 rounded-lg px-3 py-2 text-[13px]",
+                                      a.level === "danger" ? "bg-red-50 text-red-800 dark:bg-red-500/10 dark:text-red-300" : "bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300",
+                                    )}
+                                  >
+                                    <Warning className="mt-0.5 h-4 w-4 shrink-0" />
+                                    {a.message}
+                                  </p>
+                                ))}
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                  <NeonatalDialog
+                                    foaling={{
+                                      id: f.id,
+                                      foalStoodMinutes: f.foalStoodMinutes,
+                                      foalSuckledMinutes: f.foalSuckledMinutes,
+                                      placentaMinutes: f.placentaMinutes,
+                                      meconiumPassed: f.meconiumPassed,
+                                      foalIggMgDl: f.foalIggMgDl,
+                                      birthWeightKg: f.birthWeightKg,
+                                      complications: f.complications,
+                                    }}
+                                  />
+                                  {f.alive && (
+                                    <RegisterFoalDialog foalingId={f.id} sex={f.sex} foalId={f.foalId} tenantSlug={tenantSlug} />
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}

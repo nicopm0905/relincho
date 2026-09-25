@@ -8,6 +8,7 @@ import {
   type MareInsight,
   type SeasonCategory,
 } from "@/lib/repro-engine";
+import { milestoneTaskKey } from "@/lib/repro-gestation";
 
 export async function loadReproSettings(tx: PrismaClient, tenantId: string): Promise<ReproSettings> {
   const row = await tx.reproSettings.findUnique({ where: { tenantId } });
@@ -19,9 +20,26 @@ const coveringSelect = {
   cycleId: true,
   date: true,
   method: true,
+  dosesUsed: true,
+  externalStallionName: true,
   stallion: { select: { id: true, name: true } },
   pregnancyChecks: { select: { date: true, result: true }, orderBy: { date: "asc" as const } },
-  foaling: { select: { date: true, alive: true } },
+  foaling: {
+    select: {
+      date: true,
+      alive: true,
+      foalStoodMinutes: true,
+      foalSuckledMinutes: true,
+      placentaMinutes: true,
+      meconiumPassed: true,
+      foalIggMgDl: true,
+      complications: true,
+    },
+  },
+  foalingWatch: {
+    select: { date: true, udderScore: true, wax: true, milkCalciumPpm: true, relaxation: true },
+    orderBy: { date: "asc" as const },
+  },
 };
 
 const examSelect = {
@@ -66,7 +84,7 @@ export async function loadMareHistories(tx: PrismaClient, tenantId: string, mare
   for (const c of coverings) {
     const h = map.get(c.mareId)!;
     h.coverings.push(c);
-    h.stallionName = c.stallion?.name ?? null;
+    h.stallionName = c.stallion?.name ?? c.externalStallionName ?? null;
   }
   for (const p of profiles) map.get(p.horseId)!.profile = p;
   return map;
@@ -143,4 +161,55 @@ export async function buildReproOverview(
   }
 
   return { settings, season, tracked, untracked };
+}
+
+/**
+ * Convierte los hitos de gestacion proximos en tareas (vacunas, desparasitar,
+ * pasar al box de partos...). Idempotente: cada tarea lleva `sourceKey` unica,
+ * asi que el cron puede pasar cada dia. Si una gestacion se pierde o ya parió,
+ * se borran sus tareas pendientes.
+ */
+export async function syncGestationTasks(tx: PrismaClient, tenantId: string, now: Date = new Date()) {
+  const { settings, tracked } = await buildReproOverview(tx, tenantId, now.getFullYear(), {}, now);
+  const histories = await loadMareHistories(
+    tx,
+    tenantId,
+    tracked.map((m) => m.mare.id),
+  );
+  const DAY = 24 * 60 * 60 * 1000;
+  const liveCoverings = new Set<string>();
+  const rows: { tenantId: string; horseId: string; title: string; dueDate: Date; notes: string; sourceKey: string }[] = [];
+
+  for (const m of tracked) {
+    if (!m.insight.gestation) continue;
+    const coverings = histories.get(m.mare.id)?.coverings ?? [];
+    const latest = coverings[coverings.length - 1] as { id?: string } | undefined;
+    if (!latest?.id) continue;
+    liveCoverings.add(latest.id);
+    for (const milestone of m.insight.milestones) {
+      const until = (milestone.due.getTime() - now.getTime()) / DAY;
+      // Lo que ya paso hace mas de un mes no se crea (gestaciones dadas de
+      // alta tarde): seria una lista de tareas atrasadas sin sentido.
+      if (until > settings.milestoneTaskLeadDays || until < -30) continue;
+      rows.push({
+        tenantId,
+        horseId: m.mare.id,
+        title: `${milestone.label} · ${m.mare.name}`,
+        dueDate: milestone.due,
+        notes: "Creada por Reproducción (hito de gestación).",
+        sourceKey: milestoneTaskKey(latest.id, milestone.key),
+      });
+    }
+  }
+
+  const created = rows.length ? (await tx.task.createMany({ data: rows, skipDuplicates: true })).count : 0;
+
+  const pending = await tx.task.findMany({
+    where: { tenantId, doneAt: null, sourceKey: { startsWith: "repro:" } },
+    select: { id: true, sourceKey: true },
+  });
+  const stale = pending.filter((t) => !liveCoverings.has(t.sourceKey!.split(":")[1]));
+  if (stale.length) await tx.task.deleteMany({ where: { id: { in: stale.map((t) => t.id) } } });
+
+  return { created, removed: stale.length };
 }

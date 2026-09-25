@@ -211,6 +211,7 @@ model Horse {
   nutritionPrescriptions NutritionPrescription[]
   reproExams       ReproExam[]
   reproProfile     MareReproProfile?
+  semenBatches     SemenBatch[]        @relation("SemenStallion")
   createdAt        DateTime            @default(now())
 
   @@index([tenantId])
@@ -393,6 +394,11 @@ model Covering {
   cycleId               String
   mareId                String
   stallionId            String?
+  /// Semental de fuera de la yeguada (centro de sementales, IA con semen comprado).
+  externalStallionName  String?
+  semenBatchId          String?
+  /// Dosis (pajuelas) gastadas de `semenBatch` en esta cubricion.
+  dosesUsed             Int?
   method                CoveringMethod
   /// Fecha y hora: la ventana de inseminacion se cuenta en horas.
   date                  DateTime
@@ -402,8 +408,10 @@ model Covering {
   cycle                 ReproductionCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
   mare                  Horse             @relation("CoveringMare", fields: [mareId], references: [id])
   stallion              Horse?            @relation("CoveringStallion", fields: [stallionId], references: [id])
+  semenBatch            SemenBatch?       @relation(fields: [semenBatchId], references: [id], onDelete: SetNull)
   pregnancyChecks       PregnancyCheck[]
   foaling               Foaling?
+  foalingWatch          FoalingWatch[]
 
   @@index([tenantId])
 }
@@ -433,7 +441,61 @@ model Foaling {
   sex        Sex?
   alive      Boolean  @default(true)
   notes      String?
+  /// Regla 1-2-3: minutos desde el nacimiento hasta que el potro se levanta,
+  /// mama y la yegua expulsa la placenta.
+  foalStoodMinutes   Int?
+  foalSuckledMinutes Int?
+  placentaMinutes    Int?
+  meconiumPassed     Boolean?
+  /// IgG del potro a las 12-24 h (mg/dl): transferencia de inmunidad pasiva.
+  foalIggMgDl        Int?
+  birthWeightKg      Decimal? @db.Decimal(5, 1)
+  /// DYSTOCIA, RED_BAG, RETAINED_PLACENTA, WEAK_FOAL, OTHER.
+  complications      String[] @default([])
   covering   Covering @relation(fields: [coveringId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+/// Vigilancia preparto de una gestacion: desarrollo de la ubre, cera y calcio
+/// en leche (>= 200 ppm anuncia el parto en 24-72 h).
+model FoalingWatch {
+  id             String   @id @default(uuid())
+  tenantId       String
+  coveringId     String
+  date           DateTime
+  /// Ubre: 0 sin cambios, 1 empieza, 2 llena, 3 a tope.
+  udderScore     Int?
+  wax            Boolean  @default(false)
+  milkCalciumPpm Int?
+  /// Relajacion de ligamentos de la grupa y vulva.
+  relaxation     Boolean  @default(false)
+  notes          String?
+  createdAt      DateTime @default(now())
+  covering       Covering @relation(fields: [coveringId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, coveringId])
+}
+
+/// Lote de semen (fresco, refrigerado o pajuelas congeladas). Las dosis
+/// restantes son `dosesTotal` menos las gastadas en cubriciones.
+model SemenBatch {
+  id                   String     @id @default(uuid())
+  tenantId             String
+  stallionId           String?
+  externalStallionName String?
+  /// FRESH | REFRIGERATED | FROZEN
+  semenType            String
+  provider             String?
+  dosesTotal           Int
+  collectedAt          DateTime?
+  /// Tanque/canastilla donde esta guardado.
+  location             String?
+  costPerDose          Decimal?   @db.Decimal(10, 2)
+  notes                String?
+  createdAt            DateTime   @default(now())
+  stallion             Horse?     @relation("SemenStallion", fields: [stallionId], references: [id], onDelete: SetNull)
+  coverings            Covering[]
 
   @@index([tenantId])
 }
@@ -661,8 +723,12 @@ model Task {
   dueDate              DateTime
   doneAt               DateTime?
   notes                String?
+  /// Tareas generadas por el sistema (p. ej. hitos de gestacion): identifica
+  /// su origen para no crearlas dos veces.
+  sourceKey            String?
   tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, sourceKey])
   @@index([tenantId, dueDate])
 }
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
+import { createTRPCRouter, tenantProcedure, roleProcedure, staffProcedure } from "../init";
 import { assertHorseAccess, horseScope } from "../access";
 import { TRPCError } from "@trpc/server";
 import { withTenant, type PrismaClient } from "@/server/db/prisma";
@@ -7,7 +7,11 @@ import { CHECK_RESULTS, coveringResult } from "@/lib/reproduction";
 import { reproSettingsInputSchema } from "@/lib/repro-settings";
 import { mareInsight, SEASON_CATEGORIES } from "@/lib/repro-engine";
 import { EXAM_TREATMENTS, MARE_CONDITIONS } from "@/lib/repro-labels";
+import { seasonStats } from "@/lib/repro-stats";
+import { FOALING_COMPLICATIONS } from "@/lib/repro-gestation";
+import { methodLabels } from "@/lib/repro-labels";
 import {
+  syncGestationTasks,
   buildReproOverview,
   loadMareHistories,
   loadReproSettings,
@@ -16,9 +20,14 @@ import {
 const managerProcedure = roleProcedure("OWNER", "MANAGER");
 /** Ecografias: tambien el veterinario externo, que es quien las hace. */
 const checkProcedure = roleProcedure("OWNER", "MANAGER", "VET_EXTERNAL");
+/** Vigilancia preparto: la hace quien este en la cuadra, tambien el mozo. */
+const watchProcedure = roleProcedure("OWNER", "MANAGER", "GROOM", "VET_EXTERNAL");
 
 const coveringInput = z.object({
   stallionId: z.string().uuid().optional(),
+  externalStallionName: z.string().trim().max(120).optional(),
+  semenBatchId: z.string().uuid().nullish(),
+  dosesUsed: z.number().int().min(1).max(50).nullish(),
   method: z.enum(["NATURAL", "AI_FRESH", "AI_REFRIGERATED", "AI_FROZEN", "ET"]),
   date: z.date(),
   notes: z.string().max(1000).optional(),
@@ -49,11 +58,31 @@ const examInput = z.object({
   notes: z.string().max(2000).nullish(),
 });
 
+const minutes = z.number().int().min(0).max(24 * 60).nullish();
 const foalingInput = z.object({
   date: z.date(),
   sex: z.enum(["MALE", "FEMALE"]).optional(),
   alive: z.boolean().default(true),
   notes: z.string().optional(),
+  foalStoodMinutes: minutes,
+  foalSuckledMinutes: minutes,
+  placentaMinutes: minutes,
+  meconiumPassed: z.boolean().nullish(),
+  foalIggMgDl: z.number().int().min(0).max(5000).nullish(),
+  birthWeightKg: z.number().min(10).max(120).nullish(),
+  complications: z.array(z.enum(FOALING_COMPLICATIONS)).max(5).optional(),
+});
+
+const semenInput = z.object({
+  stallionId: z.string().uuid().nullish(),
+  externalStallionName: z.string().trim().max(120).nullish(),
+  semenType: z.enum(["FRESH", "REFRIGERATED", "FROZEN"]),
+  provider: z.string().trim().max(120).nullish(),
+  dosesTotal: z.number().int().min(1).max(10000),
+  collectedAt: z.date().nullish(),
+  location: z.string().trim().max(120).nullish(),
+  costPerDose: z.number().min(0).max(100000).nullish(),
+  notes: z.string().max(2000).nullish(),
 });
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -81,6 +110,33 @@ async function findFoaling(tx: PrismaClient, tenantId: string, id: string) {
   const foaling = await tx.foaling.findFirst({ where: { id, tenantId } });
   if (!foaling) throw new TRPCError({ code: "NOT_FOUND", message: "Parto no encontrado" });
   return foaling;
+}
+
+/**
+ * El lote es de la yeguada y le quedan dosis. `excludeCoveringId`: al editar
+ * una cubricion, sus propias dosis no cuentan como gastadas.
+ */
+async function assertSemenBatch(
+  tx: PrismaClient,
+  tenantId: string,
+  batchId: string | null | undefined,
+  doses: number | null | undefined,
+  excludeCoveringId?: string,
+) {
+  if (!batchId) return;
+  const batch = await tx.semenBatch.findFirst({ where: { id: batchId, tenantId } });
+  if (!batch) throw new TRPCError({ code: "NOT_FOUND", message: "Lote de semen no encontrado" });
+  const used = await tx.covering.aggregate({
+    where: { semenBatchId: batchId, ...(excludeCoveringId ? { id: { not: excludeCoveringId } } : {}) },
+    _sum: { dosesUsed: true },
+  });
+  const left = batch.dosesTotal - (used._sum.dosesUsed ?? 0);
+  if ((doses ?? 1) > left) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: left > 0 ? `Solo quedan ${left} dosis en ese lote` : "Ese lote no tiene dosis disponibles",
+    });
+  }
 }
 
 async function assertStallion(tx: PrismaClient, tenantId: string, stallionId?: string) {
@@ -125,6 +181,8 @@ export const reproductionRouter = createTRPCRouter({
                   orderBy: { date: 'asc' },
                 },
                 foaling: true,
+                foalingWatch: { orderBy: { date: "desc" } },
+                semenBatch: { select: { id: true, semenType: true, location: true } },
               }
             },
             exams: { orderBy: { date: "asc" } },
@@ -140,6 +198,13 @@ export const reproductionRouter = createTRPCRouter({
         });
         return {
           ...cycle,
+          // Decimal no viaja a componentes de cliente.
+          coverings: cycle.coverings.map((c) => ({
+            ...c,
+            foaling: c.foaling
+              ? { ...c.foaling, birthWeightKg: c.foaling.birthWeightKg === null ? null : Number(c.foaling.birthWeightKg) }
+              : null,
+          })),
           settings,
           profile: await tx.mareReproProfile.findUnique({ where: { horseId: cycle.mareId } }),
           seasons,
@@ -350,6 +415,7 @@ export const reproductionRouter = createTRPCRouter({
           throw new TRPCError({ code: "NOT_FOUND", message: "Ciclo no encontrado" });
         }
         await assertStallion(tx, ctx.tenantId, input.stallionId);
+        await assertSemenBatch(tx, ctx.tenantId, input.semenBatchId, input.dosesUsed);
 
         return tx.covering.create({
           data: {
@@ -357,6 +423,9 @@ export const reproductionRouter = createTRPCRouter({
             cycleId: cycle.id,
             mareId: cycle.mareId,
             stallionId: input.stallionId ?? null,
+            externalStallionName: input.stallionId ? null : input.externalStallionName || null,
+            semenBatchId: input.semenBatchId ?? null,
+            dosesUsed: input.semenBatchId ? (input.dosesUsed ?? 1) : null,
             method: input.method,
             date: input.date,
             notes: input.notes,
@@ -371,9 +440,15 @@ export const reproductionRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
       return withTenant(ctx.tenantId, async (tx) => {
-        await findCovering(tx, ctx.tenantId, id);
+        const current = await findCovering(tx, ctx.tenantId, id);
         await assertStallion(tx, ctx.tenantId, data.stallionId);
-        return tx.covering.update({ where: { id }, data });
+        const batchId = data.semenBatchId === undefined ? current.semenBatchId : data.semenBatchId;
+        const doses = batchId ? (data.dosesUsed ?? current.dosesUsed ?? 1) : null;
+        await assertSemenBatch(tx, ctx.tenantId, batchId, doses, id);
+        return tx.covering.update({
+          where: { id },
+          data: data.semenBatchId !== undefined || data.dosesUsed !== undefined ? { ...data, dosesUsed: doses } : data,
+        });
       });
     }),
 
@@ -501,6 +576,222 @@ export const reproductionRouter = createTRPCRouter({
         }
         await tx.reproductionCycle.delete({ where: { id: input.id } });
         return { id: input.id };
+      });
+    }),
+
+  // -------------------------------------------------------------------------
+  // F3: preparto, neonato y tareas de hitos
+  // -------------------------------------------------------------------------
+
+  /** Vigilancia preparto: ubre, cera, calcio en leche. La registra quien este en la cuadra. */
+  addFoalingWatch: watchProcedure
+    .input(
+      z.object({
+        coveringId: z.string().uuid(),
+        date: z.date(),
+        udderScore: z.number().int().min(0).max(3).nullish(),
+        wax: z.boolean().default(false),
+        milkCalciumPpm: z.number().int().min(0).max(2000).nullish(),
+        relaxation: z.boolean().default(false),
+        notes: z.string().max(1000).nullish(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { coveringId, ...data } = input;
+      return withTenant(ctx.tenantId, async (tx) => {
+        const covering = await findCovering(tx, ctx.tenantId, coveringId);
+        await assertHorseAccess(ctx, covering.mareId);
+        return tx.foalingWatch.create({ data: { ...data, tenantId: ctx.tenantId, coveringId } });
+      });
+    }),
+
+  deleteFoalingWatch: watchProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const row = await tx.foalingWatch.findFirst({
+          where: { id: input.id, tenantId: ctx.tenantId },
+          include: { covering: { select: { mareId: true } } },
+        });
+        if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+        await assertHorseAccess(ctx, row.covering.mareId);
+        await tx.foalingWatch.delete({ where: { id: input.id } });
+        return { id: input.id };
+      });
+    }),
+
+  /**
+   * Da de alta al potro como caballo de la yeguada con su genealogia (madre,
+   * padre si es de la casa) y fecha de nacimiento, y lo enlaza al parto.
+   */
+  registerFoal: managerProcedure
+    .input(
+      z.object({
+        foalingId: z.string().uuid(),
+        name: z.string().trim().min(1).max(80),
+        sex: z.enum(["MALE", "FEMALE"]).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const foaling = await tx.foaling.findFirst({
+          where: { id: input.foalingId, tenantId: ctx.tenantId },
+          include: { covering: { include: { mare: { select: { breed: true } } } } },
+        });
+        if (!foaling) throw new TRPCError({ code: "NOT_FOUND", message: "Parto no encontrado" });
+        if (!foaling.alive) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "El parto está registrado sin potro vivo" });
+        }
+        if (foaling.foalId) {
+          throw new TRPCError({ code: "CONFLICT", message: "El potro ya está dado de alta" });
+        }
+        const sex = input.sex ?? foaling.sex;
+        if (!sex) throw new TRPCError({ code: "BAD_REQUEST", message: "Indica el sexo del potro" });
+        const foal = await tx.horse.create({
+          data: {
+            tenantId: ctx.tenantId,
+            name: input.name,
+            sex,
+            birthDate: foaling.date,
+            breed: foaling.covering.mare.breed,
+            damId: foaling.covering.mareId,
+            sireId: foaling.covering.stallionId,
+          },
+        });
+        // Condicional: si otra peticion ya dio de alta al potro, esta falla y la
+        // transaccion deshace el caballo recien creado.
+        const linked = await tx.foaling.updateMany({
+          where: { id: foaling.id, foalId: null },
+          data: { foalId: foal.id, sex },
+        });
+        if (linked.count === 0) {
+          throw new TRPCError({ code: "CONFLICT", message: "El potro ya está dado de alta" });
+        }
+        return foal;
+      });
+    }),
+
+  /** Crea ya las tareas de los hitos de gestacion proximos (el cron lo hace cada dia). */
+  syncGestationTasks: managerProcedure.mutation(async ({ ctx }) => {
+    return withTenant(ctx.tenantId, (tx) => syncGestationTasks(tx, ctx.tenantId), { timeout: 60_000 });
+  }),
+
+  // -------------------------------------------------------------------------
+  // F4: semen y estadisticas
+  // -------------------------------------------------------------------------
+
+  listSemen: staffProcedure.query(async ({ ctx }) => {
+    return withTenant(ctx.tenantId, async (tx) => {
+      const batches = await tx.semenBatch.findMany({
+        where: { tenantId: ctx.tenantId },
+        include: {
+          stallion: { select: { id: true, name: true } },
+          coverings: {
+            select: {
+              id: true,
+              date: true,
+              dosesUsed: true,
+              cycleId: true,
+              mare: { select: { name: true } },
+            },
+            orderBy: { date: "desc" },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      return batches.map((b) => {
+        const used = b.coverings.reduce((n, c) => n + (c.dosesUsed ?? 0), 0);
+        return {
+          ...b,
+          costPerDose: b.costPerDose === null ? null : Number(b.costPerDose),
+          stallionName: b.stallion?.name ?? b.externalStallionName ?? "Sin semental",
+          dosesUsed: used,
+          dosesLeft: b.dosesTotal - used,
+        };
+      });
+    });
+  }),
+
+  createSemen: managerProcedure.input(semenInput).mutation(async ({ ctx, input }) => {
+    return withTenant(ctx.tenantId, async (tx) => {
+      await assertStallion(tx, ctx.tenantId, input.stallionId ?? undefined);
+      if (!input.stallionId && !input.externalStallionName) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Indica el semental" });
+      }
+      const created = await tx.semenBatch.create({
+        data: {
+          ...input,
+          externalStallionName: input.stallionId ? null : input.externalStallionName,
+          tenantId: ctx.tenantId,
+        },
+      });
+      return { id: created.id };
+    });
+  }),
+
+  updateSemen: managerProcedure
+    .input(semenInput.partial().extend({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return withTenant(ctx.tenantId, async (tx) => {
+        const batch = await tx.semenBatch.findFirst({ where: { id, tenantId: ctx.tenantId } });
+        if (!batch) throw new TRPCError({ code: "NOT_FOUND", message: "Lote no encontrado" });
+        await assertStallion(tx, ctx.tenantId, data.stallionId ?? undefined);
+        if (data.dosesTotal !== undefined) {
+          const used = await tx.covering.aggregate({ where: { semenBatchId: id }, _sum: { dosesUsed: true } });
+          if (data.dosesTotal < (used._sum.dosesUsed ?? 0)) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Ya se han gastado ${used._sum.dosesUsed} dosis de este lote`,
+            });
+          }
+        }
+        await tx.semenBatch.update({ where: { id }, data });
+        return { id };
+      });
+    }),
+
+  /** Las cubriciones que lo usaron se quedan sin lote (no se borran). */
+  deleteSemen: managerProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return withTenant(ctx.tenantId, async (tx) => {
+        const batch = await tx.semenBatch.findFirst({ where: { id: input.id, tenantId: ctx.tenantId } });
+        if (!batch) throw new TRPCError({ code: "NOT_FOUND", message: "Lote no encontrado" });
+        await tx.semenBatch.delete({ where: { id: input.id } });
+        return { id: input.id };
+      });
+    }),
+
+  stats: tenantProcedure
+    .input(z.object({ season: z.number().int().min(2000).max(2100) }))
+    .query(async ({ ctx, input }) => {
+      const scope = await horseScope(ctx, "mareId");
+      return withTenant(ctx.tenantId, async (tx) => {
+        const coverings = await tx.covering.findMany({
+          where: { tenantId: ctx.tenantId, ...scope },
+          select: {
+            mareId: true,
+            date: true,
+            method: true,
+            dosesUsed: true,
+            externalStallionName: true,
+            stallion: { select: { id: true, name: true } },
+            pregnancyChecks: { select: { date: true, result: true } },
+            foaling: { select: { alive: true } },
+          },
+        });
+        const rows = coverings.map((c) => ({
+          ...c,
+          stallionKey: c.stallion?.id ?? `ext:${c.externalStallionName ?? "?"}`,
+          stallionName: c.stallion?.name ?? c.externalStallionName ?? "Sin semental",
+        }));
+        const seasons = [...new Set(rows.map((r) => r.date.getFullYear()))].sort((a, b) => b - a);
+        return {
+          current: seasonStats(rows, input.season, (m) => methodLabels[m] ?? m),
+          previous: seasonStats(rows, input.season - 1, (m) => methodLabels[m] ?? m),
+          seasons,
+        };
       });
     }),
 });

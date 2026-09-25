@@ -23,6 +23,15 @@ import {
   mareState,
 } from "./reproduction";
 import type { CoveringMethodKey, ReproSettings } from "./repro-settings";
+import {
+  assessFoalingWatch,
+  assessNeonatal,
+  gestationMilestones,
+  type FoalingWatchInput,
+  type Milestone,
+  type NeonatalInput,
+  type WatchAssessment,
+} from "./repro-gestation";
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
@@ -65,7 +74,8 @@ export type CoveringInput = {
   date: Date | string;
   method: string;
   pregnancyChecks?: { date: Date | string; result: string }[];
-  foaling?: { date: Date | string; alive?: boolean | null } | null;
+  foaling?: ({ date: Date | string; alive?: boolean | null } & NeonatalInput) | null;
+  foalingWatch?: FoalingWatchInput[];
 };
 
 export type MareProfileInput = {
@@ -482,7 +492,8 @@ export type ReproActionKind =
   | "tease"
   | "pregnancy_check"
   | "foaling_watch"
-  | "confirm_ovulation";
+  | "confirm_ovulation"
+  | "milestone";
 
 export type ReproAction = {
   kind: ReproActionKind;
@@ -506,6 +517,10 @@ export type MareInsight = {
   nextCheck: ReturnType<typeof nextCheckpoint> | null;
   foalHeat: ReturnType<typeof foalHeat> | null;
   lactating: boolean;
+  /** Hitos de la gestacion en curso (vacunas, desparasitacion, manejo). */
+  milestones: Milestone[];
+  /** Lectura de la ultima vigilancia preparto. */
+  watch: WatchAssessment | null;
   alerts: ReproAlert[];
   actions: ReproAction[];
 };
@@ -554,6 +569,8 @@ export function mareInsight(
   let breeding: MareInsight["breeding"] = null;
   let nextEstrus: EstrusPrediction | null = null;
   let fh: MareInsight["foalHeat"] = null;
+  let milestones: Milestone[] = [];
+  let watch: WatchAssessment | null = null;
 
   const pregnant = state === "PREGNANT" || state === "TWINS";
   const coveredRecently =
@@ -599,6 +616,27 @@ export function mareInsight(
         to: gest.windowTo,
         overdue: false,
       });
+      watch = assessFoalingWatch(latestCovering.foalingWatch ?? [], settings, now);
+      if (watch && watch.level !== "info") {
+        alerts.push({ key: "foaling_watch", level: watch.level, message: watch.message });
+      }
+    }
+
+    // Hitos: se enseñan desde una semana antes (o la antelacion de las
+    // tareas, si es mayor) hasta una semana despues.
+    milestones = gestationMilestones(latestCovering.date, gest.expected, settings);
+    const lead = Math.max(7, settings.milestoneTaskLeadDays);
+    for (const m of milestones) {
+      const until = daysBetween(now, m.due);
+      if (until <= lead && until >= -7) {
+        actions.push({
+          kind: "milestone",
+          label: m.label,
+          from: m.due,
+          to: addDays(m.due, 3),
+          overdue: until < -3,
+        });
+      }
     }
   } else if (coveredRecently && latestCovering) {
     phase = "COVERED";
@@ -649,6 +687,9 @@ export function mareInsight(
     if (inPostpartum && foalingDate) {
       phase = "POSTPARTUM";
       fh = foalHeat(foalingDate, settings);
+      for (const a of assessNeonatal(foaled!.foaling!, settings)) {
+        alerts.push({ key: `neonatal_${a.key}`, level: a.level, message: a.message });
+      }
       if (now <= fh.to) {
         actions.push({
           kind: "exam",
@@ -778,6 +819,8 @@ export function mareInsight(
     nextCheck,
     foalHeat: fh,
     lactating,
+    milestones,
+    watch,
     alerts,
     actions,
   };
