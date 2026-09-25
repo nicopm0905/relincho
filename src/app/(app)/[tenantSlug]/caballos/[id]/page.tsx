@@ -4,6 +4,7 @@ import type { AppRouter } from "@/server/trpc/router";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/formatters";
 import { gestation, mareState, mareStateLabels } from "@/lib/reproduction";
+import { withdrawalStatus } from "@/lib/treatments";
 import { BreedingRationCard } from "@/components/horses/breeding-ration-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,16 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
   // Los documentos viven en su propio router porque la ficha grande no trae
   // las URLs firmadas: aqui se piden ya con enlace temporal resuelto.
-  const horseDocuments = await caller.documents.list({ horseId: id });
+  const [horseDocuments, horseHealth] = await Promise.all([
+    caller.documents.list({ horseId: id }),
+    caller.health.list({ horseId: id }),
+  ]);
+
+  // Tiempo de espera vigente: el tratamiento que libera más tarde manda.
+  const activeWithdrawal = horseHealth
+    .map((event) => ({ event, ...withdrawalStatus(event, horse) }))
+    .filter((w) => w.status === "active" && w.until)
+    .sort((a, b) => b.until!.getTime() - a.until!.getTime())[0];
 
   const age = horse.birthDate ? calculateAge(horse.birthDate) : null;
 
@@ -192,6 +202,25 @@ export default async function CaballoDetailPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {activeWithdrawal && (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm dark:border-red-500/30 dark:bg-red-500/10"
+        >
+          <WarningCircle weight="fill" className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+          <div>
+            <p className="font-semibold text-red-900 dark:text-red-200">
+              En tiempo de espera hasta el {formatDate(activeWithdrawal.until!)}
+            </p>
+            <p className="mt-0.5 text-red-800 dark:text-red-300">
+              Por {activeWithdrawal.event.name} ({formatDate(activeWithdrawal.event.date)}). Hasta
+              esa fecha no puede ir a sacrificio para consumo humano. Si en el pasaporte está
+              excluido de consumo, márcalo en la ficha y este aviso desaparece.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* TABS SECTION */}
       <Tabs defaultValue="resumen" className="w-full">

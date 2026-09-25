@@ -14,20 +14,18 @@ import { formatDate } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 import {
+  describeMissing,
+  missingBookFields,
+  withdrawalStatus,
+} from "@/lib/treatments";
+import {
   EditHealthEventDialog,
   type EditableHealthEvent,
 } from "./edit-health-event-dialog";
 
-export const healthTypeLabels: Record<string, string> = {
-  VACCINE: "Vacuna",
-  DEWORMING: "Desparasitación",
-  DENTAL: "Dental",
-  FARRIER: "Herrador",
-  VET_CHECKUP: "Revisión vet.",
-  TREATMENT: "Tratamiento",
-  INJURY: "Lesión",
-  OTHER: "Otro",
-};
+import { healthTypeLabels } from "@/lib/health-types";
+
+export { healthTypeLabels };
 
 type HealthEvent = EditableHealthEvent;
 
@@ -154,6 +152,7 @@ export function HealthEventsList({ events }: { events: HealthEvent[] }) {
                       Próx. {formatDate(event.nextDueDate)}
                     </Badge>
                   )}
+                  <TreatmentBookBadges event={event} />
                   <EditHealthEventDialog event={event} />
                 </>
               }
@@ -162,5 +161,29 @@ export function HealthEventsList({ events }: { events: HealthEvent[] }) {
         </ListRows>
       )}
     </div>
+  );
+}
+
+/**
+ * Lo que el libro de tratamientos necesita ver de un vistazo: si el caballo
+ * sigue en tiempo de espera y si al registro le faltan datos obligatorios.
+ */
+function TreatmentBookBadges({ event }: { event: HealthEvent }) {
+  const { status, until } = withdrawalStatus(event, event.horse);
+  const missing = missingBookFields(event, event.horse);
+  return (
+    <>
+      {status === "active" && until && (
+        <Badge variant="destructive" title="No puede ir a consumo humano hasta esa fecha">
+          En espera hasta {formatDate(until)}
+        </Badge>
+      )}
+      {missing.length > 0 && (
+        <Badge variant="outline" title={describeMissing(missing)}>
+          <span className="sr-only">{describeMissing(missing)}. </span>
+          Faltan datos
+        </Badge>
+      )}
+    </>
   );
 }

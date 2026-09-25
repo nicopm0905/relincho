@@ -51,7 +51,7 @@ export default async function NuevoSanidadPage({ params, searchParams }: PagePro
         <HealthEventForm 
           tenantSlug={tenantSlug} 
           defaultHorseId={horseId} 
-          horses={horses.map(h => ({ id: h.id, name: h.name }))} 
+          horses={horses.map(h => ({ id: h.id, name: h.name, excludedFromFoodChain: h.excludedFromFoodChain }))}
         />
       </div>
     </div>

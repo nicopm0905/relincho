@@ -25,6 +25,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { healthTypeLabels } from "./health-events-list";
+import { isMedicinal } from "@/lib/treatments";
+import {
+  MedicationFields,
+  medicationFromRecord,
+  medicationPayload,
+} from "./medication-fields";
 
 type HealthType =
   | "VACCINE"
@@ -44,7 +50,19 @@ export type EditableHealthEvent = {
   nextDueDate: Date | null;
   dose?: string | null;
   notes?: string | null;
-  horse: { name: string };
+  vetContactId?: string | null;
+  prescriptionNumber?: string | null;
+  withdrawalDays?: number | null;
+  durationDays?: number | null;
+  supplier?: string | null;
+  purchaseReference?: string | null;
+  batchNumber?: string | null;
+  horse: {
+    name: string;
+    uelnCode?: string | null;
+    microchip?: string | null;
+    excludedFromFoodChain?: boolean;
+  };
 };
 
 function toDateInput(date: Date | null) {
@@ -66,6 +84,8 @@ export function EditHealthEventDialog({ event }: { event: EditableHealthEvent })
   const [date, setDate] = useState(toDateInput(event.date));
   const [nextDueDate, setNextDueDate] = useState(toDateInput(event.nextDueDate));
   const [dose, setDose] = useState(event.dose ?? "");
+  const [medication, setMedication] = useState(() => medicationFromRecord(event));
+  const medicinal = isMedicinal(type);
   const [notes, setNotes] = useState(event.notes ?? "");
 
   const done = (message: string) => {
@@ -96,8 +116,9 @@ export function EditHealthEventDialog({ event }: { event: EditableHealthEvent })
       name: name.trim(),
       date: atNoon(date),
       nextDueDate: nextDueDate ? atNoon(nextDueDate) : null,
-      dose: dose.trim() || undefined,
       notes: notes.trim() || undefined,
+      // En un medicamento la cantidad va con el resto de datos del libro.
+      ...(medicinal ? medicationPayload(medication) : { dose: dose.trim() || null }),
     });
   };
 
@@ -123,7 +144,7 @@ export function EditHealthEventDialog({ event }: { event: EditableHealthEvent })
       >
         <PencilSimple weight="bold" className="h-4 w-4" />
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>Editar registro</DialogTitle>
           <DialogDescription>{event.horse.name}</DialogDescription>
@@ -170,15 +191,26 @@ export function EditHealthEventDialog({ event }: { event: EditableHealthEvent })
             />
           </div>
 
+          {medicinal && (
+            <MedicationFields
+              values={medication}
+              onChange={setMedication}
+              type={type}
+              foodChainExcluded={event.horse.excludedFromFoodChain ?? false}
+            />
+          )}
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor={`dose-${event.id}`}>Dosis</Label>
-              <Input
-                id={`dose-${event.id}`}
-                value={dose}
-                onChange={(e) => setDose(e.target.value)}
-              />
-            </div>
+            {!medicinal && (
+              <div className="space-y-1.5">
+                <Label htmlFor={`dose-${event.id}`}>Dosis</Label>
+                <Input
+                  id={`dose-${event.id}`}
+                  value={dose}
+                  onChange={(e) => setDose(e.target.value)}
+                />
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor={`next-${event.id}`}>Próxima dosis</Label>
               <Input
