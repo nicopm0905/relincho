@@ -71,6 +71,10 @@ model Tenant {
   city              String?
   province          String?
   postalCode        String?
+  /// Cuenta donde cobra la yeguada: sale en el PDF de las facturas.
+  iban              String?
+  /// Condiciones de pago en texto libre ("Pago a 30 dias por transferencia").
+  paymentTerms      String?
   country           String             @default("ES")
   regaCode          String?
   /// cuaderno | cuadra | rendimiento | yeguada (ver `src/lib/pricing.ts`).
@@ -679,6 +683,8 @@ model Invoice {
   rectificationReason String?
   /// Mes de pupilaje facturado ("2026-09"): evita facturar dos veces el mismo mes.
   periodMonth        String?
+  /// Cuando se envio la factura al cliente por email (la ultima vez).
+  emailedAt          DateTime?
   client             Contact       @relation(fields: [clientId], references: [id])
   rectifies          Invoice?      @relation("Rectification", fields: [rectifiesId], references: [id], onDelete: Restrict)
   rectifiedBy        Invoice[]     @relation("Rectification")
@@ -729,6 +735,8 @@ model InvoiceLine {
   quantity    Decimal  @db.Decimal(10, 2)
   unitPrice   Decimal  @db.Decimal(10, 2)
   vatRate     Decimal  @db.Decimal(5, 2)
+  /// Causa de exencion (E1-E6 de la AEAT). Obligatoria si el IVA es 0 %.
+  exemptionCause String?
   invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   horse       Horse?   @relation(fields: [horseId], references: [id])
 }
