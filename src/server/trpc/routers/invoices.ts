@@ -7,6 +7,8 @@ import { withTenant } from "@/server/db/prisma";
 import { InvoiceStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { issueInvoice, voidInvoice } from "@/server/services/billing/issue";
+import { invoicePdfInclude, renderInvoicePdf } from "@/server/services/billing/invoice-pdf";
+import { sendInvoiceEmail } from "@/server/services/notifications/email";
 
 const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
@@ -444,6 +446,57 @@ export const invoicesRouter = createTRPCRouter({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       return withTenant(ctx.tenantId, (tx) => issueInvoice(tx, ctx.tenantId, input.id));
+    }),
+
+  /** Enviar la factura emitida al cliente por email, con el PDF adjunto. */
+  send: managerProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        to: z.string().trim().email("Email no válido"),
+        message: z.string().trim().max(1000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const invoice = await withTenant(ctx.tenantId, (tx) =>
+        tx.invoice.findFirst({
+          where: { id: input.id, tenantId: ctx.tenantId },
+          include: invoicePdfInclude,
+        }),
+      );
+      if (!invoice) throw new TRPCError({ code: "NOT_FOUND" });
+      if (invoice.status === "DRAFT" || invoice.status === "CANCELLED" || invoice.number == null) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Solo se envían facturas emitidas y vigentes.",
+        });
+      }
+
+      const { buffer, label } = await renderInvoicePdf(invoice);
+      const result = await sendInvoiceEmail({
+        to: input.to,
+        replyTo: ctx.user?.email ?? undefined,
+        issuerName: invoice.tenant.fiscalName || invoice.tenant.name,
+        clientName: invoice.client.name,
+        invoiceLabel: label,
+        total: `${Number(invoice.total).toFixed(2).replace(".", ",")} €`,
+        dueDate: invoice.dueDate
+          ? invoice.dueDate.toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" })
+          : null,
+        message: input.message || undefined,
+        pdf: buffer,
+        isRectification: Boolean(invoice.rectifiesId),
+      });
+      if (result.skipped) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "El envío de email no está configurado en este entorno.",
+        });
+      }
+      if (!result.ok) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "No se pudo enviar el email. Inténtalo de nuevo." });
+      }
+      return { sentTo: input.to };
     }),
 
   /** Anular una factura emitida por error (con registro de anulacion). */

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowCounterClockwise, PaperPlaneTilt, PencilSimple, Plus, Prohibit, Trash, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, EnvelopeSimple, PaperPlaneTilt, PencilSimple, Plus, Prohibit, Trash, X } from "@phosphor-icons/react";
 import { trpc } from "@/lib/trpc/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +62,7 @@ export function InvoiceActions({
     hasNumber: boolean;
     isRectification: boolean;
     hasPayments: boolean;
+    clientEmail: string | null;
     /** Las rectificativas la dejan a cero: ya no hay nada que rectificar. */
     voided: boolean;
     lines: { description: string; quantity: number; unitPrice: number; vatRate: number }[];
@@ -70,6 +71,7 @@ export function InvoiceActions({
   const { router, onError } = useMutationHandlers();
   const [confirm, setConfirm] = useState<"issue" | "delete" | "void" | null>(null);
   const [rectifying, setRectifying] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const issue = trpc.invoices.issue.useMutation({
     onSuccess: () => {
@@ -121,6 +123,12 @@ export function InvoiceActions({
           )}
         </>
       )}
+      {issued && (
+        <Button variant="outline" onClick={() => setSending(true)}>
+          <EnvelopeSimple weight="bold" />
+          Enviar por email
+        </Button>
+      )}
       {issued && !invoice.isRectification && !invoice.voided && (
         <Button variant="outline" onClick={() => setRectifying(true)}>
           <ArrowCounterClockwise weight="bold" />
@@ -171,6 +179,10 @@ export function InvoiceActions({
         </DialogContent>
       </Dialog>
 
+      {sending && (
+        <SendDialog invoiceId={invoice.id} defaultTo={invoice.clientEmail ?? ""} onClose={() => setSending(false)} />
+      )}
+
       {rectifying && (
         <RectifyDialog
           tenantSlug={tenantSlug}
@@ -180,6 +192,75 @@ export function InvoiceActions({
         />
       )}
     </div>
+  );
+}
+
+function SendDialog({
+  invoiceId,
+  defaultTo,
+  onClose,
+}: {
+  invoiceId: string;
+  defaultTo: string;
+  onClose: () => void;
+}) {
+  const { onError } = useMutationHandlers();
+  const [to, setTo] = useState(defaultTo);
+  const [message, setMessage] = useState("");
+
+  const send = trpc.invoices.send.useMutation({
+    onSuccess: (res) => {
+      toast.success(`Factura enviada a ${res.sentTo}`);
+      onClose();
+    },
+    onError,
+  });
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[460px]">
+        <DialogHeader>
+          <DialogTitle>Enviar factura por email</DialogTitle>
+          <DialogDescription>
+            Se envía el PDF adjunto. Si el cliente responde, la respuesta te llega a tu correo.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send.mutate({ id: invoiceId, to: to.trim(), message: message.trim() || undefined });
+          }}
+          className="space-y-4"
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="send-to">Enviar a</Label>
+            <Input
+              id="send-to"
+              type="email"
+              required
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              placeholder="cliente@ejemplo.com"
+            />
+            {!defaultTo && (
+              <p className="text-xs text-muted-foreground">El cliente no tiene email guardado en Contactos.</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="send-message">Mensaje (opcional)</Label>
+            <Textarea id="send-message" rows={3} value={message} onChange={(e) => setMessage(e.target.value)} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={send.isPending}>
+              {send.isPending ? "Enviando…" : "Enviar"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

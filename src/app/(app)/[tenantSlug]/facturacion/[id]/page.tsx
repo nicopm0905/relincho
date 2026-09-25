@@ -82,6 +82,7 @@ export default async function FacturaDetallePage({ params }: PageProps) {
           hasNumber: invoice.number != null,
           isRectification: Boolean(invoice.rectifiesId),
           hasPayments: invoice.payments.length > 0,
+          clientEmail: invoice.client.email,
           voided,
           lines: invoice.lines.map((l) => ({
             description: l.description,

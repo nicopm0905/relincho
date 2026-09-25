@@ -33,6 +33,8 @@ async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string;
+  attachments?: { filename: string; content: Buffer }[];
 }): Promise<SendResult> {
   if (!resend || !FROM) {
     console.warn(
@@ -48,6 +50,8 @@ async function sendEmail(opts: {
       to: opts.to,
       subject: opts.subject,
       html: opts.html,
+      ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
+      ...(opts.attachments ? { attachments: opts.attachments } : {}),
     });
     if (error) {
       await reportError(error, { scope: "email", subject: opts.subject });
@@ -168,6 +172,45 @@ export async function sendPaymentFailed(opts: {
           </a>
         </p>
         <p style="color:#888;font-size:12px;">Relincho · Gestión equina profesional</p>
+      </div>
+    `,
+  });
+}
+
+/**
+ * Factura al cliente, con el PDF adjunto. Sale con el remitente de Relincho y
+ * las respuestas van a quien la envia (la yeguada), no a nosotros.
+ */
+export async function sendInvoiceEmail(opts: {
+  to: string;
+  replyTo?: string;
+  issuerName: string;
+  clientName: string;
+  invoiceLabel: string;
+  total: string;
+  dueDate: string | null;
+  message?: string;
+  pdf: Buffer;
+  isRectification: boolean;
+}): Promise<SendResult> {
+  const kind = opts.isRectification ? "factura rectificativa" : "factura";
+  return sendEmail({
+    to: opts.to,
+    replyTo: opts.replyTo,
+    subject: `${opts.isRectification ? "Factura rectificativa" : "Factura"} ${opts.invoiceLabel} de ${opts.issuerName}`,
+    attachments: [{ filename: `factura-${opts.invoiceLabel}.pdf`, content: opts.pdf }],
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #171717;">${esc(opts.issuerName)}</h2>
+        <p>Hola ${esc(opts.clientName)},</p>
+        <p>Te enviamos adjunta la ${kind} <strong>${esc(opts.invoiceLabel)}</strong>.</p>
+        <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0;">
+          Importe: <strong>${esc(opts.total)}</strong>${
+            opts.dueDate ? `<br>Vencimiento: <strong>${esc(opts.dueDate)}</strong>` : ""
+          }
+        </div>
+        ${opts.message ? `<p style="white-space:pre-line;">${esc(opts.message)}</p>` : ""}
+        <p style="color:#888;font-size:12px;">Enviado con Relincho en nombre de ${esc(opts.issuerName)}.</p>
       </div>
     `,
   });
