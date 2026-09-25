@@ -5,25 +5,25 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
-  Home,
-  Layers,
-  Activity,
+  House,
+  Horse,
+  Heartbeat,
   CheckSquare,
   Baby,
   Files,
   Receipt,
   Users,
-  Settings,
-  Menu,
+  Gear,
+  List,
   X,
-  Route,
-  Store,
+  Path,
+  Storefront,
   Gauge,
-  LogOut,
-  ChevronDown,
-  CalendarDays,
-  type LucideIcon,
-} from "lucide-react";
+  SignOut,
+  CaretDown,
+  CalendarDots,
+  type Icon as PhosphorIcon,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { useState, useEffect } from "react";
@@ -43,29 +43,29 @@ type NavKey =
   | "documents"
   | "settings";
 
-type NavItem = { key: NavKey; href: string; icon: LucideIcon };
+type NavItem = { key: NavKey; href: string; icon: PhosphorIcon };
 
 /** Grouped so the rail reads as a hierarchy instead of a wall of ten links. */
 const navGroups: { groupKey?: "stable" | "business"; items: NavItem[] }[] = [
   {
-    items: [{ key: "home", href: "inicio", icon: Home }],
+    items: [{ key: "home", href: "inicio", icon: House }],
   },
   {
     groupKey: "stable",
     items: [
-      { key: "horses", href: "caballos", icon: Layers },
+      { key: "horses", href: "caballos", icon: Horse },
       { key: "performance", href: "rendimiento", icon: Gauge },
-      { key: "health", href: "sanidad", icon: Activity },
+      { key: "health", href: "sanidad", icon: Heartbeat },
       { key: "reproduction", href: "reproduccion", icon: Baby },
-      { key: "movements", href: "movimientos", icon: Route },
+      { key: "movements", href: "movimientos", icon: Path },
       { key: "tasks", href: "tareas", icon: CheckSquare },
-      { key: "calendar", href: "calendario", icon: CalendarDays },
+      { key: "calendar", href: "calendario", icon: CalendarDots },
     ],
   },
   {
     groupKey: "business",
     items: [
-      { key: "boarding", href: "pupilaje", icon: Store },
+      { key: "boarding", href: "pupilaje", icon: Storefront },
       { key: "invoicing", href: "facturacion", icon: Receipt },
       { key: "contacts", href: "contactos", icon: Users },
       { key: "documents", href: "documentos", icon: Files },
@@ -93,7 +93,7 @@ const desktopSecondaryItems: NavItem[] = [
 const settingsItem: NavItem = {
   key: "settings",
   href: "ajustes",
-  icon: Settings,
+  icon: Gear,
 };
 
 /** Chosen by daily use in a yeguada, not by order in the rail. */
@@ -181,7 +181,6 @@ export function Sidebar({
         )}
       >
         <Icon
-          strokeWidth={2}
           className={cn(
             "h-[18px] w-[18px] shrink-0 transition-colors",
             active
@@ -237,12 +236,11 @@ export function Sidebar({
               className="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-[10.5px] font-semibold tracking-[0.08em] text-muted-foreground/70 uppercase transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
             >
               <span>{t("moreSections")}</span>
-              <ChevronDown
+              <CaretDown
                 className={cn(
                   "h-3.5 w-3.5 transition-transform",
                   desktopMoreOpen && "rotate-180",
                 )}
-                strokeWidth={2}
               />
             </button>
             {desktopMoreOpen && (
@@ -268,7 +266,7 @@ export function Sidebar({
               title={t("logout")}
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
             >
-              <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
+              <SignOut className="h-3.5 w-3.5" />
             </Link>
           </div>
           <div className="px-3 pt-1">
@@ -295,7 +293,7 @@ export function Sidebar({
           aria-label={t("sections.settings")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
         >
-          <Settings className="h-[18px] w-[18px]" strokeWidth={2} />
+          <Gear className="h-[18px] w-[18px]" />
         </Link>
       </header>
 
@@ -312,7 +310,6 @@ export function Sidebar({
                 className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 pt-1"
               >
                 <Icon
-                  strokeWidth={2}
                   className={cn(
                     "h-[20px] w-[20px] shrink-0 transition-colors",
                     active ? "text-primary-ink" : "text-muted-foreground",
@@ -339,8 +336,7 @@ export function Sidebar({
             aria-label={t("moreSheet")}
             className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 pt-1"
           >
-            <Menu
-              strokeWidth={2}
+            <List
               className={cn(
                 "h-[20px] w-[20px] shrink-0",
                 moreOpen ? "text-primary-ink" : "text-muted-foreground",
@@ -386,7 +382,7 @@ export function Sidebar({
                 aria-label={t("close")}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <X className="h-4 w-4" strokeWidth={2.5} />
+                <X className="h-4 w-4" weight="bold" />
               </button>
             </div>
             <div className="space-y-0.5 px-3 pb-5">
@@ -395,9 +391,8 @@ export function Sidebar({
                 href="/api/auth/signout"
                 className="flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
               >
-                <LogOut
+                <SignOut
                   className="h-[18px] w-[18px] shrink-0"
-                  strokeWidth={2}
                 />
                 {t("logout")}
               </Link>

@@ -59,7 +59,7 @@ export default async function PortalFacturasPage({ params }: PageProps) {
 
       {invoices.length === 0 ? (
         <EmptyState
-          icon={<Receipt weight="duotone" />}
+          icon={<Receipt />}
           title="Todavía no tienes facturas"
           description="Cuando la yeguada emita una factura a tu nombre aparecerá aquí."
         />
@@ -108,7 +108,7 @@ export default async function PortalFacturasPage({ params }: PageProps) {
                             rel="noreferrer"
                             className="inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-[0.8rem] font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
                           >
-                            <FilePdf weight="duotone" className="h-4 w-4" />
+                            <FilePdf className="h-4 w-4" />
                             PDF
                           </a>
                           {payable && (

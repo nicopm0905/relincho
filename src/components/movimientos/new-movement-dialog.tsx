@@ -163,7 +163,7 @@ export function NewMovementDialog({
         <div className="p-6 pb-0">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold font-heading text-foreground flex items-center gap-2">
-              <Path weight="duotone" className="h-6 w-6 text-primary" />
+              <Path className="h-6 w-6 text-primary" />
               {editing ? "Editar Movimiento" : "Nuevo Movimiento"}
             </DialogTitle>
             <DialogDescription>

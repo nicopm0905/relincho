@@ -90,7 +90,7 @@ export function NewContractDialog({ tenantSlug, horses, clients }: { tenantSlug:
         <div className="p-6 pb-0">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold font-heading text-foreground flex items-center gap-2">
-              <Storefront weight="duotone" className="h-6 w-6 text-orange-500" />
+              <Storefront className="h-6 w-6 text-orange-500" />
               Nuevo Contrato de Pupilaje
             </DialogTitle>
             <DialogDescription>

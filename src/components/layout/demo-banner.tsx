@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { Eye } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 
 /**

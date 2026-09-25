@@ -13,7 +13,7 @@ export default async function RootPage() {
   const session = await getSession();
 
   return (
-    <div className="flex min-h-screen flex-col selection:bg-primary/20">
+    <div className="brand-serif flex min-h-screen flex-col selection:bg-primary/20">
       <Header session={session} overHero />
       <main id="main-content" tabIndex={-1} className="flex-1">
         <Hero />

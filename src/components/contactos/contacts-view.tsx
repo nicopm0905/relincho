@@ -41,7 +41,7 @@ export function ContactsView({ contacts }: { contacts: EditableContact[] }) {
     <div className="space-y-4">
       {contacts.length === 0 ? (
         <EmptyState
-          icon={<Users weight="duotone" />}
+          icon={<Users />}
           title="Sin contactos registrados"
           description="Empieza añadiendo tu equipo habitual: veterinario, herrador y clientes de pupilaje."
           action={addButton}

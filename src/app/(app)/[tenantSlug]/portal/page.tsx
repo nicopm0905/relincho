@@ -55,14 +55,14 @@ export default async function PortalResumenPage({ params }: PageProps) {
       date: new Date(e.nextDueDate ?? e.date),
       title: e.name,
       subtitle: `${e.horse.name} · ${healthTypeLabels[e.type] ?? e.type}`,
-      icon: <Heartbeat weight="duotone" className="h-4 w-4" />,
+      icon: <Heartbeat className="h-4 w-4" />,
     })),
     ...agenda.trainings.map((t) => ({
       id: `t-${t.id}`,
       date: new Date(t.date),
       title: t.type || "Entrenamiento",
       subtitle: `${t.horse.name} · ${t.minutes} min`,
-      icon: <Barbell weight="duotone" className="h-4 w-4" />,
+      icon: <Barbell className="h-4 w-4" />,
     })),
   ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -104,7 +104,7 @@ export default async function PortalResumenPage({ params }: PageProps) {
       <section className="space-y-3">
         {horses.length === 0 ? (
           <EmptyState
-            icon={<Horse weight="duotone" />}
+            icon={<Horse />}
             title="Todavía no hay caballos asignados"
             description="Cuando la yeguada te dé acceso a un caballo aparecerá aquí."
           />
@@ -128,7 +128,7 @@ export default async function PortalResumenPage({ params }: PageProps) {
                   ) : (
                     <span className="absolute inset-0 flex items-center justify-center">
                       <Horse
-                        weight="duotone"
+                       
                         className="h-7 w-7 text-muted-foreground/40"
                       />
                     </span>
@@ -159,7 +159,7 @@ export default async function PortalResumenPage({ params }: PageProps) {
         {events.length === 0 ? (
           <EmptyState
             variant="plain"
-            icon={<CalendarBlank weight="duotone" />}
+            icon={<CalendarBlank />}
             title="Sin eventos programados"
             description="No hay sanidad, herraje ni entrenamiento previstos en los próximos 60 días."
           />

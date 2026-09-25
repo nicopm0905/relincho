@@ -50,7 +50,7 @@ export default async function NuevaFacturaPage({ params }: PageProps) {
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-blue-600" />
         <div className="flex items-center gap-3 mb-8">
           <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-sm">
-            <Receipt weight="duotone" className="h-6 w-6" />
+            <Receipt className="h-6 w-6" />
           </div>
           <div>
             <h1 className="text-2xl font-bold font-heading text-foreground">Nueva factura</h1>

@@ -95,7 +95,7 @@ export default async function RendimientoPage({ params }: PageProps) {
 
       {horses.length === 0 ? (
         <EmptyState
-          icon={<HorseIcon weight="duotone" />}
+          icon={<HorseIcon />}
           title="Todavía no hay caballos en activo"
           description="Da de alta un caballo para empezar a planificar su temporada."
           action={
@@ -113,7 +113,7 @@ export default async function RendimientoPage({ params }: PageProps) {
             {withPlan.length === 0 ? (
               <EmptyState
                 variant="plain"
-                icon={<CalendarCheck weight="duotone" />}
+                icon={<CalendarCheck />}
                 title="Ningún caballo tiene periodización"
                 description="Abre la ficha de un caballo y genera su plan hasta la próxima competición."
               />
@@ -144,9 +144,9 @@ export default async function RendimientoPage({ params }: PageProps) {
                       leading={
                         <RowIcon tone={needsAttention ? "alert" : "neutral"}>
                           {needsAttention ? (
-                            <Warning weight="duotone" />
+                            <Warning />
                           ) : (
-                            <HorseIcon weight="duotone" />
+                            <HorseIcon />
                           )}
                         </RowIcon>
                       }
@@ -211,7 +211,7 @@ export default async function RendimientoPage({ params }: PageProps) {
                   href={`/${tenantSlug}/rendimiento/${horse.horseId}`}
                   leading={
                     <RowIcon>
-                      <HorseIcon weight="duotone" />
+                      <HorseIcon />
                     </RowIcon>
                   }
                   title={horse.name}

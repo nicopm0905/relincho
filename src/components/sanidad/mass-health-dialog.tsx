@@ -149,7 +149,7 @@ export function MassHealthDialog({
         <div className="p-6 pb-0">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold font-heading text-foreground flex items-center gap-2">
-              <Heartbeat weight="duotone" className="h-6 w-6 text-rose-500" />
+              <Heartbeat className="h-6 w-6 text-rose-500" />
               Nuevo Tratamiento Masivo
             </DialogTitle>
             <DialogDescription>

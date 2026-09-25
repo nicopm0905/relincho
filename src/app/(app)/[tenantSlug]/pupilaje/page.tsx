@@ -40,7 +40,7 @@ export default async function PupilajePage({ params }: PageProps) {
         <Card>
           <EmptyState
               variant="plain"
-              icon={<Storefront weight="duotone" />}
+              icon={<Storefront />}
               title="Sin caballos en pupilaje"
               description="Añade contratos de alojamiento para generar la facturación mensual automáticamente."
             />
@@ -57,7 +57,7 @@ export default async function PupilajePage({ params }: PageProps) {
                       {contract.horse.photoUrl ? (
                         <Image src={contract.horse.photoUrl} alt={contract.horse.name} fill sizes="3rem" className="object-cover" />
                       ) : (
-                        <Horse weight="duotone" className="h-6 w-6 text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                        <Horse className="h-6 w-6 text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                       )}
                     </div>
                     <div>

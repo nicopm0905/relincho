@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
-  --font-heading: var(--font-heading), serif;
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -188,7 +188,11 @@
     scroll-padding-top: 6rem;
   }
   body {
-    @apply bg-background text-foreground tracking-tight;
+    @apply bg-background text-foreground;
+    /* Titulos de la app en la misma sans; `.brand-serif` los pasa al serif de
+       marca. Va en una variable para que tambien lo hereden los dialogos, que
+       se montan fuera del arbol de la pagina. */
+    --font-display: var(--font-jakarta), system-ui, sans-serif;
     /* Sin `background-attachment: fixed`: obliga a repintar la pantalla entera
        en cada frame de scroll y hace que el scroll vaya a tirones. */
     background-image:
@@ -205,8 +209,12 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+  .brand-serif {
+    --font-display: var(--font-newsreader), serif;
+  }
   h1, h2, h3, h4, h5, h6, .font-heading {
-    @apply tracking-tight font-heading;
+    @apply font-heading;
+    letter-spacing: -0.015em;
   }
 }
 

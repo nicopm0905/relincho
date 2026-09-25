@@ -74,15 +74,12 @@ export function FeedingPlanCard({ horseId, horseName }: { horseId: string, horse
   const rawItems = (plan?.items as unknown as FeedingItem[]) || []
 
   return (
-    <Card className="bg-white shadow-bento border-border/40 p-6">
+    <Card className="p-5">
       <CardHeader className="p-0 mb-5 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 flex items-center justify-center border border-amber-100 dark:border-amber-900 shrink-0">
-            <ForkKnife weight="duotone" className="h-5 w-5" />
-          </div>
           <div>
-            <CardTitle className="text-lg font-bold text-foreground font-heading">Plan de Alimentación</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground mt-0.5">Dieta diaria y raciones para {horseName}</CardDescription>
+            <CardTitle className="text-[15px] font-semibold text-foreground">Plan de alimentación</CardTitle>
+            <CardDescription className="mt-0.5 text-[13px] text-muted-foreground">Dieta diaria y raciones para {horseName}</CardDescription>
           </div>
         </div>
 

@@ -61,7 +61,7 @@ export default async function FacturaDetallePage({ params }: PageProps) {
         </Button>
         <Button asChild variant="outline" size="sm" className="rounded-full">
           <a href={`/api/invoices/${invoice.id}/pdf`} target="_blank" rel="noreferrer">
-            <FilePdf weight="duotone" className="mr-2 h-4 w-4" />
+            <FilePdf className="mr-2 h-4 w-4" />
             Ver PDF
           </a>
         </Button>

@@ -38,7 +38,7 @@ export default async function MovimientosPage({ params }: PageProps) {
           {movements.length === 0 ? (
             <EmptyState
               variant="plain"
-              icon={<Path weight="duotone" />}
+              icon={<Path />}
               title="Sin movimientos registrados"
               description="Registra las altas y bajas de tus caballos para mantener el libro de explotación al día."
             />

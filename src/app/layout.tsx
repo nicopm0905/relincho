@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Newsreader, Inter, Geist_Mono } from "next/font/google";
+import { Newsreader, Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { getBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
+// El serif es solo de marca (web, legales, acceso): la app va entera en sans.
 const newsreader = Newsreader({
-  variable: "--font-heading",
+  variable: "--font-newsreader",
   subsets: ["latin"],
 });
 
-const inter = Inter({
-  variable: "--font-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
 });
 
@@ -64,7 +65,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body
-        className={`${inter.variable} ${newsreader.variable} ${geistMono.variable} antialiased`}
+        className={`${jakarta.variable} ${newsreader.variable} ${geistMono.variable} antialiased`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <a

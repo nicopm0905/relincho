@@ -65,7 +65,7 @@ export function ChipPairing({
             >
               <div className="flex min-w-0 items-center gap-2">
                 <Cardholder
-                  weight="duotone"
+                 
                   className="h-4 w-4 shrink-0 text-muted-foreground"
                 />
                 <span className="truncate font-mono text-[13px] font-medium text-foreground">

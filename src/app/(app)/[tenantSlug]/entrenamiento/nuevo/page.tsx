@@ -38,7 +38,7 @@ export default async function NuevoEntrenamientoPage({ params, searchParams }: P
         
         <div className="flex items-center gap-3 mb-8">
           <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-sm">
-            <Barbell weight="duotone" className="h-6 w-6" />
+            <Barbell className="h-6 w-6" />
           </div>
           <div>
             <h1 className="text-2xl font-bold font-heading text-foreground">Entrenamiento</h1>

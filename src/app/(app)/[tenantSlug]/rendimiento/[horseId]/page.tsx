@@ -137,7 +137,7 @@ export default async function PlanCaballoPage({ params }: PageProps) {
 
       {!snapshot ? (
         <EmptyState
-          icon={<CalendarCheck weight="duotone" />}
+          icon={<CalendarCheck />}
           title="Este caballo no tiene periodización"
           description="Genera el plan indicando la competición objetivo. El calendario se construye hacia atrás desde esa fecha."
         />

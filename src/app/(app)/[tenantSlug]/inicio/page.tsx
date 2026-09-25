@@ -130,7 +130,7 @@ async function InicioContent({ params }: PageProps) {
           .filter(Boolean)
           .join(" · "),
         href: `/${tenantSlug}/rendimiento/${horse.horseId}`,
-        icon: <Warning weight="duotone" />,
+        icon: <Warning />,
       })),
     ...upcomingHealth
       .filter((event) => event.nextDueDate)
@@ -140,7 +140,7 @@ async function InicioContent({ params }: PageProps) {
         title: event.name,
         subtitle: `${event.horse.name} · ${healthTypeLabels[event.type] ?? event.type}`,
         href: `/${tenantSlug}/sanidad`,
-        icon: <Heartbeat weight="duotone" />,
+        icon: <Heartbeat />,
       })),
     ...reproDue.map(({ mare, action }, idx) => ({
       id: `repro-${mare.mare.id}-${action.kind}-${idx}`,
@@ -159,7 +159,7 @@ async function InicioContent({ params }: PageProps) {
       title: `Cobro vencido · ${invoice.client}`,
       subtitle: `Factura ${invoice.label} · ${formatEuros(invoice.pending)} pendientes`,
       href: `/${tenantSlug}/facturacion/${invoice.id}`,
-      icon: <Receipt weight="duotone" />,
+      icon: <Receipt />,
     })),
     ...openTasks
       .filter((task) => task.dueDate)
@@ -169,7 +169,7 @@ async function InicioContent({ params }: PageProps) {
         title: task.title,
         subtitle: [task.horseName, task.assigneeName].filter(Boolean).join(" · ") || "Tarea pendiente",
         href: `/${tenantSlug}/tareas`,
-        icon: <CheckSquare weight="duotone" />,
+        icon: <CheckSquare />,
       })),
   ].sort((a, b) => a.due.getTime() - b.due.getTime());
 
@@ -279,7 +279,7 @@ async function InicioContent({ params }: PageProps) {
         />
         {attention.length === 0 ? (
           <EmptyState
-            icon={<Sun weight="duotone" />}
+            icon={<Sun />}
             title="Todo al día"
             description="No hay vencimientos, ecografías, partos cercanos ni cobros vencidos."
           />
@@ -331,7 +331,7 @@ async function InicioContent({ params }: PageProps) {
         />
         {recentHorses.length === 0 ? (
           <EmptyState
-            icon={<Horse weight="duotone" />}
+            icon={<Horse />}
             title="Sin caballos aún"
             description="Registra tu primer caballo para empezar a llevar su sanidad y su documentación."
             action={
@@ -363,7 +363,7 @@ async function InicioContent({ params }: PageProps) {
                   ) : (
                     <span className="absolute inset-0 flex items-center justify-center">
                       <Horse
-                        weight="duotone"
+                       
                         className="h-7 w-7 text-muted-foreground/40"
                       />
                     </span>

@@ -20,6 +20,7 @@ type Horse = {
   birthDate: Date | null;
   photoUrl: string | null;
   uelnCode: string | null;
+  boxLocation?: string | null;
 };
 
 const sexFilters = [
@@ -109,7 +110,7 @@ export function HorsesExplorer({
   if (horses.length === 0) {
     return (
       <EmptyState
-        icon={<HorseIcon weight="duotone" />}
+        icon={<HorseIcon />}
         title="Sin caballos aún"
         description="Registra tu primer caballo para empezar a llevar su sanidad, su reproducción y su documentación."
         action={
@@ -188,7 +189,7 @@ export function HorsesExplorer({
 
       {filtered.length === 0 ? (
         <EmptyState
-          icon={<MagnifyingGlass weight="duotone" />}
+          icon={<MagnifyingGlass />}
           title="Ningún caballo coincide"
           description="Prueba con otro término de búsqueda o quita algún filtro."
           action={

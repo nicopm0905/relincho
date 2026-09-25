@@ -116,7 +116,7 @@ export default async function PortalHorsePage({ params }: PageProps) {
             />
           ) : (
             <span className="absolute inset-0 flex items-center justify-center">
-              <Horse weight="duotone" className="h-16 w-16 text-muted-foreground/30" />
+              <Horse className="h-16 w-16 text-muted-foreground/30" />
             </span>
           )}
         </div>
@@ -148,7 +148,7 @@ export default async function PortalHorsePage({ params }: PageProps) {
         {horse.healthEvents.length === 0 ? (
           <EmptyState
             variant="plain"
-            icon={<Heartbeat weight="duotone" />}
+            icon={<Heartbeat />}
             title="Sin eventos de sanidad"
           />
         ) : (
@@ -214,7 +214,7 @@ export default async function PortalHorsePage({ params }: PageProps) {
         {recentTrainings.length === 0 ? (
           <EmptyState
             variant="plain"
-            icon={<Barbell weight="duotone" />}
+            icon={<Barbell />}
             title="Sin sesiones registradas"
           />
         ) : (
@@ -250,7 +250,7 @@ export default async function PortalHorsePage({ params }: PageProps) {
         {mediaDocs.length === 0 ? (
           <EmptyState
             variant="plain"
-            icon={<ImageIcon weight="duotone" />}
+            icon={<ImageIcon />}
             title="Todavía no hay fotos ni vídeos"
           />
         ) : (
@@ -268,9 +268,9 @@ export default async function PortalHorsePage({ params }: PageProps) {
                   )}
                 >
                   {d.kind.toUpperCase() === "VIDEO" ? (
-                    <FilmSlate weight="duotone" className="h-4 w-4 text-muted-foreground" />
+                    <FilmSlate className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <ImageIcon weight="duotone" className="h-4 w-4 text-muted-foreground" />
+                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
                   )}
                   <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                     {d.name}

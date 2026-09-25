@@ -45,7 +45,7 @@ export function HorseTimeline({ horseId }: TimelineProps) {
   if (events.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-12 text-muted-foreground border border-dashed border-border/50 rounded-2xl bg-muted/10">
-        <CheckCircle weight="duotone" className="h-10 w-10 text-muted-foreground/40 mb-3" />
+        <CheckCircle className="h-10 w-10 text-muted-foreground/40 mb-3" />
         <p className="text-sm font-medium">No hay eventos recientes registrados</p>
       </div>
     );
@@ -106,7 +106,7 @@ export function HorseTimeline({ horseId }: TimelineProps) {
               "absolute -left-5 top-0.5 h-10 w-10 rounded-full flex items-center justify-center border-2 shadow-sm bg-white ring-4 ring-white z-10",
               color
             )}>
-              <Icon weight="duotone" className="h-5 w-5" />
+              <Icon className="h-5 w-5" />
             </div>
             
             <div className="bg-white border border-border/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">

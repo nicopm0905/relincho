@@ -126,6 +126,7 @@ export const horsesRouter = createTRPCRouter({
             birthDate: true,
             photoUrl: true,
             uelnCode: true,
+            boxLocation: true,
           },
           orderBy: { name: "asc" },
         }),

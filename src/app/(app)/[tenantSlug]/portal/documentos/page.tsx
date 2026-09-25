@@ -23,9 +23,9 @@ const MEDIA_KINDS = new Set(["VIDEO", "PHOTO", "FOTO"]);
 
 function iconFor(kind: string) {
   const k = kind.toUpperCase();
-  if (k === "VIDEO") return <FilmSlate weight="duotone" className="h-4 w-4" />;
-  if (MEDIA_KINDS.has(k)) return <ImageIcon weight="duotone" className="h-4 w-4" />;
-  return <FileText weight="duotone" className="h-4 w-4" />;
+  if (k === "VIDEO") return <FilmSlate className="h-4 w-4" />;
+  if (MEDIA_KINDS.has(k)) return <ImageIcon className="h-4 w-4" />;
+  return <FileText className="h-4 w-4" />;
 }
 
 export default async function PortalDocumentosPage({ params }: PageProps) {
@@ -46,7 +46,7 @@ export default async function PortalDocumentosPage({ params }: PageProps) {
 
       {documents.length === 0 ? (
         <EmptyState
-          icon={<Files weight="duotone" />}
+          icon={<Files />}
           title="Sin documentos"
           description="Aquí verás los documentos que la yeguada asocie a tus caballos."
         />

@@ -57,7 +57,7 @@ export function HealthEventsList({ events }: { events: HealthEvent[] }) {
     return (
       <EmptyState
         variant="plain"
-        icon={<Heartbeat weight="duotone" />}
+        icon={<Heartbeat />}
         title="Sin eventos registrados"
         description="Los tratamientos, vacunas y revisiones que registres aparecerán aquí."
       />
@@ -120,7 +120,7 @@ export function HealthEventsList({ events }: { events: HealthEvent[] }) {
       {filtered.length === 0 ? (
         <EmptyState
           variant="plain"
-          icon={<MagnifyingGlass weight="duotone" />}
+          icon={<MagnifyingGlass />}
           title="Ningún evento coincide"
           action={
             <Button
@@ -141,7 +141,7 @@ export function HealthEventsList({ events }: { events: HealthEvent[] }) {
               key={event.id}
               leading={
                 <RowIcon>
-                  <Heartbeat weight="duotone" />
+                  <Heartbeat />
                 </RowIcon>
               }
               title={event.name}

@@ -71,7 +71,7 @@ export function SwipeableCard({ horseName, boxLocation, photoUrl, diet, status, 
             {photoUrl ? (
               <Image src={photoUrl} alt={horseName} fill sizes="3rem" className="object-cover opacity-60" />
             ) : (
-              <Horse weight="duotone" className="h-6 w-6 text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-60" />
+              <Horse className="h-6 w-6 text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-60" />
             )}
           </div>
           <div>
@@ -126,7 +126,7 @@ export function SwipeableCard({ horseName, boxLocation, photoUrl, diet, status, 
             {photoUrl ? (
               <Image src={photoUrl} alt={horseName} fill sizes="4rem" className="object-cover" />
             ) : (
-              <Horse weight="duotone" className="h-8 w-8 text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <Horse className="h-8 w-8 text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             )}
           </div>
           <div className="flex-1 min-w-0">

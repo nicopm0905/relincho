@@ -19,7 +19,7 @@ import {
 export function FirstSteps({ tenantSlug }: { tenantSlug: string }) {
   const steps = [
     {
-      icon: <Horse weight="duotone" />,
+      icon: <Horse />,
       title: "Registra tus caballos",
       body: "Añádelos uno a uno o importa tu Excel actual. Con el nombre y el microchip basta para empezar; el resto lo completas cuando lo necesites.",
       action: (
@@ -32,7 +32,7 @@ export function FirstSteps({ tenantSlug }: { tenantSlug: string }) {
       ),
     },
     {
-      icon: <Heartbeat weight="duotone" />,
+      icon: <Heartbeat />,
       title: "Apunta el próximo cuidado",
       body: "Registra una vacuna, una visita del veterinario o una desparasitación. Relincho te avisará antes de que venza.",
       action: (
@@ -42,7 +42,7 @@ export function FirstSteps({ tenantSlug }: { tenantSlug: string }) {
       ),
     },
     {
-      icon: <UsersThree weight="duotone" />,
+      icon: <UsersThree />,
       title: "Invita a quien trabaja contigo",
       body: "Mozos, encargados y veterinarios pueden entrar con los permisos que tú decidas. No tienes que llevarlo todo solo.",
       action: (

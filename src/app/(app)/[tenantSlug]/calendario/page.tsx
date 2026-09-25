@@ -211,7 +211,7 @@ export default async function CalendarioPage({ params, searchParams }: PageProps
         <h3 className="text-sm font-semibold text-foreground">Agenda del mes</h3>
         {agendaDays.length === 0 ? (
           <EmptyState
-            icon={<CalendarBlank weight="duotone" />}
+            icon={<CalendarBlank />}
             title="Nada previsto este mes"
             description="Aquí aparecen las próximas dosis, ecografías, partos, tareas, cobros y los eventos que añadas."
           />

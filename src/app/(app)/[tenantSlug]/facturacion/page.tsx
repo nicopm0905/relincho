@@ -66,7 +66,7 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
           {invoices.length === 0 ? (
             <EmptyState
               variant="plain"
-              icon={<Receipt weight="duotone" />}
+              icon={<Receipt />}
               title="Sin facturas"
               description="Genera las facturas de pupilaje del mes o crea una factura manual."
             />
@@ -134,7 +134,7 @@ export default async function FacturacionPage({ params, searchParams }: PageProp
                             rel="noreferrer"
                             className="inline-flex h-8 items-center justify-center rounded-lg px-3 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary/[0.08]"
                           >
-                            <FilePdf weight="duotone" className="mr-2 h-4 w-4" />
+                            <FilePdf className="mr-2 h-4 w-4" />
                             PDF
                           </a>
                         </td>

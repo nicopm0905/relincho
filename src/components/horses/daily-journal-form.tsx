@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { trpc } from "@/lib/trpc/react"
 import { toast } from "sonner"
-import { BrainCircuit } from "lucide-react"
+import { Brain } from "@phosphor-icons/react"
 
 const formSchema = z.object({
   content: z.string().min(5, "El diario debe tener al menos 5 caracteres"),
@@ -56,7 +56,7 @@ export function DailyJournalForm({ horseId, horseName }: { horseId: string, hors
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           Diario Rápido
-          <BrainCircuit className="w-4 h-4 text-muted-foreground" />
+          <Brain className="w-4 h-4 text-muted-foreground" />
         </CardTitle>
         <CardDescription>
           Anota lo que ha hecho hoy {horseName} (comida, ejercicio, estado de ánimo). La IA lo analizará al guardar.

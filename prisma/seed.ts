@@ -251,7 +251,7 @@ async function main() {
       mareId: zalamera.id,
       season: new Date().getFullYear(),
       notes: "Ciclo de prueba con gestación activa",
-    }
+    },
   });
 
   const thirtyDaysAgo = new Date();
@@ -265,7 +265,7 @@ async function main() {
       stallionId: espartero.id,
       method: "NATURAL",
       date: thirtyDaysAgo,
-    }
+    },
   });
 
   await prisma.pregnancyCheck.create({
@@ -274,8 +274,8 @@ async function main() {
       coveringId: covering.id,
       date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
       result: "POSITIVE",
-      dayOfPregnancy: 15
-    }
+      dayOfPregnancy: 15,
+    },
   });
 
   // Entrenamiento
@@ -324,8 +324,8 @@ async function main() {
       subtotal: "450.00",
       vatTotal: "94.50",
       total: "544.50",
-      status: "ISSUED"
-    }
+      status: "ISSUED",
+    },
   });
 
   await prisma.invoiceLine.create({

@@ -72,7 +72,7 @@ export function PedigreeTree({ tenantSlug, horseName, sire, dam }: PedigreeTreeP
             animate={{ opacity: 1, x: 0 }}
             className="px-4 py-3 bg-primary text-primary-foreground rounded-2xl font-bold shadow-md border border-primary/20 flex items-center gap-2"
           >
-            <TreeStructure weight="duotone" className="h-5 w-5" />
+            <TreeStructure className="h-5 w-5" />
             <span className="truncate max-w-[120px]">{horseName}</span>
           </motion.div>
         </div>

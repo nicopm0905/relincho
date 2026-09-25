@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { MessageCircle, BrainCircuit, Trash2, AlertTriangle, CheckCircle2, Info } from "lucide-react"
+import { ChatCircle, Brain, Trash, Warning, CheckCircle, Info } from "@phosphor-icons/react"
 
 export function HorseChat({
   horseId,
@@ -153,7 +153,7 @@ export function HorseChat({
       <CardHeader className="py-4 border-b flex flex-row items-center justify-between space-y-0">
         <div>
           <CardTitle className="flex items-center gap-2">
-            <BrainCircuit className="w-5 h-5 text-primary" />
+            <Brain className="w-5 h-5 text-primary" />
             Asistente {horseName}
           </CardTitle>
           <CardDescription>
@@ -168,7 +168,7 @@ export function HorseChat({
             title="Limpiar chat"
             className="text-muted-foreground hover:text-destructive"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash className="w-4 h-4" />
           </Button>
         )}
       </CardHeader>
@@ -177,7 +177,7 @@ export function HorseChat({
       {aiAlerts.length > 0 && (
         <div className="p-3 bg-muted/50 border-b text-xs space-y-1.5">
           <div className="font-semibold flex items-center gap-1.5 text-foreground">
-            <BrainCircuit className="w-3.5 h-3.5 text-primary" />
+            <Brain className="w-3.5 h-3.5 text-primary" />
             Alertas de salud y rendimiento (Detección IA):
           </div>
           <div className="space-y-1">
@@ -192,9 +192,9 @@ export function HorseChat({
                     : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300"
                 }`}
               >
-                {alert.type === "warning" && <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+                {alert.type === "warning" && <Warning className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
                 {alert.type === "info" && <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
-                {alert.type === "success" && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+                {alert.type === "success" && <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
                 <span>{alert.message}</span>
               </div>
             ))}
@@ -204,7 +204,7 @@ export function HorseChat({
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-3 text-muted-foreground">
-            <MessageCircle className="w-10 h-10 opacity-20" />
+            <ChatCircle className="w-10 h-10 opacity-20" />
             <p className="text-sm max-w-[250px]">
               Pregunta lo que necesites sobre la salud, alimentación o rutinas de {horseName}.
             </p>

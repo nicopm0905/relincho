@@ -56,7 +56,7 @@ export default async function PortalLayout({
       <header className="sticky top-0 z-20 border-b border-border bg-card/80 backdrop-blur">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3 md:px-8">
           <div className="flex items-center gap-2">
-            <Horse weight="duotone" className="h-5 w-5 text-primary" />
+            <Horse className="h-5 w-5 text-primary" />
             <span className="text-sm font-semibold text-foreground">
               {tenant.name}
             </span>

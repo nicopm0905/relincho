@@ -20,7 +20,7 @@ export default async function LandingV2Page() {
   const session = await auth();
 
   return (
-    <div className="flex min-h-screen flex-col selection:bg-primary/20">
+    <div className="brand-serif flex min-h-screen flex-col selection:bg-primary/20">
       <NavbarV2 session={session} />
       {/* El fondo oscuro evita el destello blanco entre secciones oscuras. */}
       <main id="main-content" tabIndex={-1} className="flex-1" style={{ backgroundColor: "#0b0d08" }}>

@@ -186,7 +186,7 @@ export function ChipScanner({ tenantSlug }: { tenantSlug: string }) {
             {result.injury_history.length > 0 && (
               <div>
                 <div className="flex items-center gap-1.5 text-[12.5px] font-medium text-foreground">
-                  <Bandaids weight="duotone" className="h-4 w-4 text-muted-foreground" />
+                  <Bandaids className="h-4 w-4 text-muted-foreground" />
                   Historial de lesiones
                 </div>
                 <ul className="mt-1.5 space-y-1">

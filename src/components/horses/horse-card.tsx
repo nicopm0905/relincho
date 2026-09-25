@@ -1,8 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CaretRight, Horse } from "@phosphor-icons/react/dist/ssr";
 
 const statusLabels: Record<string, string> = {
   ACTIVE: "Activo",
@@ -45,67 +43,71 @@ interface HorseCardProps {
     birthDate: Date | null;
     photoUrl: string | null;
     uelnCode: string | null;
+    boxLocation?: string | null;
   };
   tenantSlug: string;
 }
 
 export function HorseCard({ horse, tenantSlug }: HorseCardProps) {
   const age = horse.birthDate ? ageInYears(horse.birthDate) : null;
+  // "Activo" es lo normal: solo se marca lo que se sale de ahi.
+  const showStatus = horse.status !== "ACTIVE";
 
   return (
     <Link
       href={`/${tenantSlug}/caballos/${horse.id}`}
-      className="group block h-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-bento outline-none transition-[border-color,box-shadow] duration-200 hover:border-foreground/15 hover:shadow-raised focus-visible:ring-2 focus-visible:ring-ring/50"
     >
-      <Card className="h-full gap-0 py-0 transition-colors duration-200 group-hover:border-foreground/20">
-        {/* Photo / placeholder */}
-        <div className="relative aspect-[4/3] overflow-hidden border-b border-border bg-muted">
-          {horse.photoUrl ? (
-            <Image
-              src={horse.photoUrl}
-              alt={horse.name}
-              fill
-              sizes="(min-width: 1280px) 18rem, (min-width: 640px) 45vw, 100vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/15">
-              <Horse weight="duotone" className="h-16 w-16 text-primary/25" />
-            </div>
-          )}
-          <div className="absolute top-2.5 right-2.5">
-            <Badge
-              variant={statusBadgeVariant[horse.status] ?? "secondary"}
-              className="bg-card/95 shadow-xs backdrop-blur-md"
-            >
-              {statusLabels[horse.status] ?? horse.status}
-            </Badge>
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+        {horse.photoUrl ? (
+          <Image
+            src={horse.photoUrl}
+            alt={horse.name}
+            fill
+            sizes="(min-width: 1280px) 18rem, (min-width: 640px) 45vw, 100vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          // Sin foto, el nombre hace de retrato: distingue mejor que un icono
+          // repetido en toda la cuadricula.
+          <div
+            aria-hidden
+            className="absolute inset-0 flex items-center justify-center bg-primary/[0.07]"
+          >
+            <span className="text-5xl font-bold text-primary-ink/35 transition-colors group-hover:text-primary-ink/50">
+              {horse.name.charAt(0).toUpperCase()}
+            </span>
           </div>
-        </div>
+        )}
+        {showStatus && (
+          <Badge
+            variant={statusBadgeVariant[horse.status] ?? "secondary"}
+            className="absolute top-2.5 left-2.5 shadow-xs"
+          >
+            {statusLabels[horse.status] ?? horse.status}
+          </Badge>
+        )}
+      </div>
 
-        <CardContent className="space-y-2 px-3.5 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="truncate text-[14.5px] font-semibold tracking-tight text-foreground">
-              {horse.name}
-            </h3>
-            <CaretRight
-              weight="bold"
-              className="h-3 w-3 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5"
-            />
-          </div>
-
-          {/* One quiet metadata line instead of a stack of chips. */}
-          <p className="truncate text-[12px] text-muted-foreground">
-            {[
-              sexLabels[horse.sex] ?? horse.sex,
-              horse.breed,
-              age !== null ? `${age} ${age === 1 ? "año" : "años"}` : null,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
+      <div className="flex flex-1 flex-col gap-1 px-3.5 py-3">
+        <h3 className="truncate text-[15px] font-semibold text-foreground">
+          {horse.name}
+        </h3>
+        <p className="truncate text-[12.5px] text-muted-foreground">
+          {[
+            sexLabels[horse.sex] ?? horse.sex,
+            age !== null ? `${age} ${age === 1 ? "año" : "años"}` : null,
+            horse.coat,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+        {horse.boxLocation && (
+          <p className="mt-auto truncate pt-1 text-[12px] font-medium text-foreground/70">
+            {horse.boxLocation}
           </p>
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </Link>
   );
 }

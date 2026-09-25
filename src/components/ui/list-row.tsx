@@ -78,10 +78,10 @@ export function RowIcon({
   return (
     <span
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-xl border [&>svg]:h-4 [&>svg]:w-4",
+        "flex h-9 w-9 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4",
         tone === "alert"
-          ? "border-amber-200 bg-amber-50 text-amber-700"
-          : "border-border bg-muted text-muted-foreground",
+          ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+          : "bg-muted text-muted-foreground",
       )}
     >
       {children}

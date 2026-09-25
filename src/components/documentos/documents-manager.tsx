@@ -95,11 +95,11 @@ function kindLabel(kind: string) {
 function iconFor(kind: string) {
   switch (kind.toUpperCase()) {
     case "PHOTO":
-      return <ImageIcon weight="duotone" />;
+      return <ImageIcon />;
     case "VIDEO":
-      return <FilmSlate weight="duotone" />;
+      return <FilmSlate />;
     default:
-      return <FileText weight="duotone" />;
+      return <FileText />;
   }
 }
 
@@ -320,7 +320,7 @@ export function DocumentsManager({
 
       {documents.length === 0 ? (
         <EmptyState
-          icon={<Files weight="duotone" />}
+          icon={<Files />}
           title="Todavía no hay documentos"
           description={
             lockedHorseId

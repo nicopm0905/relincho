@@ -1,7 +1,7 @@
 "use client"
 
 import { trpc } from "@/lib/trpc/react"
-import { BrainCircuit, Loader2 } from "lucide-react"
+import { Brain, SpinnerGap } from "@phosphor-icons/react"
 import { EditJournalDialog } from "./record-edit-dialogs"
 
 export function JournalFeed({ horseId }: { horseId: string }) {
@@ -10,7 +10,7 @@ export function JournalFeed({ horseId }: { horseId: string }) {
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <SpinnerGap className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -38,7 +38,7 @@ export function JournalFeed({ horseId }: { horseId: string }) {
           {journal.aiAnalysis && (
             <div className="mt-4 bg-primary/5 p-3 rounded-lg border-l-4 border-primary">
               <div className="flex items-center gap-2 mb-1">
-                <BrainCircuit className="h-4 w-4 text-primary" />
+                <Brain className="h-4 w-4 text-primary" />
                 <span className="text-xs font-semibold text-primary">Análisis IA</span>
               </div>
               <p className="text-sm text-primary/90 leading-relaxed">{journal.aiAnalysis}</p>

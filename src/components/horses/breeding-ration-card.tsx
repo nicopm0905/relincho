@@ -1,4 +1,3 @@
-import { Grains } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@/components/ui/card";
 import { breedingRation, type RationInput } from "@/lib/breeding-ration";
 
@@ -12,14 +11,11 @@ const range = ([a, b]: [number, number]) =>
 export function BreedingRationCard({ input }: { input: RationInput }) {
   const r = breedingRation(input);
   return (
-    <Card className="p-6 border-border bg-card">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-          <Grains weight="duotone" className="h-5 w-5" />
-        </div>
+    <Card className="p-5">
+      <div className="mb-4">
         <div>
-          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Ración orientativa</h3>
-          <p className="text-xs text-muted-foreground">
+          <h3 className="text-[15px] font-semibold text-foreground">Ración orientativa</h3>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
             {r.label}
             {r.detail ? ` · ${r.detail}` : ""}
           </p>
@@ -28,15 +24,15 @@ export function BreedingRationCard({ input }: { input: RationInput }) {
 
       <dl className="grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl bg-muted/50 px-2 py-3">
-          <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Forraje</dt>
+          <dt className="text-[12px] font-medium text-muted-foreground">Forraje</dt>
           <dd className="mt-1 text-base font-bold text-foreground">{range(r.forageKg)} kg</dd>
         </div>
         <div className="rounded-xl bg-muted/50 px-2 py-3">
-          <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Concentrado</dt>
+          <dt className="text-[12px] font-medium text-muted-foreground">Concentrado</dt>
           <dd className="mt-1 text-base font-bold text-foreground">{range(r.concentrateKg)} kg</dd>
         </div>
         <div className="rounded-xl bg-muted/50 px-2 py-3">
-          <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Proteína</dt>
+          <dt className="text-[12px] font-medium text-muted-foreground">Proteína</dt>
           <dd className="mt-1 text-base font-bold text-foreground">{r.proteinPct}%</dd>
         </div>
       </dl>

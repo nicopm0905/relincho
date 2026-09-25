@@ -111,7 +111,7 @@ export function TasksBoard({
 
         {visiblePending.length === 0 ? (
           <EmptyState
-            icon={<Sun weight="duotone" />}
+            icon={<Sun />}
             title="Todo al día"
             description="No hay tareas pendientes."
           />

@@ -58,7 +58,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <CaretRight weight="duotone" className="h-6 w-6 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
+              <CaretRight className="h-6 w-6 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-foreground group-hover:translate-x-1 transition-all duration-300" />
             </a>
           ))}
         </div>

@@ -87,7 +87,7 @@ export function ContractExtras({
         className="mt-3 w-full rounded-lg text-xs text-muted-foreground hover:text-foreground"
         onClick={() => setOpen(true)}
       >
-        <Receipt weight="duotone" className="mr-1.5 h-4 w-4" />
+        <Receipt className="mr-1.5 h-4 w-4" />
         Extras de facturación ({extras.length}
         {recurringCount > 0 ? `, ${recurringCount} recurrentes` : ""})
       </Button>

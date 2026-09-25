@@ -71,7 +71,7 @@ async function SanidadContent({ params }: PageProps) {
                 key={ev.id}
                 leading={
                   <RowIcon tone="alert">
-                    <CalendarCheck weight="duotone" />
+                    <CalendarCheck />
                   </RowIcon>
                 }
                 title={ev.horse.name}

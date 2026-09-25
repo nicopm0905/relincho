@@ -29,11 +29,11 @@ export function EmptyState({
       )}
     >
       {icon && (
-        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-border/80 bg-muted text-muted-foreground [&>svg]:h-5 [&>svg]:w-5">
+        <div className="mb-3 text-muted-foreground/60 [&>svg]:h-7 [&>svg]:w-7">
           {icon}
         </div>
       )}
-      <h3 className="text-[14.5px] font-semibold tracking-tight text-foreground">
+      <h3 className="text-[15px] font-semibold text-foreground">
         {title}
       </h3>
       {description && (

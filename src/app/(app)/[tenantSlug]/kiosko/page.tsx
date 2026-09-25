@@ -78,7 +78,7 @@ export default function KioskoPage() {
   if (isError) {
     return (
       <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6 text-center">
-        <WarningCircle weight="duotone" className="h-16 w-16 text-rose-500 mb-4" />
+        <WarningCircle className="h-16 w-16 text-rose-500 mb-4" />
         <h2 className="text-xl font-bold text-foreground">Error al cargar datos</h2>
         <Button asChild className="mt-6 rounded-full" variant="outline">
           <Link href={`/${tenantSlug}/inicio`}>Volver al inicio</Link>

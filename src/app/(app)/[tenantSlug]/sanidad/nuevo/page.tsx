@@ -40,7 +40,7 @@ export default async function NuevoSanidadPage({ params, searchParams }: PagePro
         
         <div className="flex items-center gap-3 mb-8">
           <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shadow-sm">
-            <Heartbeat weight="duotone" className="h-6 w-6" />
+            <Heartbeat className="h-6 w-6" />
           </div>
           <div>
             <h1 className="text-2xl font-bold font-heading text-foreground">Nuevo Registro</h1>

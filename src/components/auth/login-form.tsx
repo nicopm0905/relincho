@@ -76,7 +76,7 @@ export function LoginForm({
       <Card>
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50">
-            <WarningCircle weight="duotone" className="h-6 w-6 text-amber-600" />
+            <WarningCircle className="h-6 w-6 text-amber-600" />
           </div>
           <CardTitle className="text-center">{t("unavailableTitle")}</CardTitle>
         </CardHeader>
