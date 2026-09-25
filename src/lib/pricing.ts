@@ -297,6 +297,21 @@ export const PLAN_FEATURES: Record<PlanKey, readonly FeatureKey[]> = {
   yeguada: YEGUADA,
 };
 
+/**
+ * Funciones del plan que todavía no están en la app. La web las enseña con la
+ * etiqueta "Próximamente": vender algo que no existe es la forma más rápida de
+ * perder la confianza de una yeguada. Se quitan de aquí el día que se publican.
+ */
+export const COMING_SOON: ReadonlySet<FeatureKey> = new Set<FeatureKey>([
+  "voz",
+  "multiFinca",
+  "comparativas",
+]);
+
+export function isComingSoon(feature: FeatureKey): boolean {
+  return COMING_SOON.has(feature);
+}
+
 /** Funciones que SOLO aporta cada plan respecto al anterior (para la web). */
 export function newFeaturesOf(key: PlanKey): FeatureKey[] {
   const idx = PLAN_ORDER.indexOf(key);
@@ -347,11 +362,14 @@ export function horseLimitFor(
   return base + Math.max(0, Math.floor(extraBlocks)) * ADDONS.extraHorses.blockSize;
 }
 
-/** Formatea euros sin decimales inútiles: 69 → "69 €", 3,45 → "3,45 €". */
+/**
+ * Formatea euros sin decimales inútiles: 69 → "69 €", 3,45 → "3,45 €".
+ * El espacio es de no separación: el símbolo nunca baja solo a otra línea.
+ */
 export function formatEuro(amount: number, locale = "es-ES"): string {
   const hasCents = Math.round(amount * 100) % 100 !== 0;
   return `${new Intl.NumberFormat(locale, {
     minimumFractionDigits: hasCents ? 2 : 0,
     maximumFractionDigits: 2,
-  }).format(amount)} €`;
+  }).format(amount)}\u00A0€`;
 }

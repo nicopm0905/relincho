@@ -213,12 +213,12 @@
         "cuadra": {
           "name": "Cuadra",
           "description": "For the yard that wants its day-to-day in order.",
-          "cta": "Start with Cuadra"
+          "cta": "Choose Cuadra"
         },
         "rendimiento": {
           "name": "Rendimiento",
           "description": "To protect performance and stop the injury before it arrives.",
-          "cta": "Start with Rendimiento"
+          "cta": "Choose Rendimiento"
         },
         "yeguada": {
           "name": "Yeguada",
@@ -244,7 +244,7 @@
         "racionDinamica": "Dynamic ration",
         "informeSemanal": "Weekly owner report",
         "panelVeterinario": "Shareable vet panel",
-        "nfc": "NFC/RFID chip",
+        "nfc": "Microchip lookup",
         "roles": "Team with roles",
         "pupilajeFacturacion": "Boarding and Veri*Factu invoicing included",
         "multiFinca": "Multi-site",
@@ -281,7 +281,8 @@
       "principle": {
         "title": "We charge per yard, not per user",
         "body": "If the stable manager cost a licence, nobody would log anything and the yard would lose the data that makes the app useful. That's why every plan includes your team."
-      }
+      },
+      "comingSoon": "Coming soon"
     },
     "showcase": {
       "eyebrow": "A look inside",

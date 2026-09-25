@@ -213,12 +213,12 @@
         "cuadra": {
           "name": "Cuadra",
           "description": "Para la cuadra que quiere tener el día a día en orden.",
-          "cta": "Empezar con Cuadra"
+          "cta": "Elegir Cuadra"
         },
         "rendimiento": {
           "name": "Rendimiento",
           "description": "Para cuidar el rendimiento y frenar la lesión antes de que llegue.",
-          "cta": "Empezar con Rendimiento"
+          "cta": "Elegir Rendimiento"
         },
         "yeguada": {
           "name": "Yeguada",
@@ -244,7 +244,7 @@
         "racionDinamica": "Ración dinámica",
         "informeSemanal": "Informe semanal al propietario",
         "panelVeterinario": "Panel veterinario compartible",
-        "nfc": "Chip NFC/RFID",
+        "nfc": "Búsqueda por microchip",
         "roles": "Equipo con roles",
         "pupilajeFacturacion": "Pupilaje y Facturación Veri*Factu incluidos",
         "multiFinca": "Multi-finca",
@@ -281,7 +281,8 @@
       "principle": {
         "title": "Cobramos por cuadra, no por usuario",
         "body": "Si el mayoral tuviera que costar una licencia, nadie apuntaría nada y la cuadra se quedaría sin el dato que hace útil la app. Por eso todos los planes incluyen a tu equipo."
-      }
+      },
+      "comingSoon": "Próximamente"
     },
     "showcase": {
       "eyebrow": "Así se ve por dentro",

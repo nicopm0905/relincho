@@ -11,6 +11,7 @@ import {
   annualMonthlyEquivalent,
   formatEuro,
   founderPrice,
+  isComingSoon,
   newFeaturesOf,
   planPrice,
   pricePerHorseMonth,
@@ -109,7 +110,9 @@ function PlanCard({
   const features = newFeaturesOf(planKey);
 
   const cta = t(`plans.${planKey}.cta`);
-  const buttonClass = "h-12 w-full text-base";
+  // Con 4 columnas el texto del botón no cabe en una línea a ~1280 px: se
+  // deja partir en vez de cortarlo.
+  const buttonClass = "h-auto min-h-12 w-full py-3 text-base whitespace-normal";
 
   return (
     <div
@@ -127,19 +130,31 @@ function PlanCard({
         <h3 className="mb-2 font-heading text-2xl font-bold text-foreground">
           {t(`plans.${planKey}.name`)}
         </h3>
-        <p className="text-sm text-muted-foreground">{t(`plans.${planKey}.description`)}</p>
+        <p className="text-sm text-muted-foreground md:min-h-[3.75rem]">
+          {t(`plans.${planKey}.description`)}
+        </p>
       </div>
 
       <div className="mb-2">
-        {plan.startsAt && (
-          <span className="mr-1 text-sm font-medium text-muted-foreground">{t("from")}</span>
-        )}
-        <span className="font-heading text-4xl font-bold text-foreground md:text-5xl">
-          {formatEuro(price)}
-        </span>
-        <span className="ml-1 font-medium text-muted-foreground">
-          {free ? "" : interval === "year" ? t("perYear") : t("perMonth")}
-        </span>
+        {/* "desde" va en su propia línea, reservada en todas las tarjetas para
+            que las cifras queden a la misma altura. El precio nunca se parte:
+            con 4 columnas "3490 €" no cabía y el € bajaba a otra línea. */}
+        <p
+          className="h-5 text-sm font-medium text-muted-foreground"
+          aria-hidden={!plan.startsAt}
+        >
+          {plan.startsAt ? t("from") : ""}
+        </p>
+        <p className="flex flex-wrap items-baseline gap-x-1">
+          <span className="font-heading text-4xl font-bold whitespace-nowrap text-foreground md:text-5xl xl:text-[2.75rem]">
+            {formatEuro(price)}
+          </span>
+          {!free && (
+            <span className="font-medium whitespace-nowrap text-muted-foreground">
+              {interval === "year" ? t("perYear") : t("perMonth")}
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="mb-6 min-h-[3.5rem] space-y-1 text-sm">
@@ -183,7 +198,14 @@ function PlanCard({
         {features.map((feature) => (
           <li key={feature} className="flex items-start gap-3">
             <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-            <span className="text-muted-foreground">{t(`features.${feature}`)}</span>
+            <span className="text-muted-foreground">
+              {t(`features.${feature}`)}
+              {isComingSoon(feature) && (
+                <span className="ml-2 inline-block rounded-full bg-muted px-2 py-0.5 align-middle text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                  {t("comingSoon")}
+                </span>
+              )}
+            </span>
           </li>
         ))}
       </ul>
