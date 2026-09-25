@@ -2,7 +2,7 @@
 
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +30,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const formSchema = z.object({
   mareId: z.string().min(1, "Debes seleccionar una yegua"),
-  season: z.coerce.number().min(2000).max(2100),
+  season: z.number({ message: "Indica el año" }).int().min(2000).max(2100),
   notes: z.string().optional(),
 });
 
@@ -42,7 +42,7 @@ export default function NuevoCicloPage() {
   const initialMareId = searchParams.get("mareId") || "";
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       mareId: initialMareId,
       season: new Date().getFullYear(),
@@ -128,7 +128,13 @@ export default function NuevoCicloPage() {
                     <FormItem>
                       <FormLabel className="font-bold">Temporada (Año)</FormLabel>
                       <FormControl>
-                        <Input type="number" className="h-12 rounded-xl bg-muted/20 border-border/50" {...field} />
+                        <Input
+                          type="number"
+                          className="h-12 rounded-xl bg-muted/20 border-border/50"
+                          {...field}
+                          value={Number.isFinite(field.value) ? field.value : ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? NaN : e.target.valueAsNumber)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

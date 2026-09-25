@@ -9,6 +9,7 @@ import {
   type SeasonCategory,
 } from "@/lib/repro-engine";
 import { milestoneTaskKey } from "@/lib/repro-gestation";
+import { coveringResult } from "@/lib/reproduction";
 
 export async function loadReproSettings(tx: PrismaClient, tenantId: string): Promise<ReproSettings> {
   const row = await tx.reproSettings.findUnique({ where: { tenantId } });
@@ -208,7 +209,26 @@ export async function syncGestationTasks(tx: PrismaClient, tenantId: string, now
     where: { tenantId, doneAt: null, sourceKey: { startsWith: "repro:" } },
     select: { id: true, sourceKey: true },
   });
-  const stale = pending.filter((t) => !liveCoverings.has(t.sourceKey!.split(":")[1]));
+  // Solo se retiran las de gestaciones que ya no siguen: perdida, parto o
+  // cubricion borrada. Una yegua que sale del seguimiento por otra razon (p. ej.
+  // pasa a inactiva) conserva sus tareas.
+  const orphanIds = [
+    ...new Set(
+      pending.map((t) => t.sourceKey!.split(":")[1]).filter((id) => !liveCoverings.has(id)),
+    ),
+  ];
+  const orphans = orphanIds.length
+    ? await tx.covering.findMany({
+        where: { tenantId, id: { in: orphanIds } },
+        select: { id: true, foaling: { select: { id: true } }, pregnancyChecks: { select: { date: true, result: true } } },
+      })
+    : [];
+  const ended = new Set(orphanIds);
+  for (const c of orphans) {
+    const result = coveringResult(c.pregnancyChecks);
+    if (!c.foaling && (result === "POSITIVE" || result === "TWINS")) ended.delete(c.id);
+  }
+  const stale = pending.filter((t) => ended.has(t.sourceKey!.split(":")[1]));
   if (stale.length) await tx.task.deleteMany({ where: { id: { in: stale.map((t) => t.id) } } });
 
   return { created, removed: stale.length };
