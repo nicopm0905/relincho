@@ -6,7 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { BillingButton } from "@/components/settings/billing-button";
 import { planHorseLimit, planLabel, isPlanPurchasable, founderCouponId } from "@/lib/stripe";
-import { FREE_PLAN, isFounderOfferOpen, normalizePlanKey } from "@/lib/pricing";
+import {
+  FREE_PLAN,
+  isFounderEligible,
+  isFounderOfferOpen,
+  normalizePlanKey,
+} from "@/lib/pricing";
 import { CreditCard, UsersThree, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { formatDate } from "@/lib/formatters";
 
@@ -48,7 +53,10 @@ export default async function AjustesPage({ params }: PageProps) {
     normalizePlanKey(tenant.plan) === FREE_PLAN;
   const foundersTaken = await prisma.tenant.count({ where: { founder: true } });
   const founderOpen =
-    !tenant.founder && Boolean(founderCouponId()) && isFounderOfferOpen(foundersTaken);
+    !tenant.founder &&
+    isFounderEligible(tenant) &&
+    Boolean(founderCouponId()) &&
+    isFounderOfferOpen(foundersTaken);
   // Un impago deja el plan intacto unos dias: se avisa sin cortar el acceso.
   const paymentPending =
     tenant.stripeStatus === "past_due" || tenant.stripeStatus === "unpaid";
