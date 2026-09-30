@@ -16,6 +16,8 @@ import {
   Warning,
 } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
+import { READINESS_ORDER } from "@/lib/readiness";
+import { ReadinessBadge } from "@/components/rendimiento/readiness-badge";
 import {
   disciplineLabels,
   phaseBarColor,
@@ -45,6 +47,19 @@ export default async function RendimientoPage({ params }: PageProps) {
   const alerts = withPlan.filter(
     (h) => h.bufferStatus === "exhausted" || h.tendonHistoryAlert,
   );
+  // Semáforo: lo que no puede trabajar o debe ir suave, primero.
+  const notFit = horses.filter(
+    (h) => h.readiness?.level === "ROJO" || h.readiness?.level === "AMBAR",
+  );
+  const checkedToday = horses.filter((h) => h.readiness?.checked).length;
+  const byUrgency = <T extends { readiness: { level: keyof typeof READINESS_ORDER } | null }>(
+    list: T[],
+  ) =>
+    [...list].sort(
+      (a, b) =>
+        READINESS_ORDER[a.readiness?.level ?? "SIN_CHEQUEO"] -
+        READINESS_ORDER[b.readiness?.level ?? "SIN_CHEQUEO"],
+    );
 
   return (
     <div className="animate-in fade-in-0 space-y-6 duration-500">
@@ -81,15 +96,19 @@ export default async function RendimientoPage({ params }: PageProps) {
           hint="Según el microciclo en curso"
         />
         <StatCard
-          label="Descansan hoy"
-          value={withPlan.length - workingToday.length}
-          hint="Descanso o sin carga prevista"
+          label="Patas chequeadas hoy"
+          value={`${checkedToday}/${horses.length}`}
+          hint="Antes de sacarlos a trabajar"
         />
         <StatCard
-          label="Requieren atención"
-          value={alerts.length}
-          hint="Margen agotado o alerta de tendón"
-          emphasis={alerts.length > 0}
+          label="No aptos o trabajo suave"
+          value={notFit.length}
+          hint={
+            alerts.length > 0
+              ? `Semáforo rojo o ámbar · ${alerts.length} con margen agotado o tendón`
+              : "Semáforo rojo o ámbar"
+          }
+          emphasis={notFit.length > 0}
         />
       </div>
 
@@ -119,7 +138,7 @@ export default async function RendimientoPage({ params }: PageProps) {
               />
             ) : (
               <ListRows>
-                {withPlan.map((horse) => {
+                {byUrgency(withPlan).map((horse) => {
                   const daysToTarget = horse.targetDate
                     ? differenceInCalendarDays(horse.targetDate, new Date())
                     : null;
@@ -168,6 +187,7 @@ export default async function RendimientoPage({ params }: PageProps) {
                       subtitle={subtitle}
                       meta={
                         <>
+                          <ReadinessBadge readiness={horse.readiness} />
                           {horse.bufferStatus === "exhausted" && (
                             <Badge variant="warning">Margen agotado</Badge>
                           )}
@@ -205,7 +225,7 @@ export default async function RendimientoPage({ params }: PageProps) {
           </CardHeader>
           <CardContent>
             <ListRows>
-              {withoutPlan.map((horse) => (
+              {byUrgency(withoutPlan).map((horse) => (
                 <ListRow
                   key={horse.horseId}
                   href={`/${tenantSlug}/rendimiento/${horse.horseId}`}
@@ -223,7 +243,12 @@ export default async function RendimientoPage({ params }: PageProps) {
                       .filter(Boolean)
                       .join(" · ") || "Sin disciplina asignada"
                   }
-                  meta={<span className="hidden sm:block">Planificar</span>}
+                  meta={
+                    <>
+                      <ReadinessBadge readiness={horse.readiness} />
+                      <span className="hidden sm:block">Planificar</span>
+                    </>
+                  }
                 />
               ))}
             </ListRows>
