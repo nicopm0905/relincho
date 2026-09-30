@@ -199,10 +199,31 @@
       },
       "founder": {
         "badge": "Precio de fundador",
-        "title": "−40 % de por vida y gratis hasta el 1 de enero de 2027",
-        "body": "Solo {slots} plazas. Te avisamos 30 días antes del primer cobro, sin permanencia. El descuento se mantiene aunque suba el precio de lista mientras no canceles.",
+        "title": "−40 % de por vida, mientras sigas con nosotros",
+        "subtitle": "Y gratis hasta el 1 de enero de 2027. Solo {slots} plazas. Calcula cuánto te ahorras:",
         "left": "Quedan {n} plazas",
-        "price": "{price}/mes de por vida"
+        "price": "{price}/mes de por vida",
+        "calc": {
+          "plan": "Tu plan",
+          "billing": "Cómo pagas",
+          "horizon": "En cuánto tiempo",
+          "years": "{n, plural, one {# año} other {# años}}",
+          "perCharge": "En cada cobro pagas <strong>{founder}</strong> en vez de {list}.",
+          "savedIn": "Te ahorras en {years}",
+          "withoutFounder": "Sin ser fundador",
+          "asFounder": "Como fundador",
+          "freeExtra": "Y además no pagas nada hasta el 1 de enero: {n, plural, one {# mes gratis} other {# meses gratis}}, {amount} más que te ahorras.",
+          "note": "Cuentas desde el primer cobro, con los precios de hoy y sin IVA. Si subimos el precio de lista, tu ahorro crece.",
+          "fromNote": "Yeguada es precio desde: con más caballos, el ahorro es mayor.",
+          "cta": "Reservar mi plaza de fundador"
+        },
+        "rules": {
+          "title": "Las condiciones, claras",
+          "forLife": "El −40 % es para siempre, aunque subamos el precio de lista, mientras sigas suscrito y al día con los pagos.",
+          "comeBack": "Si cancelas o dejas de pagar y vuelves más adelante, entras al precio normal: la plaza de fundador no se recupera.",
+          "notice": "Te avisamos 30 días antes del primer cobro.",
+          "noLockIn": "Sin permanencia: puedes cancelar cuando quieras."
+        }
       },
       "plans": {
         "cuaderno": {
@@ -516,7 +537,7 @@
       "notConfigured": "El pago en línea todavía no está activo. Escríbenos y lo activamos contigo.",
       "monthly": "Mensual",
       "annual": "Anual (paga 10, usa 12)",
-      "founderNote": "Precio de fundador aplicado: −40 % de por vida.",
+      "founderNote": "Precio de fundador aplicado: −40 % de por vida mientras sigas suscrito.",
       "seePlans": "Ver todos los planes"
     }
   },
