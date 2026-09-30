@@ -157,7 +157,7 @@
         },
         {
           "question": "¿Qué incluye el módulo de rendimiento?",
-          "answer": "Planifica la temporada hacia la competición (fases de volumen e intensidad), registra la carga real de cada sesión y avisa cuando un caballo con historial de tendón se pasa de intensidad. La intensidad la valora el jinete, así que reportar una sesión son dos datos: cuánto ha durado y cómo de duro ha sido."
+          "answer": "Planifica la temporada hacia la competición (fases de volumen e intensidad), registra la carga real de cada sesión y avisa cuando un caballo con historial de tendón se pasa de intensidad. La intensidad la valora el jinete, así que reportar una sesión son dos datos: cuánto ha durado y cómo de duro ha sido. Además, cada mañana el mozo chequea las patas en un toque (calor, hinchazón, dolor, trote) y la app cruza ese chequeo con la carga de las últimas cuatro semanas: semáforo verde, ámbar o rojo antes de sacar al caballo."
         },
         {
           "question": "¿Necesito conocimientos técnicos para usar la plataforma?",
@@ -262,6 +262,7 @@
         "periodizacion": "Periodización y microciclos",
         "cargaInterna": "Carga interna (UA)",
         "alertasTendon": "Alertas de tendón",
+        "semaforoAptitud": "Chequeo diario de patas y semáforo de aptitud",
         "racionDinamica": "Ración dinámica",
         "informeSemanal": "Informe semanal al propietario",
         "panelVeterinario": "Panel veterinario compartible",

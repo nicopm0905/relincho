@@ -13,13 +13,20 @@ import { projectNutrition } from "@/server/services/nutrition/projection";
 import { stripTime } from "@/server/services/performance/periodization";
 import { listPendingCheckIns } from "@/server/services/performance/check-in";
 import {
+  getHorseReadiness,
+  getReadinessForHorses,
+} from "@/server/services/performance/readiness";
+import {
   chipIdSchema,
   disciplineSchema,
+  limbCheckSchema,
   reproductiveStatusSchema,
   sweatLossSchema,
 } from "@/lib/schemas/performance";
 
 const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
+/** El chequeo de patas lo puede apuntar también el veterinario externo. */
+const limbCheckProcedure = roleProcedure("OWNER", "MANAGER", "GROOM", "VET_EXTERNAL");
 
 export const performanceRouter = createTRPCRouter({
   // --- Emparejamiento chip fisico <-> caballo -----------------------------
@@ -238,8 +245,18 @@ export const performanceRouter = createTRPCRouter({
         orderBy: { name: "asc" },
       });
 
+      const readinessByHorse = await getReadinessForHorses(
+        tx,
+        ctx.tenantId,
+        horses.map((h) => ({
+          id: h.id,
+          tendonHistory: h.vetProfile?.tendonHistoryAlert ?? false,
+        })),
+      );
+
       return horses.map((horse) => {
         const macro = horse.macrocycles[0] ?? null;
+        const readiness = readinessByHorse.get(horse.id) ?? null;
         const today = horse.dailyLoads[0] ?? null;
         return {
           horseId: horse.id,
@@ -254,6 +271,14 @@ export const performanceRouter = createTRPCRouter({
           phase: today?.microcycle.mesocycle.phase ?? null,
           weekNumber: today?.microcycle.weekNumber ?? null,
           bufferStatus: today?.microcycle.bufferStatus ?? null,
+          readiness: readiness
+            ? {
+                level: readiness.level,
+                label: readiness.label,
+                checked: readiness.checked,
+                firstReason: readiness.reasons[0] ?? null,
+              }
+            : null,
           today: today
             ? {
                 workType: today.workType,
@@ -282,6 +307,49 @@ export const performanceRouter = createTRPCRouter({
         listPendingCheckIns(tx, ctx.tenantId, input?.days ?? 4),
       );
       return ids ? pending.filter((item) => ids.includes(item.horseId)) : pending;
+    }),
+
+  // --- Semaforo de aptitud: chequeo de patas + carga aguda/cronica -------
+  /** Semaforo, carga de 28 dias y mapa de patas de 14 dias de un caballo. */
+  readiness: tenantProcedure
+    .input(z.object({ horseId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
+      return withTenant(ctx.tenantId, (tx) =>
+        getHorseReadiness(tx, ctx.tenantId, input.horseId),
+      );
+    }),
+
+  /** Guarda (o corrige) el chequeo de patas del dia. Uno por caballo y dia. */
+  saveLimbCheck: limbCheckProcedure
+    .input(limbCheckSchema)
+    .mutation(async ({ ctx, input }) => {
+      await assertHorseAccess(ctx, input.horseId);
+      const date = stripTime(input.date ?? new Date());
+      const unique = (legs: string[]) => [...new Set(legs)];
+      const data = {
+        heatLegs: unique(input.heatLegs),
+        swellingLegs: unique(input.swellingLegs),
+        painLegs: unique(input.painLegs),
+        lameness: input.lameness,
+        notes: input.notes?.trim() || null,
+        checkedById: ctx.user.id,
+      };
+      return withTenant(ctx.tenantId, async (tx) => {
+        const horse = await tx.horse.findFirst({
+          where: { id: input.horseId, tenantId: ctx.tenantId },
+          select: { id: true },
+        });
+        if (!horse) throw new TRPCError({ code: "NOT_FOUND" });
+
+        await tx.limbCheck.upsert({
+          where: { horseId_date: { horseId: input.horseId, date } },
+          update: data,
+          create: { tenantId: ctx.tenantId, horseId: input.horseId, date, ...data },
+        });
+        const result = await getHorseReadiness(tx, ctx.tenantId, input.horseId);
+        return result.readiness;
+      });
     }),
 
   snapshot: tenantProcedure

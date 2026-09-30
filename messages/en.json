@@ -157,7 +157,7 @@
         },
         {
           "question": "What does the performance module include?",
-          "answer": "Plan the season towards a competition (volume and intensity phases), log the actual load of every session and get an alert when a horse with a tendon history goes over its intensity limit. Intensity is rated by the rider, so reporting a session is just two data points: how long it lasted and how hard it felt."
+          "answer": "Plan the season towards a competition (volume and intensity phases), log the actual load of every session and get an alert when a horse with a tendon history goes over its intensity limit. Intensity is rated by the rider, so reporting a session is just two data points: how long it lasted and how hard it felt. Every morning the groom checks the legs in one tap (heat, swelling, pain, trot) and the app cross-checks it with the last four weeks of workload: a green, amber or red light before the horse goes out."
         },
         {
           "question": "Do I need technical knowledge to use the platform?",
@@ -262,6 +262,7 @@
         "periodizacion": "Periodisation and microcycles",
         "cargaInterna": "Internal load (AU)",
         "alertasTendon": "Tendon alerts",
+        "semaforoAptitud": "Daily leg check and fitness traffic light",
         "racionDinamica": "Dynamic ration",
         "informeSemanal": "Weekly owner report",
         "panelVeterinario": "Shareable vet panel",

@@ -301,6 +301,7 @@ export type FeatureKey =
   | "periodizacion"
   | "cargaInterna"
   | "alertasTendon"
+  | "semaforoAptitud"
   | "racionDinamica"
   | "informeSemanal"
   | "panelVeterinario"
@@ -335,6 +336,7 @@ const RENDIMIENTO: FeatureKey[] = [
   "periodizacion",
   "cargaInterna",
   "alertasTendon",
+  "semaforoAptitud",
   "racionDinamica",
   "informeSemanal",
   "panelVeterinario",

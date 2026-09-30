@@ -219,6 +219,7 @@ model Horse {
   vetProfile       VeterinaryProfile?
   macrocycles      Macrocycle[]
   dailyLoads       DailyLoad[]
+  limbChecks       LimbCheck[]
   events           Event[]
   nutritionBaseline NutritionBaseline?
   nutritionPrescriptions NutritionPrescription[]
@@ -1009,6 +1010,33 @@ model NutritionBaseline {
   updatedAt              DateTime @updatedAt
 
   @@index([tenantId])
+}
+
+enum Lameness {
+  NO
+  DUDOSA
+  SI
+}
+
+/// Chequeo de patas antes de trabajar (semaforo de aptitud). Uno por caballo y
+/// dia. Patas: MI/MD = manos (anteriores), PI/PD = pies (posteriores).
+model LimbCheck {
+  id           String   @id @default(uuid())
+  tenantId     String
+  horseId      String
+  date         DateTime @db.Date
+  heatLegs     String[] @default([])
+  swellingLegs String[] @default([])
+  painLegs     String[] @default([])
+  lameness     Lameness @default(NO)
+  notes        String?
+  checkedById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  horse        Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+
+  @@unique([horseId, date])
+  @@index([tenantId, date])
 }
 
 /// Racion calculada para un dia concreto a partir de la carga y el estado clinico.
