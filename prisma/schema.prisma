@@ -233,6 +233,7 @@ model Horse {
   macrocycles      Macrocycle[]
   dailyLoads       DailyLoad[]
   limbChecks       LimbCheck[]
+  bodyMeasurements BodyMeasurement[]
   identificationIncidents IdentificationIncident[]
   events           Event[]
   nutritionBaseline NutritionBaseline?
@@ -1174,6 +1175,56 @@ model LimbCheck {
 
   @@unique([horseId, date])
   @@index([tenantId, date])
+}
+
+enum WeightMethod {
+  BASCULA
+  CINTA
+  MEDIDAS
+}
+
+/// Pesaje y condicion corporal (Henneke 1-9). Uno por caballo y dia: volver a
+/// pesar el mismo dia corrige el anterior. El ultimo peso alimenta la racion.
+model BodyMeasurement {
+  id            String        @id @default(uuid())
+  tenantId      String
+  horseId       String
+  date          DateTime      @db.Date
+  method        WeightMethod?
+  weightKg      Decimal?      @db.Decimal(6, 1)
+  /// Perimetro toracico y longitud (punta del hombro a punta de la nalga).
+  girthCm       Decimal?      @db.Decimal(5, 1)
+  lengthCm      Decimal?      @db.Decimal(5, 1)
+  /// Escala Henneke, de 1 a 9 (admite medios puntos).
+  bodyCondition Decimal?      @db.Decimal(3, 1)
+  notes         String?
+  recordedById  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  horse         Horse         @relation(fields: [horseId], references: [id], onDelete: Cascade)
+
+  @@unique([horseId, date])
+  @@index([tenantId, date])
+}
+
+/// Prevision del tiempo hora a hora de un punto (MET Norway), compartida por
+/// las fincas que caen en el mismo km. Guarda tambien las horas ya pasadas: la
+/// prevision solo mira hacia delante y el calor del dia necesita la manana.
+/// No es dato de ninguna yeguada: no lleva tenantId.
+model WeatherForecast {
+  id           String   @id @default(uuid())
+  /// "36.68,-6.14": latitud y longitud con dos decimales.
+  locationKey  String   @unique
+  latitude     Float
+  longitude    Float
+  timeZone     String
+  /// [{ time: ISO UTC, tempC, rh }]
+  points       Json
+  /// Cabecera Last-Modified de MET Norway, para pedir solo si hay cambios.
+  lastModified String?
+  fetchedAt    DateTime
+  expiresAt    DateTime
+  updatedAt    DateTime @updatedAt
 }
 
 /// Racion calculada para un dia concreto a partir de la carga y el estado clinico.

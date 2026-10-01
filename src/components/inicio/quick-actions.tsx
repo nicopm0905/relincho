@@ -21,7 +21,7 @@ export function QuickActions({
   canRecordHealth,
 }: {
   tenantSlug: string;
-  horses: (TaskOption & { status: string; excludedFromFoodChain: boolean })[];
+  horses: (TaskOption & { status: string; excludedFromFoodChain: boolean; weightKg?: number | null })[];
   assignees: TaskOption[];
   canRecordHealth: boolean;
 }) {

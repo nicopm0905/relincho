@@ -7,6 +7,9 @@ import { gestation, mareState, mareStateLabels, type MareState } from "@/lib/rep
 import { cn } from "@/lib/utils";
 import { withdrawalStatus } from "@/lib/treatments";
 import { BreedingRationCard } from "@/components/horses/breeding-ration-card";
+import { BodyConditionCard } from "@/components/horses/body-condition-card";
+import { getSession } from "@/server/auth";
+import { getTenantAccess } from "@/server/tenant-access";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -166,10 +169,16 @@ export default async function CaballoDetailPage({ params }: PageProps) {
 
   // Los documentos viven en su propio router porque la ficha grande no trae
   // las URLs firmadas: aqui se piden ya con enlace temporal resuelto.
-  const [horseDocuments, horseHealth] = await Promise.all([
+  const [horseDocuments, horseHealth, bodyCondition, session] = await Promise.all([
     caller.documents.list({ horseId: id }),
     caller.health.list({ horseId: id }),
+    caller.bodyCondition.get({ horseId: id }).catch(() => null),
+    getSession(),
   ]);
+  const { membership } = await getTenantAccess(tenantSlug, session?.user?.id);
+  const role = membership?.role ?? "";
+  const canRecordWeight = ["OWNER", "MANAGER", "GROOM", "VET_EXTERNAL"].includes(role);
+  const canManageWeight = ["OWNER", "MANAGER"].includes(role);
 
   // Tiempo de espera vigente: el tratamiento que libera más tarde manda.
   const activeWithdrawal = horseHealth
@@ -314,7 +323,14 @@ export default async function CaballoDetailPage({ params }: PageProps) {
               {lastCovering ? mareStateLabels[lastState] : "Sin cubriciones"}
             </Fact>
           ) : (
-            <Fact label="Peso base">
+            <Fact
+              label="Peso"
+              hint={
+                bodyCondition?.lastCondition
+                  ? `Condición ${bodyCondition.lastCondition.bodyCondition} de 9`
+                  : undefined
+              }
+            >
               {horse.vetProfile?.baseWeightKg ? `${Number(horse.vetProfile.baseWeightKg)} kg` : "—"}
             </Fact>
           )}
@@ -369,6 +385,17 @@ export default async function CaballoDetailPage({ params }: PageProps) {
               <Field label="Propietario" value={horse.owner?.name ?? "La yeguada"} />
             </dl>
           </Card>
+
+          {bodyCondition && (
+            <div className="mt-5">
+              <BodyConditionCard
+                data={bodyCondition}
+                birthDate={horse.birthDate ? new Date(horse.birthDate) : null}
+                canRecord={canRecordWeight}
+                canManage={canManageWeight}
+              />
+            </div>
+          )}
 
           <div className="mt-5 grid items-start gap-5 lg:grid-cols-2">
             <FeedingPlanCard horseId={horse.id} horseName={horse.name} />

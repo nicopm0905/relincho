@@ -19,6 +19,8 @@ import { portalRouter } from "./routers/portal";
 import { documentsRouter } from "./routers/documents";
 import { calendarRouter } from "./routers/calendar";
 import { eventsRouter } from "./routers/events";
+import { weatherRouter } from "./routers/weather";
+import { bodyConditionRouter } from "./routers/body-condition";
 
 export const appRouter = createTRPCRouter({
   horses: horsesRouter,
@@ -41,6 +43,8 @@ export const appRouter = createTRPCRouter({
   documents: documentsRouter,
   calendar: calendarRouter,
   events: eventsRouter,
+  weather: weatherRouter,
+  bodyCondition: bodyConditionRouter,
 });
 
 export type AppRouter = typeof appRouter;

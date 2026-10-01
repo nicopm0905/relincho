@@ -5,7 +5,7 @@ import { withTenant } from "@/server/db/prisma";
 import { stripTime, type PhaseValue } from "../performance/periodization";
 import { computeDailyPrescription } from "./engine";
 import { loadNutritionContext } from "./context";
-import { getMaxTempRange } from "./weather";
+import { getDailyHeatRange } from "../weather";
 
 /** Horizonte por defecto: la semana en curso y la siguiente. */
 export const DEFAULT_PROJECTION_DAYS = 14;
@@ -25,9 +25,11 @@ function estimateSweat(
   workType: string,
   plannedLoadUa: number,
   tempC: number | null,
+  heatStress = false,
 ): "BAJA" | "MEDIA" | "ALTA" | null {
   if (workType === "DESCANSO") return null;
-  if (plannedLoadUa > 400 || (tempC != null && tempC > 30 && plannedLoadUa > 200)) {
+  const hot = (tempC != null && tempC > 30) || heatStress;
+  if (plannedLoadUa > 400 || (hot && plannedLoadUa > 200)) {
     return "ALTA";
   }
   if (plannedLoadUa > 200) return "MEDIA";
@@ -57,8 +59,8 @@ export async function projectNutrition(input: ProjectNutritionInput) {
   const days = Math.min(Math.max(input.days ?? DEFAULT_PROJECTION_DAYS, 1), 60);
   const to = addDays(from, days - 1);
 
-  // Una sola llamada al tiempo para todo el rango.
-  const temps = await getMaxTempRange({ from, to });
+  // Una sola llamada al tiempo de la finca para todo el rango.
+  const weather = await getDailyHeatRange({ tenantId: input.tenantId, from, to });
 
   return withTenant(input.tenantId, async (tx) => {
     const context = await loadNutritionContext(tx, input.tenantId, input.horseId);
@@ -103,7 +105,8 @@ export async function projectNutrition(input: ProjectNutritionInput) {
         continue;
       }
 
-      const tempC = temps.get(key) ?? null;
+      const tempC = weather.get(key)?.maxTempC ?? null;
+      const heatStress = weather.get(key)?.heatStress ?? false;
       const phase = day.microcycle.mesocycle.phase as PhaseValue;
 
       const prescription = computeDailyPrescription({
@@ -112,8 +115,9 @@ export async function projectNutrition(input: ProjectNutritionInput) {
         training: {
           internalLoadUa: day.plannedLoadUa,
           mesocyclePhase: phase,
-          sweatLoss: estimateSweat(day.workType, day.plannedLoadUa, tempC),
+          sweatLoss: estimateSweat(day.workType, day.plannedLoadUa, tempC, heatStress),
           ambientTempC: tempC,
+          heatStress,
           strengthSession: STRENGTH_WORK_TYPES.has(day.workType),
         },
       });

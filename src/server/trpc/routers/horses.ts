@@ -108,7 +108,7 @@ export const horsesRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const ids = await allowedHorseIds(ctx);
-      return withTenant(ctx.tenantId, (tx) =>
+      const rows = await withTenant(ctx.tenantId, (tx) =>
         tx.horse.findMany({
           where: {
             tenantId: ctx.tenantId,
@@ -132,10 +132,16 @@ export const horsesRouter = createTRPCRouter({
             uelnCode: true,
             boxLocation: true,
             excludedFromFoodChain: true,
+            // Peso actual (el último pesaje): la dosis del desparasitante.
+            vetProfile: { select: { baseWeightKg: true } },
           },
           orderBy: { name: "asc" },
         }),
       );
+      return rows.map(({ vetProfile, ...horse }) => ({
+        ...horse,
+        weightKg: vetProfile?.baseWeightKg != null ? Number(vetProfile.baseWeightKg) : null,
+      }));
     }),
 
   byId: tenantProcedure

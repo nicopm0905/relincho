@@ -9,6 +9,7 @@ import {
   dayKey,
   type Lameness,
   type LimbCheckData,
+  type ReadinessHeat,
   type ReadinessResult,
   type SessionLoad,
   type WorkloadSummary,
@@ -71,6 +72,7 @@ export async function getHorseReadiness(
   tenantId: string,
   horseId: string,
   now: Date = new Date(),
+  heat: ReadinessHeat | null = null,
 ): Promise<HorseReadiness> {
   const today = stripTime(now);
   const historyFrom = addDays(today, -(LIMB_HISTORY_DAYS - 1));
@@ -112,6 +114,7 @@ export async function getHorseReadiness(
     yesterday: yesterdayRow ? toCheck(yesterdayRow) : null,
     workload,
     tendonHistory,
+    heat,
   });
 
   return {
@@ -132,6 +135,7 @@ export async function getReadinessForHorses(
   tenantId: string,
   horses: { id: string; tendonHistory: boolean }[],
   now: Date = new Date(),
+  heat: ReadinessHeat | null = null,
 ): Promise<Map<string, ReadinessResult & { checked: boolean }>> {
   const result = new Map<string, ReadinessResult & { checked: boolean }>();
   if (horses.length === 0) return result;
@@ -173,6 +177,7 @@ export async function getReadinessForHorses(
       yesterday: yesterdayRow ? toCheck(yesterdayRow) : null,
       workload,
       tendonHistory: horse.tendonHistory,
+      heat,
     });
     result.set(horse.id, { ...readiness, checked: Boolean(todayRow) });
   }

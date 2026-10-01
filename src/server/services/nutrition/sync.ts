@@ -5,7 +5,7 @@ import { stripTime, type PhaseValue } from "../performance/periodization";
 import { getPhaseForDate } from "../performance/plan-service";
 import { computeDailyPrescription, type SweatLossValue } from "./engine";
 import { loadNutritionContext } from "./context";
-import { getMaxTempC } from "./weather";
+import { getDailyHeat } from "../weather";
 
 export interface SyncNutritionInput {
   tenantId: string;
@@ -45,8 +45,13 @@ export async function syncNutritionForDay(input: SyncNutritionInput) {
     input.internalLoadUa ?? (planContext.actualLoadUa || planContext.plannedLoadUa);
   const phase = input.mesocyclePhase ?? planContext.phase;
 
-  const ambientTempC =
-    input.ambientTempC ?? (await getMaxTempC({ date: day }));
+  // El tiempo de la finca se consulta solo; un valor manual (API) manda.
+  const heat =
+    input.ambientTempC != null
+      ? null
+      : await getDailyHeat({ tenantId: input.tenantId, date: day });
+  const ambientTempC = input.ambientTempC ?? heat?.maxTempC ?? null;
+  const heatStress = heat?.heatStress ?? false;
 
   return withTenant(input.tenantId, async (tx) => {
     const { vet, baseline } = await loadNutritionContext(
@@ -63,6 +68,7 @@ export async function syncNutritionForDay(input: SyncNutritionInput) {
         mesocyclePhase: phase,
         sweatLoss: input.sweatLoss ?? null,
         ambientTempC,
+        heatStress,
         strengthSession: input.strengthSession,
       },
     });

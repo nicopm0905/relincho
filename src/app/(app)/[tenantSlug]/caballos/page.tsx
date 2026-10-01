@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { createServerCaller } from "@/lib/trpc/server";
 import { Button } from "@/components/ui/button";
-import { DownloadSimple, Plus } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple, Plus, Scales } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { HorsesExplorer } from "@/components/horses/horses-explorer";
@@ -50,6 +50,14 @@ async function CaballosContent({ params }: PageProps) {
         actions={
           <div className="flex flex-wrap gap-2">
             <HorseImportDialog />
+            {horses.length > 0 && (
+              <Button asChild variant="outline" size="lg">
+                <Link href={`/${tenantSlug}/caballos/pesaje`}>
+                  <Scales weight="bold" />
+                  Pesaje
+                </Link>
+              </Button>
+            )}
             {horses.length > 0 && canExport && (
               <Button asChild variant="outline" size="lg">
                 <a href={`/api/horses/export?tenant=${encodeURIComponent(tenantSlug)}`}>
