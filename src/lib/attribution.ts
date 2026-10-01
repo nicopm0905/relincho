@@ -14,6 +14,20 @@ export const ATTRIBUTION_REFERRER_COOKIE = "relincho_ref";
 /** 90 días: cubre de sobra el tiempo entre ver el flyer y decidirse. */
 export const ATTRIBUTION_MAX_AGE_SECONDS = 90 * 24 * 60 * 60;
 
+/**
+ * Consentimiento de cookies: "si" o "no". La cookie de origen no es
+ * estrictamente necesaria, así que solo se guarda con un "si" (LSSI art. 22.2
+ * y guía de cookies de la AEPD). Esta, que recuerda la decisión, sí lo es.
+ */
+export const CONSENT_COOKIE = "relincho_consent";
+/** 12 meses: la AEPD pide no recordar la decisión más de 24. */
+export const CONSENT_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
+export type ConsentValue = "si" | "no";
+
+export function parseConsent(raw: string | null | undefined): ConsentValue | null {
+  return raw === "si" || raw === "no" ? raw : null;
+}
+
 const MAX_SOURCE_LENGTH = 40;
 
 /**

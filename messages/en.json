@@ -81,19 +81,47 @@
     },
     "hero": {
       "badgeNew": "New",
-      "badgeFeature": "Invoicing with fees and SEPA",
-      "titleLead": "The",
-      "titleHighlight": "equine management",
-      "titleTail": "software for stud farms.",
-      "subtitle": "Health, breeding, boarding, invoicing and training performance. All in one place. No hassle.",
+      "badgeFeature": "Fitness traffic light: one-tap leg check",
+      "titleLead": "From the notebook",
+      "titleHighlight": "to your phone.",
+      "titleTail": "",
+      "subtitle": "Vaccines and treatments that remind you, heats and foalings you don't miss, and every morning a traffic light that tells you which horse can work. Made in Jerez for stud farms and sport yards.",
       "ctaPrimary": "Try it free for 21 days",
-      "ctaSecondary": "See features",
+      "ctaSecondary": "See the demo, no sign-up",
       "disclaimer": "21 days free · No credit card",
       "trust": [
         "21 days free, no card",
         "Made in Jerez",
         "Your data stays in the EU"
       ]
+    },
+    "differentiators": {
+      "eyebrow": "What you won't find in other software",
+      "title": "Built for how a yard really works",
+      "items": {
+        "readiness": {
+          "title": "Fitness traffic light",
+          "body": "Before the horse goes out, the groom checks the legs in one tap. The app cross-checks it with the last four weeks of workload and gives you green, amber or red.",
+          "tag": "Injury prevention"
+        },
+        "treatments": {
+          "title": "Treatment book ready for inspection",
+          "body": "The record required by Spanish RD 666/2023 fills itself as you log each treatment, with its withdrawal period, and exports to PDF when it's requested.",
+          "tag": "Compliance without effort"
+        },
+        "ancce": {
+          "title": "ANCCE paperwork pre-filled",
+          "body": "When you log a covering or a foaling, the covering request and birth notification come out pre-filled, ready to check and submit.",
+          "tag": "PRE breeding"
+        }
+      }
+    },
+    "founderBand": {
+      "badge": "Founding members",
+      "title": "40% off for life and free until 1 January 2027",
+      "body": "For the first {slots} yards that trust us. No lock-in.",
+      "left": "{n} spots left",
+      "cta": "Calculate my savings"
     },
     "features": {
       "title": "Everything you need. And nothing else.",
@@ -492,20 +520,20 @@
         "body": "A cookie is a small text file that a website saves on your computer or mobile device when you visit it. It lets the website remember your actions and preferences (such as sign-in, language and other display preferences) for a period of time."
       },
       "s2": {
-        "title": "2. How we use cookies at Relincho",
-        "intro": "We use cookies for several reasons, mainly to:",
+        "title": "2. Which cookies Relincho uses",
+        "intro": "Only our own cookies. We use no advertising or third-party cookies.",
         "items": [
           {
-            "term": "Strictly Necessary Cookies:",
-            "description": "Essential for you to browse the platform and use its features, such as accessing secure areas (signing in to your account)."
+            "term": "Necessary (always on):",
+            "description": "Sign-in session (to access your account), language (NEXT_LOCALE) and your cookie choice (relincho_consent, 12 months). The site doesn't work without them and they need no consent."
           },
           {
-            "term": "Performance Cookies:",
-            "description": "Help us understand how visitors interact with the site, collecting information anonymously."
+            "term": "Visit origin (only if you accept):",
+            "description": "relincho_src and relincho_ref keep for 90 days which link or flyer you came from (for example, a fair's QR code) and the referring website. It tells us which channels work. If you reject, they are not stored and any existing ones are deleted."
           },
           {
-            "term": "Functionality Cookies:",
-            "description": "Allow the website to remember the choices you make (such as your username)."
+            "term": "Visit counting (no cookies):",
+            "description": "We count page visits with Vercel Web Analytics, which uses no cookies and doesn't identify anyone across days."
           }
         ]
       },
@@ -606,10 +634,11 @@
     }
   },
   "cookieBanner": {
-    "title": "Cookie Notice",
-    "body": "We use our own and third-party cookies to improve our services and show you advertising related to your preferences by analysing your browsing habits. If you continue browsing, we consider that you accept their use.",
+    "title": "Cookies",
+    "body": "We only use our own cookies. The necessary ones (sign-in and language) are always on. If you accept, we also keep for 90 days where you found us, e.g. a flyer's QR code. No advertising or third-party tracking.",
     "accept": "Accept",
-    "more": "Learn more"
+    "reject": "Reject",
+    "more": "More information"
   },
   "sidebar": {
     "brand": "Relincho",

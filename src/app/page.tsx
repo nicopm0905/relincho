@@ -2,6 +2,8 @@ import { getSession } from "@/server/auth";
 import { Header } from "@/components/marketing/header";
 import { Hero } from "@/components/marketing/hero";
 import { Showcase } from "@/components/marketing/showcase";
+import { Differentiators } from "@/components/marketing/differentiators";
+import { FounderBand } from "@/components/marketing/founder-band";
 import { Features } from "@/components/marketing/features";
 import { About } from "@/components/marketing/about";
 import { Faq } from "@/components/marketing/faq";
@@ -18,8 +20,10 @@ export default async function RootPage() {
       <main id="main-content" tabIndex={-1} className="flex-1">
         <Hero />
         <Showcase />
+        <Differentiators />
         <Features />
         <About />
+        <FounderBand />
         <Pricing />
         <Faq />
         <CtaBand />

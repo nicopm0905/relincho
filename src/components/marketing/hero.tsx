@@ -53,9 +53,9 @@ export async function Hero() {
               asChild
               className="h-12 bg-[#c5d86d] px-8 text-base text-[#1c2114] shadow-raised hover:bg-[#d4e384] sm:h-14"
             >
-              {/* Ver la demo antes de pedir cuenta: el visitante del QR viene a
-                  comprobar que existe lo que le contaron. */}
-              <Link href="/demo">
+              {/* El botón dice "prueba", así que lleva al alta. La demo, sin
+                  registro, va al lado para quien quiere mirar antes. */}
+              <Link href="/login">
                 {t("ctaPrimary")} <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
@@ -65,7 +65,7 @@ export async function Hero() {
               asChild
               className="h-12 border-white/30 bg-white/5 px-8 text-base text-white backdrop-blur-sm hover:bg-white/15 hover:text-white sm:h-14"
             >
-              <Link href="/#features">{t("ctaSecondary")}</Link>
+              <Link href="/demo">{t("ctaSecondary")}</Link>
             </Button>
           </div>
 

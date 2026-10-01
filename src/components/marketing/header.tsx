@@ -135,9 +135,9 @@ export function Header({ session, overHero = false }: HeaderProps) {
                   <Link href="/login">{t("actions.login")}</Link>
                 </Button>
                 <Button asChild size="sm" className="rounded-full">
-                  {/* Lleva a la demo, no al login: que vean el producto antes de
-                      tener que crear cuenta. */}
-                  <Link href="/demo">{t("actions.startFree")}</Link>
+                  {/* El botón promete la prueba, así que lleva al alta. La demo
+                      sin registro ya está en el menú. */}
+                  <Link href="/login">{t("actions.startFree")}</Link>
                 </Button>
               </>
             )}
