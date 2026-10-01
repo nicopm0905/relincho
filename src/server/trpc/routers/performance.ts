@@ -1,3 +1,5 @@
+import { getFarmHeat } from "@/server/services/weather";
+import type { ReadinessHeat } from "@/lib/readiness";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
@@ -27,6 +29,17 @@ import {
 const dailyProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
 /** El chequeo de patas lo puede apuntar también el veterinario externo. */
 const limbCheckProcedure = roleProcedure("OWNER", "MANAGER", "GROOM", "VET_EXTERNAL");
+
+/**
+ * Calor de hoy en la finca para el semáforo. Se consulta fuera de la
+ * transacción (es una llamada a la red) y, si falla, el semáforo sigue sin él.
+ */
+async function todayHeat(tenantId: string): Promise<ReadinessHeat | null> {
+  const farm = await getFarmHeat(tenantId).catch(() => null);
+  if (!farm) return null;
+  const { level, headline, allDayDanger } = farm.today.heat;
+  return { level, headline, allDayDanger };
+}
 
 export const performanceRouter = createTRPCRouter({
   // --- Emparejamiento chip fisico <-> caballo -----------------------------
@@ -198,6 +211,7 @@ export const performanceRouter = createTRPCRouter({
   /** Estado de todos los caballos con plan activo, para el panel de rendimiento. */
   overview: tenantProcedure.query(async ({ ctx }) => {
     const scope = await horseScope(ctx, "id");
+    const heat = await todayHeat(ctx.tenantId);
     return withTenant(ctx.tenantId, async (tx) => {
       const today = stripTime(new Date());
       const horses = await tx.horse.findMany({
@@ -252,6 +266,8 @@ export const performanceRouter = createTRPCRouter({
           id: h.id,
           tendonHistory: h.vetProfile?.tendonHistoryAlert ?? false,
         })),
+        new Date(),
+        heat,
       );
 
       return horses.map((horse) => {
@@ -315,8 +331,9 @@ export const performanceRouter = createTRPCRouter({
     .input(z.object({ horseId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       await assertHorseAccess(ctx, input.horseId);
+      const heat = await todayHeat(ctx.tenantId);
       return withTenant(ctx.tenantId, (tx) =>
-        getHorseReadiness(tx, ctx.tenantId, input.horseId),
+        getHorseReadiness(tx, ctx.tenantId, input.horseId, new Date(), heat),
       );
     }),
 
@@ -335,6 +352,7 @@ export const performanceRouter = createTRPCRouter({
         notes: input.notes?.trim() || null,
         checkedById: ctx.user.id,
       };
+      const heat = await todayHeat(ctx.tenantId);
       return withTenant(ctx.tenantId, async (tx) => {
         const horse = await tx.horse.findFirst({
           where: { id: input.horseId, tenantId: ctx.tenantId },
@@ -347,7 +365,7 @@ export const performanceRouter = createTRPCRouter({
           update: data,
           create: { tenantId: ctx.tenantId, horseId: input.horseId, date, ...data },
         });
-        const result = await getHorseReadiness(tx, ctx.tenantId, input.horseId);
+        const result = await getHorseReadiness(tx, ctx.tenantId, input.horseId, new Date(), heat);
         return result.readiness;
       });
     }),

@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CalendarBlank, CurrencyEur } from "@phosphor-icons/react";
 import { HealthEventType } from "@prisma/client";
 import { isMedicinal } from "@/lib/treatments";
+import { dewormerDoseWeight } from "@/lib/body-condition";
 import {
   MedicationFields,
   emptyMedication,
@@ -41,7 +42,7 @@ type FormData = z.output<typeof healthEventSchema>;
 interface HealthEventFormProps {
   tenantSlug: string;
   defaultHorseId?: string;
-  horses: { id: string; name: string; excludedFromFoodChain?: boolean }[];
+  horses: { id: string; name: string; excludedFromFoodChain?: boolean; weightKg?: number | null }[];
   onSaved?: () => void;
 }
 
@@ -174,6 +175,11 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses, onSaved }:
           onChange={setMedication}
           type={selectedType}
           foodChainExcluded={selectedHorse?.excludedFromFoodChain ?? false}
+          weightHint={
+            selectedType === "DEWORMING" && selectedHorse?.weightKg
+              ? `${selectedHorse.name} pesa ${selectedHorse.weightKg.toLocaleString("es-ES")} kg: dosifica la jeringa para ${dewormerDoseWeight(selectedHorse.weightKg)} kg. En desparasitantes, siempre hacia arriba: quedarse corto crea resistencias.`
+              : null
+          }
         />
       )}
 

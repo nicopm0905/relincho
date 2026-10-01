@@ -51,6 +51,11 @@ export interface TrainingImpactInput {
   sweatLoss?: SweatLossValue | null;
   /** Temperatura maxima del dia; por encima de 30 grados se activan electrolitos. */
   ambientTempC?: number | null;
+  /**
+   * Estres por calor en horas de trabajo (WBGT o humedad, ver lib/heat): en
+   * dias humedos el caballo no evapora el sudor aunque no pase de 30 grados.
+   */
+  heatStress?: boolean | null;
   /** Marca los microciclos de fuerza/potencia para el ajuste proteico nocturno. */
   strengthSession?: boolean;
 }
@@ -174,7 +179,7 @@ export function computeDailyPrescription(params: {
   }
 
   // --- Electrolitos: sudoracion o calor ------------------------------------
-  const hot = (training.ambientTempC ?? 0) > HIGH_TEMP_C;
+  const hot = (training.ambientTempC ?? 0) > HIGH_TEMP_C || Boolean(training.heatStress);
   // Sin trabajo no hay perdida por sudor que reponer, por mucho calor que haga.
   const worked = training.internalLoadUa > 0;
   let electrolytesGrams = 0;

@@ -24,6 +24,7 @@ import { SessionCheckIn } from "@/components/rendimiento/session-check-in";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { FirstSteps } from "@/components/onboarding/first-steps";
 import { QuickActions } from "@/components/inicio/quick-actions";
+import { HeatCard } from "@/components/rendimiento/heat-card";
 import { calendarDayOffset, dayWindowUtc, relativeDayLabel } from "@/lib/day-window";
 import { getSession } from "@/server/auth";
 import { getTenantAccess } from "@/server/tenant-access";
@@ -87,9 +88,11 @@ async function InicioContent({ params }: PageProps) {
       // sin cobros.
       caller.invoices.receivables().catch(() => null),
       caller.tasks.assignees().catch(() => []),
+      // El tiempo de la finca: se consulta solo, nadie lo apunta.
+      caller.weather.heat().catch(() => null),
     ]),
   ]);
-  const [horses, upcomingHealth, repro, openTasks, performance, pendingCheckIns, receivables, assignees] = data;
+  const [horses, upcomingHealth, repro, openTasks, performance, pendingCheckIns, receivables, assignees, heat] = data;
   const canRecordHealth = ["OWNER", "MANAGER", "GROOM", "VET_EXTERNAL"].includes(
     membership?.role ?? "",
   );
@@ -207,6 +210,8 @@ async function InicioContent({ params }: PageProps) {
 
       <SessionCheckIn sessions={pendingCheckIns} />
 
+      <HeatCard heat={heat} tenantSlug={tenantSlug} collapseWhenNormal />
+
       <QuickActions
         tenantSlug={tenantSlug}
         horses={horses.map((horse) => ({
@@ -214,6 +219,7 @@ async function InicioContent({ params }: PageProps) {
           name: horse.name,
           status: horse.status,
           excludedFromFoodChain: horse.excludedFromFoodChain,
+          weightKg: horse.weightKg,
         }))}
         assignees={assignees}
         canRecordHealth={canRecordHealth}

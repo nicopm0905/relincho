@@ -17,9 +17,16 @@
  *    crónica alta parece proteger), así que se usa como aviso orientativo y
  *    nunca pone un rojo por sí solo.
  *
+ * 3. El calor del día en la finca (lib/heat), que se calcula solo con la
+ *    previsión. El calor no pone rojo a un caballo sano: dice a qué hora
+ *    trabajarlo. Solo si no hay ninguna hora asumible en todo el día pasa a
+ *    ámbar ("trabajo suave").
+ *
  * No diagnostica: ordena las prioridades del día y dice cuándo llamar al
  * veterinario. Módulo puro: sin Prisma, se usa en servidor y navegador.
  */
+
+import { heatRank, type HeatDay } from "./heat";
 
 // ---------------------------------------------------------------------------
 // Extremidades
@@ -230,7 +237,11 @@ export interface ReadinessInput {
   yesterday?: LimbCheckData | null;
   workload?: Pick<WorkloadSummary, "ratio" | "zone" | "monotony"> | null;
   tendonHistory?: boolean;
+  /** Calor del día en la finca; null si no hay previsión. */
+  heat?: ReadinessHeat | null;
 }
+
+export type ReadinessHeat = Pick<HeatDay, "level" | "headline" | "allDayDanger">;
 
 export interface ReadinessResult {
   level: ReadinessLevel;
@@ -312,6 +323,14 @@ export function assessReadiness(input: ReadinessInput): ReadinessResult {
 
   if (input.tendonHistory && check && legsWithFindings(check).length > 0 && red.length === 0) {
     amber.push("Tiene historial de tendón: cualquier hallazgo cuenta doble.");
+  }
+
+  // Calor: la hora de trabajo cambia; el color, solo si no hay hora buena.
+  const heat = input.heat;
+  if (heat?.allDayDanger) {
+    amber.push("Calor peligroso todo el día en la finca: como mucho paso a la sombra.");
+  } else if (heat && heatRank(heat.level) >= heatRank("PRECAUCION")) {
+    notes.push(`Calor: ${heat.headline}`);
   }
 
   let level: ReadinessLevel;

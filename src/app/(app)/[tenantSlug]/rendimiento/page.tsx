@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { READINESS_ORDER } from "@/lib/readiness";
 import { ReadinessBadge } from "@/components/rendimiento/readiness-badge";
+import { HeatCard } from "@/components/rendimiento/heat-card";
 import {
   disciplineLabels,
   phaseBarColor,
@@ -37,7 +38,10 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function RendimientoPage({ params }: PageProps) {
   const { tenantSlug } = await params;
   const caller = await createServerCaller(tenantSlug);
-  const horses = await caller.performance.overview();
+  const [horses, heat] = await Promise.all([
+    caller.performance.overview(),
+    caller.weather.heat().catch(() => null),
+  ]);
 
   const withPlan = horses.filter((h) => h.hasPlan);
   const withoutPlan = horses.filter((h) => !h.hasPlan);
@@ -83,6 +87,8 @@ export default async function RendimientoPage({ params }: PageProps) {
           </>
         }
       />
+
+      <HeatCard heat={heat} tenantSlug={tenantSlug} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard

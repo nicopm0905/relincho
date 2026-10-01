@@ -90,6 +90,8 @@ interface MedicationFieldsProps {
   type: string;
   /** Todos los caballos elegidos están excluidos de consumo humano. */
   foodChainExcluded?: boolean;
+  /** Dosis según el peso real del caballo (desparasitaciones). */
+  weightHint?: string | null;
 }
 
 export function MedicationFields({
@@ -97,6 +99,7 @@ export function MedicationFields({
   onChange,
   type,
   foodChainExcluded = false,
+  weightHint = null,
 }: MedicationFieldsProps) {
   const id = useId();
   const hasPurchaseData = Boolean(values.supplier || values.purchaseReference);
@@ -123,6 +126,12 @@ export function MedicationFields({
       <legend className="px-1 text-sm font-semibold text-foreground">
         Libro de tratamientos
       </legend>
+
+      {weightHint && (
+        <p className="rounded-lg border border-border/70 bg-background px-3 py-2 text-[12.5px] text-foreground">
+          {weightHint}
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
