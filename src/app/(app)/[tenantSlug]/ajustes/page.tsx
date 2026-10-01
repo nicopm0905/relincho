@@ -14,6 +14,8 @@ import {
 } from "@/lib/pricing";
 import { CreditCard, UsersThree, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { formatDate } from "@/lib/formatters";
+import { accessState, describeTrialValue, TRIAL_DAYS } from "@/lib/trial";
+import { getTrialValue } from "@/server/services/billing/trial";
 
 import { TenantSettingsForm } from "@/components/settings/tenant-settings-form";
 import dynamic from "next/dynamic";
@@ -57,6 +59,12 @@ export default async function AjustesPage({ params }: PageProps) {
     isFounderEligible(tenant) &&
     Boolean(founderCouponId()) &&
     isFounderOfferOpen(foundersTaken);
+  const access = accessState(tenant);
+  const inTrial = access.kind === "TRIAL" || access.kind === "TRIAL_ENDED";
+  const built = inTrial ? describeTrialValue(await getTrialValue(tenant.id)) : null;
+  // Tras cancelar queda el cliente de Stripe pero no hay suscripcion: hay que
+  // volver a ofrecer los planes, no el portal.
+  const hasLiveSubscription = access.kind === "SUBSCRIBED";
   // Un impago deja el plan intacto unos dias: se avisa sin cortar el acceso.
   const paymentPending =
     tenant.stripeStatus === "past_due" || tenant.stripeStatus === "unpaid";
@@ -99,7 +107,7 @@ export default async function AjustesPage({ params }: PageProps) {
         </Card>
       )}
 
-      <Card>
+      <Card id="plan" className="scroll-mt-24">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard weight="fill" className="h-4 w-4" />
@@ -123,6 +131,32 @@ export default async function AjustesPage({ params }: PageProps) {
             </div>
           )}
 
+          {inTrial ? (
+            <div className="flex items-start justify-between gap-3 rounded-xl bg-muted/50 p-4">
+              <div>
+                <p className="font-semibold text-foreground">
+                  {access.kind === "TRIAL"
+                    ? `Prueba gratuita de Rendimiento`
+                    : "Prueba gratuita terminada"}
+                </p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {access.kind === "TRIAL"
+                    ? `${access.daysLeft === 1 ? "Queda 1 día" : `Quedan ${access.daysLeft} días`} de ${TRIAL_DAYS}${
+                        access.trialEndsAt ? `, hasta el ${formatDate(access.trialEndsAt)}` : ""
+                      }. Todo el plan completo, sin tarjeta.`
+                    : "Modo lectura: tus datos siguen aquí. Elige plan para seguir apuntando."}
+                </p>
+                {built && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Lo que ya tienes en Relincho: {built}.
+                  </p>
+                )}
+              </div>
+              <Badge variant={access.kind === "TRIAL" ? "default" : "destructive"}>
+                {access.kind === "TRIAL" ? "PRUEBA" : "LECTURA"}
+              </Badge>
+            </div>
+          ) : (
           <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
             <div>
               <p className="font-semibold text-foreground">{planLabel(tenant.plan)}</p>
@@ -141,10 +175,11 @@ export default async function AjustesPage({ params }: PageProps) {
               {tenant.plan.toUpperCase()}
             </Badge>
           </div>
+          )}
 
           <BillingButton
             tenantId={tenant.id}
-            hasSubscription={!!tenant.stripeCustomerId}
+            hasSubscription={hasLiveSubscription && !!tenant.stripeCustomerId}
             canManage={isOwner}
             founderOpen={founderOpen}
             plans={(["cuadra", "rendimiento"] as const).map((key) => ({

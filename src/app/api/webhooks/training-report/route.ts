@@ -1,3 +1,5 @@
+import { TRIAL_ENDED_MESSAGE } from "@/lib/trial";
+import { isTrialEnded } from "@/server/services/billing/trial";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { prisma } from "@/server/db/prisma";
@@ -92,6 +94,10 @@ export async function POST(request: NextRequest) {
     if (!membership) {
       return NextResponse.json({ error: "Sin acceso a este caballo" }, { status: 403 });
     }
+  }
+
+  if (await isTrialEnded(tenantId)) {
+    return NextResponse.json({ error: TRIAL_ENDED_MESSAGE }, { status: 402 });
   }
 
   const date = input.date ?? new Date();

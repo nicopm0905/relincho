@@ -5,6 +5,11 @@ import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
 import { isDemoTenant } from "@/lib/demo";
 import { Sidebar } from "@/components/layout/sidebar";
 import { DemoBanner } from "@/components/layout/demo-banner";
+import { TrialBanner } from "@/components/layout/trial-banner";
+import { accessState, isTrialEnding } from "@/lib/trial";
+import { isFounderOfferOpen } from "@/lib/pricing";
+import { prisma } from "@/server/db/prisma";
+import { getTrialValue } from "@/server/services/billing/trial";
 import { Toaster } from "@/components/ui/sonner";
 import { TRPCProvider } from "@/lib/trpc/react";
 import { OwnerExternalGate } from "@/components/portal/owner-external-gate";
@@ -35,6 +40,19 @@ export default async function TenantLayout({
   // Sin membresia en la yeguada de demostracion: mismo panel, en solo lectura.
   const readOnlyDemo = demo && !membership;
 
+  // Prueba gratuita: cuenta atras y, en los ultimos dias o al acabar, lo que ya
+  // han metido en la app y si quedan plazas de fundador (tres conteos rapidos,
+  // solo en esos dias).
+  const access = demo ? null : accessState(tenant);
+  const trialDecision =
+    access !== null && (access.kind === "TRIAL_ENDED" || isTrialEnding(access));
+  const [trialValue, foundersTaken] = trialDecision
+    ? await Promise.all([
+        getTrialValue(tenant.id),
+        prisma.tenant.count({ where: { founder: true } }),
+      ])
+    : [null, null];
+
   // Portal del propietario externo (Fase 1): si el único rol del usuario en el
   // tenant es OWNER_EXTERNAL, sólo puede usar /[tenantSlug]/portal. Se le sirve
   // un layout reducido (sin el sidebar del panel completo) y <OwnerExternalGate>
@@ -63,6 +81,16 @@ export default async function TenantLayout({
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
           <div className="mx-auto max-w-6xl px-4 pt-20 pb-24 md:px-8 md:pt-8 md:pb-12">
             {readOnlyDemo && <DemoBanner />}
+            {access && (
+              <TrialBanner
+                tenantSlug={tenantSlug}
+                state={access}
+                value={trialValue}
+                founderOpen={
+                  foundersTaken !== null && !tenant.founder && isFounderOfferOpen(foundersTaken)
+                }
+              />
+            )}
             {children}
           </div>
         </main>

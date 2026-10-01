@@ -19,8 +19,15 @@
 export type PlanKey = "cuaderno" | "cuadra" | "rendimiento" | "yeguada";
 export type BillingInterval = "month" | "year";
 
-/** Plan gratuito al que vuelve una yeguada que cancela. */
+/**
+ * Plan sin cobro. Ya no se vende: las altas nuevas tienen una prueba de 21
+ * días (ver `src/lib/trial.ts`). Lo conservan las yeguadas de la beta y es el
+ * valor que queda en la base de datos cuando no hay suscripción.
+ */
 export const FREE_PLAN: PlanKey = "cuaderno";
+
+/** Planes que se enseñan y se venden en la web (sin plan gratis). */
+export const PUBLIC_PLANS: readonly PlanKey[] = ["cuadra", "rendimiento", "yeguada"];
 
 export const PLAN_ORDER: readonly PlanKey[] = [
   "cuaderno",

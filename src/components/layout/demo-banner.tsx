@@ -19,7 +19,7 @@ export function DemoBanner() {
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
         <Button asChild size="sm">
-          <Link href="/login">Crear cuenta gratis</Link>
+          <Link href="/login">Probar 21 días gratis</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
           <Link href="/demo">Ver la demo guiada</Link>

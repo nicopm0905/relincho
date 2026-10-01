@@ -11,6 +11,7 @@ import {
   referrerHost,
 } from "@/lib/attribution";
 import { logEvent } from "@/lib/observability";
+import { trialEndFrom } from "@/lib/trial";
 import { z } from "zod";
 
 const schema = z.object({
@@ -56,6 +57,8 @@ export async function createTenantAction(input: z.infer<typeof schema>) {
       nif,
       acquisitionSource,
       acquisitionReferrer,
+      // Sin plan gratis: toda alta nueva empieza la prueba de Rendimiento.
+      trialEndsAt: trialEndFrom(),
       memberships: {
         create: {
           userId: session.user.id,

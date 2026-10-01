@@ -8,6 +8,7 @@ import {
   PLAN_DEFINITIONS,
   PLAN_FEATURES,
   PLAN_ORDER,
+  PUBLIC_PLANS,
   annualMonthlyEquivalent,
   annualPrice,
   billingAddonPrice,
@@ -193,4 +194,9 @@ test("los planes heredados de la beta se normalizan y respetan su límite", () =
 test("formato de euros sin decimales inútiles", () => {
   assert.equal(formatEuro(69).replace(/\s/g, " "), "69 €");
   assert.equal(formatEuro(3.45).replace(/\s/g, " "), "3,45 €");
+});
+
+test("la web ya no vende plan gratis: Cuadra, Rendimiento y Yeguada", () => {
+  assert.deepEqual([...PUBLIC_PLANS], ["cuadra", "rendimiento", "yeguada"]);
+  for (const key of PUBLIC_PLANS) assert.ok(PLAN_DEFINITIONS[key].monthly > 0);
 });

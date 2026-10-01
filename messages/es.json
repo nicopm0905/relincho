@@ -74,7 +74,7 @@
     "navigation": "Navegación principal",
     "actions": {
       "login": "Iniciar sesión",
-      "startFree": "Empezar gratis",
+      "startFree": "Prueba 21 días gratis",
       "goToPanel": "Ir al panel",
       "openMenu": "Abrir menú",
       "closeMenu": "Cerrar menú"
@@ -86,11 +86,11 @@
       "titleHighlight": "gestión equina",
       "titleTail": "para yeguadas.",
       "subtitle": "Sanidad, reproducción, pupilaje, facturación y rendimiento deportivo. Todo en un solo lugar. Sin complicaciones.",
-      "ctaPrimary": "Pruébalo gratis",
+      "ctaPrimary": "Pruébalo 21 días gratis",
       "ctaSecondary": "Ver características",
-      "disclaimer": "Sin tarjeta de crédito · Cancela cuando quieras",
+      "disclaimer": "21 días gratis · Sin tarjeta de crédito",
       "trust": [
-        "Sin tarjeta de crédito",
+        "21 días gratis, sin tarjeta",
         "Hecho en Jerez",
         "Tus datos, en la UE"
       ]
@@ -172,20 +172,21 @@
           "answer": "Con la facturación ya trabajas hoy: series y numeración por ejercicio, impuestos por línea, cuotas de pupilaje automáticas y recibos SEPA. Veri*Factu es una obligación de la AEAT que se aplazó a 2027, y preferimos no anunciarla como lista hasta que lo esté: cuando llegue, avisaremos a todas las yeguadas. Si necesitas facturar con Veri*Factu ahora mismo, escríbenos y te lo decimos claro antes de que te des de alta."
         },
         {
-          "question": "¿Puedo probar Relincho antes de suscribirme?",
-          "answer": "¡Por supuesto! El plan Cuaderno no tiene coste ni tarjeta: creas tu cuenta y empiezas a meter hasta 5 caballos. Cuando la cuadra crezca, pasas a Cuadra (reproducción, voz y nutrición) o a Rendimiento (periodización y alertas de tendón), desde 69 €/mes sin IVA."
+          "question": "¿Puedo probar Relincho antes de pagar?",
+          "answer": "Sí. Al crear la cuenta tienes 21 días con todo el plan Rendimiento, sin tarjeta: sanidad y libro de tratamientos, reproducción, periodización y semáforo de aptitud. Si traes tu Excel, en diez minutos tienes la cuadra dentro. Al terminar eliges plan, desde 69 €/mes sin IVA, y si lo eliges antes no pierdes los días que te quedan. Si no sigues, no se borra nada: la cuenta queda en modo lectura y puedes descargar tu libro de tratamientos."
         }
       ]
     },
     "pricing": {
       "title": "Precios simples. Sin sorpresas.",
-      "subtitle": "Empieza gratis y sube de plan cuando crezca tu cuadra. Pagas por cuadra y por caballo, nunca por la persona que apunta los datos.",
+      "subtitle": "Pruébalo 21 días con todo el plan Rendimiento, sin tarjeta. Después eliges plan. Pagas por cuadra y por caballo, nunca por la persona que apunta los datos.",
       "recommended": "Recomendado",
       "perMonth": "/mes",
       "perYear": "/año",
       "monthly": "Mensual",
       "annual": "Anual",
       "annualNote": "Paga 10 meses, usa 12",
+      "trialNote": "Empieza con {days} días gratis de Rendimiento completo, sin tarjeta. Si no eliges plan, tus datos no se borran: quedan en modo lectura.",
       "from": "desde",
       "perHorse": "{price} por caballo y mes con el plan lleno",
       "equivalent": "equivale a {price}/mes",
@@ -234,12 +235,12 @@
         "cuadra": {
           "name": "Cuadra",
           "description": "Para la cuadra que quiere tener el día a día en orden.",
-          "cta": "Elegir Cuadra"
+          "cta": "Probar gratis {days} días"
         },
         "rendimiento": {
           "name": "Rendimiento",
           "description": "Para cuidar el rendimiento y frenar la lesión antes de que llegue.",
-          "cta": "Elegir Rendimiento"
+          "cta": "Probar gratis {days} días"
         },
         "yeguada": {
           "name": "Yeguada",
@@ -323,10 +324,10 @@
     "badge": "Demo",
     "title": "Así trabaja Relincho por dentro",
     "subtitle": "Estas son pantallas reales de la aplicación, con la yeguada de demostración. Sin registro, sin llamada y sin tarjeta solo para mirar.",
-    "ctaPrimary": "Crear cuenta gratis",
+    "ctaPrimary": "Probar 21 días gratis",
     "ctaSecondary": "Hablar con nosotros",
     "tryNow": "Probar sin registro",
-    "ctaNote": "El plan Cuaderno no pide tarjeta: hasta 5 caballos.",
+    "ctaNote": "21 días con todo el plan Rendimiento, sin tarjeta. Si no sigues, tus datos no se borran.",
     "performance": {
       "eyebrow": "Lo que no vas a encontrar en otro sitio",
       "title": "Rendimiento y prevención de lesiones",
@@ -647,7 +648,7 @@
       "pricing": "Precios",
       "faq": "FAQ",
       "login": "Iniciar sesión",
-      "startFree": "Empezar gratis",
+      "startFree": "Prueba 21 días gratis",
       "goToPanel": "Ir al panel"
     },
     "hero": {
