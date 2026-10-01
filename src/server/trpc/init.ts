@@ -4,6 +4,7 @@ import { Role } from "@prisma/client";
 import { getSession } from "@/server/auth";
 import { getTenantAccess } from "@/server/tenant-access";
 import { DEMO_VIEWER_ID, isDemoTenant } from "@/lib/demo";
+import { TRIAL_ENDED_MESSAGE, accessState } from "@/lib/trial";
 import { cache } from "react";
 import { ZodError } from "zod";
 import superjson from "superjson";
@@ -49,12 +50,20 @@ export const createTRPCContext = cache(
         } as NonNullable<typeof user>);
     }
 
+    // Prueba gratuita terminada sin suscripcion: se ve todo, no se apunta nada.
+    const trialEnded =
+      Boolean(tenantId) &&
+      !isDemo &&
+      requestedTenant !== null &&
+      accessState(requestedTenant).readOnly;
+
     return {
       user: viewer,
       tenantId,
       role,
       membershipId,
       isDemo,
+      trialEnded,
       headers: opts.headers,
     };
   },
@@ -93,8 +102,13 @@ const baseProcedure = t.procedure.use(({ ctx, next, type }) => {
     throw new TRPCError({
       code: "FORBIDDEN",
       message:
-        "Estás viendo la demo de Relincho: es de solo lectura. Crea tu cuenta gratis para editar.",
+        "Estás viendo la demo de Relincho: es de solo lectura. Crea tu cuenta y pruébala 21 días gratis.",
     });
+  }
+  // Mismo sitio y misma regla para la prueba terminada: el cobro va por
+  // server actions de Stripe (fuera de tRPC), asi que pagar sigue funcionando.
+  if (ctx.trialEnded && type === "mutation") {
+    throw new TRPCError({ code: "FORBIDDEN", message: TRIAL_ENDED_MESSAGE });
   }
   return next();
 });

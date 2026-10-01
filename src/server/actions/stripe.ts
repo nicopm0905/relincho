@@ -120,8 +120,17 @@ export async function createCheckoutSession(
       throw new Error("La oferta de fundador ya no está disponible");
     }
   }
-  const trialEnd = Math.floor(new Date(FOUNDER.freeUntil).getTime() / 1000);
-  const trialUsable = founder && trialEnd - Date.now() / 1000 > 3 * 24 * 3600;
+  // Dias gratis que se respetan al contratar: el fundador hasta el 1 ene 2027;
+  // quien elige plan en mitad de la prueba no pierde los dias que le quedan
+  // (asi no hay motivo para esperar al ultimo dia). Stripe pide margen.
+  const minTrialSeconds = 3 * 24 * 3600;
+  const nowSeconds = Date.now() / 1000;
+  const founderEnd = Math.floor(new Date(FOUNDER.freeUntil).getTime() / 1000);
+  const ownTrialEnd = tenant.trialEndsAt
+    ? Math.floor(tenant.trialEndsAt.getTime() / 1000)
+    : 0;
+  const trialEnd = founder ? Math.max(founderEnd, ownTrialEnd) : ownTrialEnd;
+  const trialUsable = trialEnd - nowSeconds > minTrialSeconds;
 
   const stripeSession = await stripe.checkout.sessions.create({
     mode: "subscription",

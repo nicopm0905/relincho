@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -40,6 +41,7 @@ const NONE = "__none__";
 interface FormState {
   name: string;
   sex: "MALE" | "FEMALE" | "GELDING";
+  species: "CABALLAR" | "ASNAL" | "MULAR" | "BURDEGANO";
   status: "ACTIVE" | "SOLD" | "DEAD" | "RETIRED" | "IN_TRAINING";
   breed: string;
   coat: string;
@@ -80,6 +82,7 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
   const [form, setForm] = useState<FormState>({
     name: defaultValues?.name ?? "",
     sex: defaultValues?.sex ?? "MALE",
+    species: defaultValues?.species ?? "CABALLAR",
     status: defaultValues?.status ?? "ACTIVE",
     breed: defaultValues?.breed ?? "",
     coat: defaultValues?.coat ?? "",
@@ -259,6 +262,20 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
                   <SelectItem value="GELDING">Castrado</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="species">Especie</Label>
+              <NativeSelect
+                id="species"
+                value={form.species}
+                onChange={(e) => set("species", e.target.value)}
+              >
+                <option value="CABALLAR">Caballar</option>
+                <option value="ASNAL">Asnal</option>
+                <option value="MULAR">Mular</option>
+                <option value="BURDEGANO">Burdégano</option>
+              </NativeSelect>
             </div>
 
             <div className="space-y-1.5">

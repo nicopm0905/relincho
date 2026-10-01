@@ -50,6 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+import Script from "next/script";
 import { CookieBanner } from "@/components/cookie-banner";
 
 export default async function RootLayout({
@@ -77,6 +78,12 @@ export default async function RootLayout({
           </a>
           {children}
           <CookieBanner />
+          {/* Vercel Web Analytics: cuenta visitas por página sin cookies ni
+              identificar a nadie, así que no necesita consentimiento. Hay que
+              activarlo una vez en el panel de Vercel (Analytics → Enable). */}
+          {process.env.NODE_ENV === "production" && (
+            <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />
+          )}
         </NextIntlClientProvider>
         <Analytics />
       </body>

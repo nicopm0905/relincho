@@ -74,26 +74,54 @@
     "navigation": "Navegación principal",
     "actions": {
       "login": "Iniciar sesión",
-      "startFree": "Empezar gratis",
+      "startFree": "Prueba 21 días gratis",
       "goToPanel": "Ir al panel",
       "openMenu": "Abrir menú",
       "closeMenu": "Cerrar menú"
     },
     "hero": {
       "badgeNew": "Nuevo",
-      "badgeFeature": "Facturación con cuotas y SEPA",
-      "titleLead": "El software de",
-      "titleHighlight": "gestión equina",
-      "titleTail": "para yeguadas.",
-      "subtitle": "Sanidad, reproducción, pupilaje, facturación y rendimiento deportivo. Todo en un solo lugar. Sin complicaciones.",
-      "ctaPrimary": "Pruébalo gratis",
-      "ctaSecondary": "Ver características",
-      "disclaimer": "Sin tarjeta de crédito · Cancela cuando quieras",
+      "badgeFeature": "Semáforo de aptitud: chequeo de patas en un toque",
+      "titleLead": "Del cuaderno",
+      "titleHighlight": "al móvil.",
+      "titleTail": "",
+      "subtitle": "Vacunas y tratamientos que avisan solos, celos y partos que no se escapan, y cada mañana un semáforo que te dice qué caballo puede trabajar. Hecho en Jerez para yeguadas y cuadras deportivas.",
+      "ctaPrimary": "Pruébalo 21 días gratis",
+      "ctaSecondary": "Ver la demo sin registrarte",
+      "disclaimer": "21 días gratis · Sin tarjeta de crédito",
       "trust": [
-        "Sin tarjeta de crédito",
+        "21 días gratis, sin tarjeta",
         "Hecho en Jerez",
         "Tus datos, en la UE"
       ]
+    },
+    "differentiators": {
+      "eyebrow": "Lo que no encontrarás en otro software",
+      "title": "Hecho para cómo se trabaja de verdad en una cuadra",
+      "items": {
+        "readiness": {
+          "title": "Semáforo de aptitud",
+          "body": "Antes de sacar al caballo, el mozo chequea las patas en un toque. La app lo cruza con la carga de las últimas cuatro semanas y te dice verde, ámbar o rojo.",
+          "tag": "Prevención de lesiones"
+        },
+        "treatments": {
+          "title": "Libro de tratamientos listo para inspección",
+          "body": "El registro que exige el RD 666/2023 se rellena solo al apuntar cada tratamiento, con su tiempo de espera, y sale en PDF para enseñarlo cuando lo pidan.",
+          "tag": "Cumples la ley sin darte cuenta"
+        },
+        "ancce": {
+          "title": "Papeles de ANCCE ya rellenos",
+          "body": "Al registrar una cubrición o un parto, la solicitud de cubrición y la comunicación de nacimiento salen ya rellenas para revisarlas y presentarlas.",
+          "tag": "Cría PRE"
+        }
+      }
+    },
+    "founderBand": {
+      "badge": "Socios fundadores",
+      "title": "−40 % de por vida y gratis hasta el 1 de enero de 2027",
+      "body": "Para las primeras {slots} yeguadas que confíen en nosotros. Sin permanencia.",
+      "left": "Quedan {n} plazas",
+      "cta": "Calcular mi ahorro"
     },
     "features": {
       "title": "Todo lo que necesitas. Y nada más.",
@@ -172,20 +200,21 @@
           "answer": "Con la facturación ya trabajas hoy: series y numeración por ejercicio, impuestos por línea, cuotas de pupilaje automáticas y recibos SEPA. Veri*Factu es una obligación de la AEAT que se aplazó a 2027, y preferimos no anunciarla como lista hasta que lo esté: cuando llegue, avisaremos a todas las yeguadas. Si necesitas facturar con Veri*Factu ahora mismo, escríbenos y te lo decimos claro antes de que te des de alta."
         },
         {
-          "question": "¿Puedo probar Relincho antes de suscribirme?",
-          "answer": "¡Por supuesto! El plan Cuaderno no tiene coste ni tarjeta: creas tu cuenta y empiezas a meter hasta 5 caballos. Cuando la cuadra crezca, pasas a Cuadra (reproducción, voz y nutrición) o a Rendimiento (periodización y alertas de tendón), desde 69 €/mes sin IVA."
+          "question": "¿Puedo probar Relincho antes de pagar?",
+          "answer": "Sí. Al crear la cuenta tienes 21 días con todo el plan Rendimiento, sin tarjeta: sanidad y libro de tratamientos, reproducción, periodización y semáforo de aptitud. Si traes tu Excel, en diez minutos tienes la cuadra dentro. Al terminar eliges plan, desde 69 €/mes sin IVA, y si lo eliges antes no pierdes los días que te quedan. Si no sigues, no se borra nada: la cuenta queda en modo lectura y puedes descargar tu libro de tratamientos."
         }
       ]
     },
     "pricing": {
       "title": "Precios simples. Sin sorpresas.",
-      "subtitle": "Empieza gratis y sube de plan cuando crezca tu cuadra. Pagas por cuadra y por caballo, nunca por la persona que apunta los datos.",
+      "subtitle": "Pruébalo 21 días con todo el plan Rendimiento, sin tarjeta. Después eliges plan. Pagas por cuadra y por caballo, nunca por la persona que apunta los datos.",
       "recommended": "Recomendado",
       "perMonth": "/mes",
       "perYear": "/año",
       "monthly": "Mensual",
       "annual": "Anual",
       "annualNote": "Paga 10 meses, usa 12",
+      "trialNote": "Empieza con {days} días gratis de Rendimiento completo, sin tarjeta. Si no eliges plan, tus datos no se borran: quedan en modo lectura.",
       "from": "desde",
       "perHorse": "{price} por caballo y mes con el plan lleno",
       "equivalent": "equivale a {price}/mes",
@@ -234,12 +263,12 @@
         "cuadra": {
           "name": "Cuadra",
           "description": "Para la cuadra que quiere tener el día a día en orden.",
-          "cta": "Elegir Cuadra"
+          "cta": "Probar gratis {days} días"
         },
         "rendimiento": {
           "name": "Rendimiento",
           "description": "Para cuidar el rendimiento y frenar la lesión antes de que llegue.",
-          "cta": "Elegir Rendimiento"
+          "cta": "Probar gratis {days} días"
         },
         "yeguada": {
           "name": "Yeguada",
@@ -323,10 +352,10 @@
     "badge": "Demo",
     "title": "Así trabaja Relincho por dentro",
     "subtitle": "Estas son pantallas reales de la aplicación, con la yeguada de demostración. Sin registro, sin llamada y sin tarjeta solo para mirar.",
-    "ctaPrimary": "Crear cuenta gratis",
+    "ctaPrimary": "Probar 21 días gratis",
     "ctaSecondary": "Hablar con nosotros",
     "tryNow": "Probar sin registro",
-    "ctaNote": "El plan Cuaderno no pide tarjeta: hasta 5 caballos.",
+    "ctaNote": "21 días con todo el plan Rendimiento, sin tarjeta. Si no sigues, tus datos no se borran.",
     "performance": {
       "eyebrow": "Lo que no vas a encontrar en otro sitio",
       "title": "Rendimiento y prevención de lesiones",
@@ -491,20 +520,20 @@
         "body": "Una cookie es un pequeño archivo de texto que un sitio web guarda en tu ordenador o dispositivo móvil cuando lo visitas. Permite al sitio web recordar tus acciones y preferencias (como inicio de sesión, idioma y otras preferencias de visualización) durante un período de tiempo."
       },
       "s2": {
-        "title": "2. Cómo utilizamos las cookies en Relincho",
-        "intro": "Utilizamos cookies por varias razones, principalmente para:",
+        "title": "2. Qué cookies usa Relincho",
+        "intro": "Solo cookies propias. No usamos cookies de publicidad ni de terceros.",
         "items": [
           {
-            "term": "Cookies Estrictamente Necesarias:",
-            "description": "Esenciales para que puedas navegar por la plataforma y usar sus funciones, como acceder a áreas seguras (iniciar sesión en tu cuenta)."
+            "term": "Necesarias (siempre activas):",
+            "description": "Sesión de inicio (para entrar en tu cuenta), idioma (NEXT_LOCALE) y tu decisión sobre las cookies (relincho_consent, 12 meses). Sin ellas la web no funciona y no necesitan consentimiento."
           },
           {
-            "term": "Cookies de Rendimiento:",
-            "description": "Nos ayudan a entender cómo los visitantes interactúan con la web, recopilando información de forma anónima."
+            "term": "Origen de la visita (solo si aceptas):",
+            "description": "relincho_src y relincho_ref guardan durante 90 días de qué enlace o folleto llegaste (por ejemplo, el QR de una feria) y la web de la que venías. Sirve para saber qué canales nos funcionan. Si rechazas, no se guardan y se borran las que hubiera."
           },
           {
-            "term": "Cookies de Funcionalidad:",
-            "description": "Permiten que el sitio web recuerde las elecciones que haces (como tu nombre de usuario)."
+            "term": "Medición de visitas (sin cookies):",
+            "description": "Contamos visitas por página con Vercel Web Analytics, que no usa cookies ni identifica a nadie entre días distintos."
           }
         ]
       },
@@ -605,9 +634,10 @@
     }
   },
   "cookieBanner": {
-    "title": "Aviso de Cookies",
-    "body": "Utilizamos cookies propias y de terceros para mejorar nuestros servicios y mostrarle publicidad relacionada con sus preferencias mediante el análisis de sus hábitos de navegación. Si continúa navegando, consideramos que acepta su uso.",
+    "title": "Cookies",
+    "body": "Solo usamos cookies propias. Las necesarias (inicio de sesión e idioma) van siempre. Si aceptas, guardamos también durante 90 días de dónde nos conociste, por ejemplo el QR de un folleto. Sin publicidad ni seguimiento de terceros.",
     "accept": "Aceptar",
+    "reject": "Rechazar",
     "more": "Más información"
   },
   "sidebar": {
@@ -623,7 +653,7 @@
       "performance": "Rendimiento",
       "health": "Sanidad",
       "reproduction": "Reproducción",
-      "movements": "Movimientos",
+      "movements": "Libro de explotación",
       "tasks": "Tareas",
       "calendar": "Calendario",
       "boarding": "Pupilaje",
@@ -647,7 +677,7 @@
       "pricing": "Precios",
       "faq": "FAQ",
       "login": "Iniciar sesión",
-      "startFree": "Empezar gratis",
+      "startFree": "Prueba 21 días gratis",
       "goToPanel": "Ir al panel"
     },
     "hero": {

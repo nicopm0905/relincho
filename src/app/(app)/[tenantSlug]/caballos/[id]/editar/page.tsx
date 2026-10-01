@@ -50,6 +50,7 @@ export default async function EditarCaballoPage({ params }: PageProps) {
           id: horse.id,
           name: horse.name,
           sex: horse.sex as any,
+          species: horse.species,
           status: horse.status as any,
           breed: horse.breed || "",
           coat: horse.coat || "",
