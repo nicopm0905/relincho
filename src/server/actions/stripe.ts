@@ -17,6 +17,7 @@ import {
   ADDONS,
   FOUNDER,
   PLAN_DEFINITIONS,
+  isFounderEligible,
   isFounderOfferOpen,
   isMigrationFree,
   isPlanKey,
@@ -108,9 +109,11 @@ export async function createCheckoutSession(
 
   // Precio de fundador: -40 % de por vida y gratis hasta el 1 ene 2027. Las
   // plazas son las yeguadas fundadoras vivas; una cancelada libera la suya.
+  // Quien canceló o dejó de pagar y vuelve, paga precio normal: no recupera
+  // la plaza (isFounderEligible). Se sigue sin descuento en vez de dar error.
   const coupon = founderCouponId();
   let founder = tenant.founder;
-  if (!founder && options.founder && coupon) {
+  if (!founder && options.founder && coupon && isFounderEligible(tenant)) {
     const taken = await prisma.tenant.count({ where: { founder: true } });
     founder = isFounderOfferOpen(taken);
     if (!founder) {

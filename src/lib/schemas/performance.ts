@@ -113,3 +113,18 @@ export const sessionReportSchema = z.object({
 });
 
 export type SessionReport = z.infer<typeof sessionReportSchema>;
+
+/** Extremidades del chequeo de patas: manos (MI, MD) y pies (PI, PD). */
+export const legSchema = z.enum(["MI", "MD", "PI", "PD"]);
+export const lamenessSchema = z.enum(["NO", "DUDOSA", "SI"]);
+
+export const limbCheckSchema = z.object({
+  horseId: z.string().uuid(),
+  /** Por defecto, hoy. */
+  date: z.coerce.date().optional(),
+  heatLegs: z.array(legSchema).max(4).default([]),
+  swellingLegs: z.array(legSchema).max(4).default([]),
+  painLegs: z.array(legSchema).max(4).default([]),
+  lameness: lamenessSchema.default("NO"),
+  notes: z.string().max(500).optional(),
+});

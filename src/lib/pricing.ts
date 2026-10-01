@@ -130,7 +130,11 @@ export function pricePerHorseMonth(key: PlanKey): number | null {
 // ---------------------------------------------------------------------------
 
 export const FOUNDER = {
-  /** Descuento de por vida mientras no se cancele; sobrevive a subidas de lista. */
+  /**
+   * Descuento de por vida mientras la suscripción siga viva; sobrevive a
+   * subidas de lista. Si se cancela o se deja de pagar, se pierde: al volver
+   * se paga el precio normal (ver `isFounderEligible`).
+   */
   discount: 0.4,
   /** Plazas totales del programa. */
   slots: 30,
@@ -150,6 +154,64 @@ export function founderMonthly(key: PlanKey): number {
 export function founderPrice(key: PlanKey, interval: BillingInterval): number {
   const monthly = founderMonthly(key);
   return interval === "year" ? annualPrice(monthly) : monthly;
+}
+
+/** Plazos que enseña la calculadora de fundador, en años. */
+export const FOUNDER_HORIZONS_YEARS = [1, 3, 5, 10] as const;
+
+export interface FounderComparison {
+  /** Lo que pagaría una cuadra sin precio de fundador. */
+  list: number;
+  /** Lo que paga el fundador. */
+  founder: number;
+  /** Diferencia a favor del fundador. */
+  saved: number;
+}
+
+/**
+ * Lo que se paga en `years` años con y sin precio de fundador, contando desde
+ * el primer cobro. Usa los mismos precios redondeados que se cobran en Stripe,
+ * así que la cifra de la web cuadra con la factura.
+ */
+export function founderSavings(
+  key: PlanKey,
+  interval: BillingInterval,
+  years: number,
+): FounderComparison {
+  const cycles = interval === "year" ? years : years * 12;
+  const list = planPrice(key, interval) * cycles;
+  const founder = founderPrice(key, interval) * cycles;
+  return { list, founder, saved: list - founder };
+}
+
+/**
+ * Meses enteros que quedan hasta el primer cobro del fundador (1 ene 2027).
+ * Es lo que se ahorra, además del −40 %, quien entra hoy frente a quien
+ * contrata hoy a precio normal.
+ */
+export function founderFreeMonthsLeft(now: Date = new Date()): number {
+  const msLeft = new Date(FOUNDER.freeUntil).getTime() - now.getTime();
+  if (msLeft <= 0) return 0;
+  const days = msLeft / (24 * 3600 * 1000);
+  // Mes medio (365,25 / 12 días): del 1 oct al 1 ene salen 3, no 2.
+  return Math.floor(days / (365.25 / 12) + 1e-9);
+}
+
+/**
+ * ¿Puede esta cuadra pedir el precio de fundador?
+ *
+ * El −40 % dura mientras la suscripción siga viva. Quien ya ha tenido una
+ * suscripción (fundador o no) y la canceló o dejó de pagar, vuelve a precio
+ * normal: la plaza no se recupera. Se reconoce porque ya tiene cliente en
+ * Stripe pero no conserva la marca de fundador (el webhook la quita al
+ * cancelar). No hace falta migración de base de datos.
+ */
+export function isFounderEligible(tenant: {
+  founder: boolean;
+  stripeCustomerId: string | null;
+}): boolean {
+  if (tenant.founder) return true;
+  return !tenant.stripeCustomerId;
 }
 
 /** ¿Sigue abierta la oferta de fundador? Depende de la fecha y de las plazas. */
@@ -239,6 +301,7 @@ export type FeatureKey =
   | "periodizacion"
   | "cargaInterna"
   | "alertasTendon"
+  | "semaforoAptitud"
   | "racionDinamica"
   | "informeSemanal"
   | "panelVeterinario"
@@ -273,6 +336,7 @@ const RENDIMIENTO: FeatureKey[] = [
   "periodizacion",
   "cargaInterna",
   "alertasTendon",
+  "semaforoAptitud",
   "racionDinamica",
   "informeSemanal",
   "panelVeterinario",

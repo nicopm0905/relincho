@@ -13,9 +13,13 @@ import {
   billingAddonPrice,
   extraHorsesPrice,
   formatEuro,
+  FOUNDER_HORIZONS_YEARS,
+  founderFreeMonthsLeft,
   founderMonthly,
   founderPrice,
+  founderSavings,
   horseLimitFor,
+  isFounderEligible,
   isFounderOfferOpen,
   isMigrationFree,
   isNearHorseLimit,
@@ -79,6 +83,49 @@ test("la oferta de fundador se cierra por plazas o por fecha", () => {
   assert.equal(isFounderOfferOpen(FOUNDER.slots - 1, before), true);
   assert.equal(isFounderOfferOpen(FOUNDER.slots, before), false);
   assert.equal(isFounderOfferOpen(0, after), false);
+});
+
+test("calculadora de fundador: lo que se paga con y sin descuento", () => {
+  // Rendimiento en anual, 5 años: 1.490 × 5 frente a 890 × 5.
+  assert.deepEqual(founderSavings("rendimiento", "year", 5), {
+    list: 7450,
+    founder: 4450,
+    saved: 3000,
+  });
+  // Cuadra en mensual, 1 año: 12 × 69 frente a 12 × 41.
+  assert.deepEqual(founderSavings("cuadra", "month", 1), {
+    list: 828,
+    founder: 492,
+    saved: 336,
+  });
+  // Cuadra: una mensualidad de ahorro × 10 al pagar en anual.
+  assert.equal(founderSavings("cuadra", "year", 1).saved, 280);
+  // El ahorro nunca es negativo y crece con el plazo.
+  for (const key of ["cuadra", "rendimiento", "yeguada"] as const) {
+    let previous = 0;
+    for (const years of FOUNDER_HORIZONS_YEARS) {
+      const { saved } = founderSavings(key, "year", years);
+      assert.ok(saved > previous);
+      previous = saved;
+    }
+  }
+});
+
+test("meses gratis hasta el primer cobro del fundador", () => {
+  assert.equal(founderFreeMonthsLeft(new Date("2026-09-30T12:00:00+02:00")), 3);
+  assert.equal(founderFreeMonthsLeft(new Date("2026-10-01T00:00:00+02:00")), 3);
+  assert.equal(founderFreeMonthsLeft(new Date("2026-11-01T00:00:00+01:00")), 2);
+  assert.equal(founderFreeMonthsLeft(new Date("2026-12-15T12:00:00+01:00")), 0);
+  assert.equal(founderFreeMonthsLeft(new Date("2027-02-01T12:00:00+01:00")), 0);
+});
+
+test("quien cancela o deja de pagar no recupera el precio de fundador", () => {
+  // Nunca ha sido cliente: puede pedirlo.
+  assert.equal(isFounderEligible({ founder: false, stripeCustomerId: null }), true);
+  // Fundador con la suscripción viva: lo conserva.
+  assert.equal(isFounderEligible({ founder: true, stripeCustomerId: "cus_1" }), true);
+  // Tuvo suscripción y la canceló (el webhook le quitó la marca): precio normal.
+  assert.equal(isFounderEligible({ founder: false, stripeCustomerId: "cus_1" }), false);
 });
 
 test("módulos: facturación 39 €/mes, caballos extra 25 €/mes por bloque de 10", () => {

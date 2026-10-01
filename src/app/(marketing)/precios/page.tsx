@@ -5,10 +5,12 @@ import { prisma } from "@/server/db/prisma";
 import { Header } from "@/components/marketing/header";
 import { Footer } from "@/components/marketing/footer";
 import { PricingPlans } from "@/components/marketing/pricing-plans";
+import { FounderCalculator } from "@/components/marketing/founder-calculator";
 import {
   ADDONS,
   FOUNDER,
   formatEuro,
+  founderFreeMonthsLeft,
   isFounderOfferOpen,
   qrPrintPrice,
 } from "@/lib/pricing";
@@ -83,23 +85,8 @@ export default async function PreciosPage() {
         </section>
 
         {founderOpen && (
-          <section className="container mx-auto max-w-4xl px-4 pb-10 sm:px-6">
-            <div className="rounded-[2rem] border-2 border-primary bg-[#f9f9f6] p-6 text-center md:p-8">
-              <span className="inline-flex rounded-full bg-primary px-3 py-1 text-[11px] font-bold tracking-wider text-primary-foreground uppercase">
-                {t("founder.badge")}
-              </span>
-              <h2 className="mt-4 font-heading text-2xl text-foreground md:text-3xl">
-                {t("founder.title")}
-              </h2>
-              <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-                {t("founder.body", { slots: FOUNDER.slots })}
-              </p>
-              {spotsLeft !== null && (
-                <p className="mt-3 font-semibold text-primary-ink">
-                  {t("founder.left", { n: spotsLeft })}
-                </p>
-              )}
-            </div>
+          <section className="container mx-auto max-w-5xl px-4 pb-10 sm:px-6">
+            <FounderCalculator spotsLeft={spotsLeft} freeMonths={founderFreeMonthsLeft()} />
           </section>
         )}
 

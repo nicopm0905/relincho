@@ -157,7 +157,7 @@
         },
         {
           "question": "What does the performance module include?",
-          "answer": "Plan the season towards a competition (volume and intensity phases), log the actual load of every session and get an alert when a horse with a tendon history goes over its intensity limit. Intensity is rated by the rider, so reporting a session is just two data points: how long it lasted and how hard it felt."
+          "answer": "Plan the season towards a competition (volume and intensity phases), log the actual load of every session and get an alert when a horse with a tendon history goes over its intensity limit. Intensity is rated by the rider, so reporting a session is just two data points: how long it lasted and how hard it felt. Every morning the groom checks the legs in one tap (heat, swelling, pain, trot) and the app cross-checks it with the last four weeks of workload: a green, amber or red light before the horse goes out."
         },
         {
           "question": "Do I need technical knowledge to use the platform?",
@@ -199,10 +199,31 @@
       },
       "founder": {
         "badge": "Founder pricing",
-        "title": "40% off for life and free until 1 January 2027",
-        "body": "Only {slots} spots. We notify you 30 days before the first charge, no lock-in. The discount stays even if list prices rise, as long as you don't cancel.",
+        "title": "40% off for life, as long as you stay with us",
+        "subtitle": "And free until 1 January 2027. Only {slots} spots. See how much you save:",
         "left": "{n} spots left",
-        "price": "{price}/mo for life"
+        "price": "{price}/mo for life",
+        "calc": {
+          "plan": "Your plan",
+          "billing": "How you pay",
+          "horizon": "Over how long",
+          "years": "{n, plural, one {# year} other {# years}}",
+          "perCharge": "Each charge you pay <strong>{founder}</strong> instead of {list}.",
+          "savedIn": "You save over {years}",
+          "withoutFounder": "Without founder pricing",
+          "asFounder": "As a founder",
+          "freeExtra": "Plus you pay nothing until 1 January: {n, plural, one {# free month} other {# free months}}, another {amount} saved.",
+          "note": "Counted from the first charge, at today's prices, excluding VAT. If list prices go up, your savings grow.",
+          "fromNote": "Yeguada is a starting price: with more horses, you save more.",
+          "cta": "Claim my founder spot"
+        },
+        "rules": {
+          "title": "The terms, plainly",
+          "forLife": "The 40% discount is for life, even if list prices rise, as long as you stay subscribed and up to date with payments.",
+          "comeBack": "If you cancel or stop paying and come back later, you join at the regular price: the founder spot can't be recovered.",
+          "notice": "We notify you 30 days before the first charge.",
+          "noLockIn": "No lock-in: cancel whenever you want."
+        }
       },
       "plans": {
         "cuaderno": {
@@ -241,6 +262,7 @@
         "periodizacion": "Periodisation and microcycles",
         "cargaInterna": "Internal load (AU)",
         "alertasTendon": "Tendon alerts",
+        "semaforoAptitud": "Daily leg check and fitness traffic light",
         "racionDinamica": "Dynamic ration",
         "informeSemanal": "Weekly owner report",
         "panelVeterinario": "Shareable vet panel",
@@ -516,7 +538,7 @@
       "notConfigured": "Online payment is not active yet. Write to us and we will set it up with you.",
       "monthly": "Monthly",
       "annual": "Annual (pay 10, use 12)",
-      "founderNote": "Founder price applied: 40% off for life.",
+      "founderNote": "Founder price applied: 40% off for life while you stay subscribed.",
       "seePlans": "See all plans"
     }
   },

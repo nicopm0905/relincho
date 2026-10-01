@@ -10,6 +10,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { formatDate } from "@/lib/formatters";
 import { CalendarCheck, QrCode, Warning } from "@phosphor-icons/react/dist/ssr";
 import dynamic from "next/dynamic";
+import { ReadinessCard } from "@/components/rendimiento/readiness-card";
 
 const WeekStrip = dynamic(() => import("@/components/rendimiento/week-strip").then((module) => module.WeekStrip), { loading: () => <div className="h-48 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
 const MesocycleTimeline = dynamic(() => import("@/components/rendimiento/mesocycle-timeline").then((module) => module.MesocycleTimeline), { loading: () => <div className="h-48 animate-pulse rounded-xl bg-muted/40" aria-busy="true" /> });
@@ -56,6 +57,7 @@ export default async function PlanCaballoPage({ params }: PageProps) {
     competitions,
     prescription,
     forecast,
+    readiness,
   ] =
     await Promise.all([
       caller.performance.snapshot({ horseId }),
@@ -65,6 +67,7 @@ export default async function PlanCaballoPage({ params }: PageProps) {
       caller.performance.listCompetitions({ horseId }),
       caller.nutrition.getPrescription({ horseId, date: new Date() }),
       caller.nutrition.upcoming({ horseId, days: 10 }),
+      caller.performance.readiness({ horseId }),
     ]);
 
   const daysToTarget = snapshot
@@ -134,6 +137,17 @@ export default async function PlanCaballoPage({ params }: PageProps) {
           </p>
         </div>
       )}
+
+      <ReadinessCard
+        horseId={horseId}
+        horseName={horse.name}
+        data={readiness}
+        plannedWorkToday={Boolean(
+          today &&
+            today.workType !== "DESCANSO" &&
+            (today.status === "PLANNED" || today.status === "ADJUSTED"),
+        )}
+      />
 
       {!snapshot ? (
         <EmptyState
