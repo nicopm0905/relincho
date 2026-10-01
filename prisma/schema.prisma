@@ -115,6 +115,9 @@ model Tenant {
   documents         Document[]
   verifactuRecords VerifactuRecord[]
   reproSettings    ReproSettings?
+  farmBook         FarmBookSettings?
+  farmInspections  FarmInspection[]
+  farmCaretakers   FarmCaretaker[]
 }
 
 model User {
@@ -192,6 +195,8 @@ model Horse {
   /// para consumo humano". Si es false, el caballo cuenta como animal de
   /// producción y los tiempos de espera de los medicamentos le aplican.
   excludedFromFoodChain Boolean          @default(false)
+  /// Especie para el libro de explotación (C caballar, A asnal, M mular, B burdégano).
+  species          EquineSpecies       @default(CABALLAR)
   status           HorseStatus         @default(ACTIVE)
   boxLocation      String?
   photoUrl         String?
@@ -228,6 +233,7 @@ model Horse {
   macrocycles      Macrocycle[]
   dailyLoads       DailyLoad[]
   limbChecks       LimbCheck[]
+  identificationIncidents IdentificationIncident[]
   events           Event[]
   nutritionBaseline NutritionBaseline?
   nutritionPrescriptions NutritionPrescription[]
@@ -393,18 +399,40 @@ model Document {
   @@index([tenantId, deletedAt])
 }
 
+/// Libro de registro de la explotación (RD 804/2011, anexo IV; en Andalucía,
+/// Orden de 29/04/2015, anexo IV). Una fila por alta o baja de un animal.
 model Movement {
-  id              String   @id @default(uuid())
+  id              String          @id @default(uuid())
   tenantId        String
   horseId         String
+  /// IN = alta, OUT = baja.
   direction       String
   date            DateTime
+  /// Causa oficial. Null en los movimientos anotados antes del libro completo.
+  cause           MovementCause?
   originRega      String?
   destinationRega String?
   reason          String?
-  horse           Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  /// Guía, certificado sanitario, documento de movimiento o TME.
+  documentType    String?
+  documentNumber  String?
+  /// Transportista (nombre y NIF o nº de autorización) y vehículo.
+  transporterName String?
+  transporterId   String?
+  vehiclePlate    String?
+  trailerPlate    String?
+  /// Traslado provisional: vuelta prevista (máx. 30 días con TME).
+  expectedReturnDate DateTime?
+  /// Muerte: RECOGIDA (gestor SANDACH), ENTERRAMIENTO u OTRO, y dónde.
+  disposalMethod  String?
+  disposalPlace   String?
+  /// Fecha en que se comunicó la baja a la Administración.
+  notifiedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  horse           Horse           @relation(fields: [horseId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, horseId])
+  @@index([tenantId, date])
 }
 
 /// Temporada reproductiva de una yegua (una por año). Dentro caben varios
@@ -1020,6 +1048,103 @@ model NutritionBaseline {
   supplements            Json?
   horse                  Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
   updatedAt              DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+enum EquineSpecies {
+  CABALLAR
+  ASNAL
+  MULAR
+  BURDEGANO
+}
+
+enum MovementCause {
+  APERTURA
+  NACIMIENTO
+  COMPRA
+  RETORNO
+  TRASLADO_PROVISIONAL
+  VENTA
+  SACRIFICIO
+  MUERTE
+}
+
+/// Datos de la explotación para el libro (anexo IV a-c y hoja 1 del modelo
+/// andaluz). Lo fiscal (titular, NIF, dirección) sigue en Tenant.
+model FarmBookSettings {
+  id                    String    @id @default(uuid())
+  tenantId              String    @unique
+  /// Nombre o paraje de la explotación.
+  farmName              String?
+  farmAddress           String?
+  farmMunicipality      String?
+  farmProvince          String?
+  latitude              Decimal?  @db.Decimal(9, 6)
+  longitude             Decimal?  @db.Decimal(9, 6)
+  holderPhone           String?
+  holderEmail           String?
+  legalRepName          String?
+  legalRepNif           String?
+  /// Agrupación de Defensa Sanitaria a la que pertenece, si alguna.
+  adsg                  String?
+  /// Clasificación zootécnica (reproducción para silla, ocio, etc.).
+  classification        String?
+  capacity              Int?
+  surfaceHa             Decimal?  @db.Decimal(8, 2)
+  installationsM2       Decimal?  @db.Decimal(10, 2)
+  sanitaryQualification String?
+  /// Fecha de apertura del libro en Relincho.
+  openedAt              DateTime?
+  updatedAt             DateTime  @updatedAt
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+/// Hoja 3 del modelo andaluz: cambios en la identificación de un animal.
+model IdentificationIncident {
+  id         String   @id @default(uuid())
+  tenantId   String
+  horseId    String
+  date       DateTime
+  previousId String?
+  newId      String?
+  /// PERDIDA (A), DETERIORO (B), OTRA_REGION (C) u OTRA; DUPLICADO si se pidió duplicado del documento.
+  cause      String
+  duplicate  Boolean  @default(false)
+  notes      String?
+  createdAt  DateTime @default(now())
+  horse      Horse    @relation(fields: [horseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+}
+
+/// Inspecciones y controles oficiales (anexo IV f y l).
+model FarmInspection {
+  id           String   @id @default(uuid())
+  tenantId     String
+  date         DateTime
+  reason       String
+  actNumber    String?
+  officialName String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+}
+
+/// Personas al cuidado de los animales (anexo IV k).
+model FarmCaretaker {
+  id         String    @id @default(uuid())
+  tenantId   String
+  name       String
+  documentId String?
+  role       String?
+  phone      String?
+  startDate  DateTime?
+  endDate    DateTime?
+  createdAt  DateTime  @default(now())
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
 }

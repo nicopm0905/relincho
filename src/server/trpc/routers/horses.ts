@@ -18,6 +18,8 @@ const identifier = (valid: (value: string) => boolean, message: string) =>
 const horseInput = z.object({
   name: z.string().trim().min(1),
   sex: z.nativeEnum(Sex),
+  /** Especie para el libro de explotación; por defecto, caballar. */
+  species: z.enum(["CABALLAR", "ASNAL", "MULAR", "BURDEGANO"]).optional(),
   status: z.nativeEnum(HorseStatus).default("ACTIVE"),
   breed: z.string().optional(),
   coat: z.string().optional(),
