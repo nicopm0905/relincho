@@ -667,6 +667,17 @@ export const reproductionRouter = createTRPCRouter({
         if (linked.count === 0) {
           throw new TRPCError({ code: "CONFLICT", message: "El potro ya está dado de alta" });
         }
+        // Alta por nacimiento en el libro de explotación (RD 804/2011, anexo IV g).
+        await tx.movement.create({
+          data: {
+            tenantId: ctx.tenantId,
+            horseId: foal.id,
+            direction: "IN",
+            date: foaling.date,
+            cause: "NACIMIENTO",
+            reason: "Nacimiento en la explotación",
+          },
+        });
         return foal;
       });
     }),

@@ -5,6 +5,7 @@ import { tasksRouter } from "./routers/tasks";
 import { invoicesRouter } from "./routers/invoices";
 import { reproductionRouter } from "./routers/reproduction";
 import { movementsRouter } from "./routers/movements";
+import { farmBookRouter } from "./routers/farm-book";
 import { boardingRouter } from "./routers/boarding";
 import { trainingRouter } from "./routers/training";
 import { contactsRouter } from "./routers/contacts";
@@ -26,6 +27,7 @@ export const appRouter = createTRPCRouter({
   invoices: invoicesRouter,
   reproduction: reproductionRouter,
   movements: movementsRouter,
+  farmBook: farmBookRouter,
   boarding: boardingRouter,
   training: trainingRouter,
   contacts: contactsRouter,
