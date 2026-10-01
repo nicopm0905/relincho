@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeading } from "@/components/layout/page-header";
 import { formatDate } from "@/lib/formatters";
+import { calendarDayOffset, relativeDayLabel } from "@/lib/day-window";
 import { cn } from "@/lib/utils";
 import { TaskDialog, type EditableTask, type TaskOption } from "./task-dialog";
 
@@ -92,7 +93,6 @@ export function TasksBoard({
     onError,
   });
 
-  const today = new Date().setHours(0, 0, 0, 0);
   const visiblePending = pending.filter((t) => !optimisticDone.has(t.id));
 
   return (
@@ -118,7 +118,8 @@ export function TasksBoard({
         ) : (
           <ul className="divide-y divide-border/70">
             {visiblePending.map((task) => {
-              const overdue = new Date(task.dueDate).setHours(0, 0, 0, 0) < today;
+              const daysUntilDue = calendarDayOffset(new Date(task.dueDate));
+              const overdue = daysUntilDue < 0;
               const detail = subtitle(task);
               return (
                 <li key={task.id} className="flex items-center gap-3 py-3">
@@ -150,8 +151,12 @@ export function TasksBoard({
                     )}
                   </div>
 
-                  <Badge variant={overdue ? "destructive" : "secondary"} className="shrink-0">
-                    {formatDate(task.dueDate)}
+                  <Badge
+                    variant={overdue ? "destructive" : "secondary"}
+                    className="shrink-0"
+                    title={formatDate(task.dueDate)}
+                  >
+                    {relativeDayLabel(daysUntilDue)}
                   </Badge>
 
                   {confirmDelete === task.id ? (

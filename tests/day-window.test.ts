@@ -1,6 +1,25 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dayWindowUtc } from "../src/lib/day-window";
+import {
+  calendarDayOffset,
+  dayWindowUtc,
+  relativeDayLabel,
+} from "../src/lib/day-window";
+
+test("compara vencimientos por día de España y no por la hora local del servidor", () => {
+  const now = new Date("2026-10-01T00:30:00Z");
+  assert.equal(calendarDayOffset(new Date("2026-09-30T21:00:00Z"), now), -1);
+  assert.equal(calendarDayOffset(new Date("2026-10-01T21:00:00Z"), now), 0);
+  assert.equal(calendarDayOffset(new Date("2026-10-01T22:00:00Z"), now), 1);
+});
+
+test("etiquetas de vencimiento son cortas y legibles", () => {
+  assert.equal(relativeDayLabel(-3), "Hace 3 días");
+  assert.equal(relativeDayLabel(-1), "Ayer");
+  assert.equal(relativeDayLabel(0), "Hoy");
+  assert.equal(relativeDayLabel(1), "Mañana");
+  assert.equal(relativeDayLabel(12), "En 12 días");
+});
 
 test("la ventana es un día natural completo, sea cual sea la hora del cron", () => {
   for (const hour of ["06:00", "08:00", "21:30"]) {

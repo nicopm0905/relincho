@@ -80,6 +80,24 @@ test("los controles de kiosko se pueden usar sin gesto táctil", () => {
   assert.match(card, />\s*Marcar repartido\s*<\/button>/);
 });
 
+test("las acciones rápidas de Inicio tienen nombres claros y reutilizan formularios existentes", () => {
+  const quickActions = source("src/components/inicio/quick-actions.tsx");
+  const massHealthDialog = source("src/components/sanidad/mass-health-dialog.tsx");
+  const home = source("src/app/(app)/[tenantSlug]/inicio/page.tsx");
+
+  assert.match(quickActions, /aria-labelledby="quick-actions-heading"/);
+  assert.match(quickActions, /Tarea rápida/);
+  assert.match(quickActions, /Nueva tarea/);
+  assert.match(quickActions, /Registrar cuidado/);
+  assert.match(massHealthDialog, /compact \? "Mismo cuidado a varios"/);
+  assert.match(quickActions, /MassHealthDialog/);
+  assert.match(quickActions, /canRecordHealth/);
+  assert.match(quickActions, /quickMode/);
+  assert.match(quickActions, /<TaskDialog/);
+  assert.match(quickActions, /<HealthEventForm/);
+  assert.match(home, /<QuickActions/);
+});
+
 test("los campos del diálogo de movimientos conservan sus relaciones label-control", () => {
   const content = source("src/components/movimientos/new-movement-dialog.tsx");
 

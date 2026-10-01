@@ -23,6 +23,10 @@ import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
 import { SessionCheckIn } from "@/components/rendimiento/session-check-in";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { FirstSteps } from "@/components/onboarding/first-steps";
+import { QuickActions } from "@/components/inicio/quick-actions";
+import { calendarDayOffset, dayWindowUtc, relativeDayLabel } from "@/lib/day-window";
+import { getSession } from "@/server/auth";
+import { getTenantAccess } from "@/server/tenant-access";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -51,15 +55,9 @@ const formatEuros = (value: number) => euros.format(value);
 
 /** "Vencía hace 3 días" / "Hoy" / "En 12 días" — relative beats a raw date
  *  when the whole point of the row is urgency. */
-function dueLabel(due: Date, today: number) {
-  const days = Math.round(
-    (new Date(due).setHours(0, 0, 0, 0) - today) / DAY_MS,
-  );
-  if (days < -1) return { text: `Hace ${Math.abs(days)} días`, overdue: true };
-  if (days === -1) return { text: "Ayer", overdue: true };
-  if (days === 0) return { text: "Hoy", overdue: true };
-  if (days === 1) return { text: "Mañana", overdue: false };
-  return { text: `En ${days} días`, overdue: false };
+function dueLabel(due: Date, now: Date) {
+  const days = calendarDayOffset(due, now);
+  return { text: relativeDayLabel(days), overdue: days <= 0 };
 }
 
 export default function InicioPage({ params }: PageProps) {
@@ -72,10 +70,13 @@ export default function InicioPage({ params }: PageProps) {
 
 async function InicioContent({ params }: PageProps) {
   const { tenantSlug } = await params;
-  const caller = await createServerCaller(tenantSlug);
-
-  const [horses, upcomingHealth, repro, openTasks, performance, pendingCheckIns, receivables] =
-    await Promise.all([
+  const [caller, session] = await Promise.all([
+    createServerCaller(tenantSlug),
+    getSession(),
+  ]);
+  const [{ membership }, data] = await Promise.all([
+    getTenantAccess(tenantSlug, session?.user?.id),
+    Promise.all([
       caller.horses.list(),
       caller.health.upcoming({ days: 30 }),
       caller.reproduction.overview({}),
@@ -85,10 +86,16 @@ async function InicioContent({ params }: PageProps) {
       // Facturacion es solo del personal: un veterinario externo ve el Inicio
       // sin cobros.
       caller.invoices.receivables().catch(() => null),
-    ]);
+      caller.tasks.assignees().catch(() => []),
+    ]),
+  ]);
+  const [horses, upcomingHealth, repro, openTasks, performance, pendingCheckIns, receivables, assignees] = data;
+  const canRecordHealth = ["OWNER", "MANAGER", "GROOM", "VET_EXTERNAL"].includes(
+    membership?.role ?? "",
+  );
 
   const now = new Date();
-  const today = new Date().setHours(0, 0, 0, 0);
+  const today = dayWindowUtc(0, now).start.getTime();
 
   const activeHorses = horses.filter((h) => h.status === "ACTIVE").length;
   const DAYS = (n: number) => n * DAY_MS;
@@ -174,7 +181,7 @@ async function InicioContent({ params }: PageProps) {
   ].sort((a, b) => a.due.getTime() - b.due.getTime());
 
   const overdueCount = attention.filter(
-    (item) => new Date(item.due).setHours(0, 0, 0, 0) <= today,
+    (item) => calendarDayOffset(item.due, now) <= 0,
   ).length;
 
   const recentHorses = horses.filter((h) => h.status === "ACTIVE").slice(0, 6);
@@ -185,22 +192,12 @@ async function InicioContent({ params }: PageProps) {
         title="Inicio"
         description={format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
         actions={
-          <>
-            {horses.length > 0 && (
-              <Button asChild variant="outline">
-                <Link href={`/${tenantSlug}/sanidad/nuevo`}>
-                  <Heartbeat weight="bold" />
-                  Registrar sanidad
-                </Link>
-              </Button>
-            )}
-            <Button asChild>
-              <Link href={`/${tenantSlug}/caballos/nuevo`}>
-                <Plus weight="bold" />
-                Añadir caballo
-              </Link>
-            </Button>
-          </>
+          <Button asChild>
+            <Link href={`/${tenantSlug}/caballos/nuevo`}>
+              <Plus weight="bold" />
+              Añadir caballo
+            </Link>
+          </Button>
         }
       />
 
@@ -209,6 +206,18 @@ async function InicioContent({ params }: PageProps) {
       {horses.length < 3 && <FirstSteps tenantSlug={tenantSlug} />}
 
       <SessionCheckIn sessions={pendingCheckIns} />
+
+      <QuickActions
+        tenantSlug={tenantSlug}
+        horses={horses.map((horse) => ({
+          id: horse.id,
+          name: horse.name,
+          status: horse.status,
+          excludedFromFoodChain: horse.excludedFromFoodChain,
+        }))}
+        assignees={assignees}
+        canRecordHealth={canRecordHealth}
+      />
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatCard
@@ -286,7 +295,7 @@ async function InicioContent({ params }: PageProps) {
         ) : (
           <ListRows>
             {attention.slice(0, 8).map((item) => {
-              const due = dueLabel(item.due, today);
+              const due = dueLabel(item.due, now);
               return (
                 <ListRow
                   key={item.id}

@@ -42,6 +42,7 @@ interface HealthEventFormProps {
   tenantSlug: string;
   defaultHorseId?: string;
   horses: { id: string; name: string; excludedFromFoodChain?: boolean }[];
+  onSaved?: () => void;
 }
 
 const typeLabels: Record<HealthEventType, string> = {
@@ -55,7 +56,7 @@ const typeLabels: Record<HealthEventType, string> = {
   OTHER: "Otro"
 };
 
-export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEventFormProps) {
+export function HealthEventForm({ tenantSlug, defaultHorseId, horses, onSaved }: HealthEventFormProps) {
   const router = useRouter();
   
   const [medication, setMedication] = useState(emptyMedication);
@@ -79,7 +80,9 @@ export function HealthEventForm({ tenantSlug, defaultHorseId, horses }: HealthEv
   const createMutation = trpc.health.create.useMutation({
     onSuccess: () => {
       toast.success("Registro guardado correctamente");
-      if (defaultHorseId) {
+      if (onSaved) {
+        onSaved();
+      } else if (defaultHorseId) {
         router.push(`/${tenantSlug}/caballos/${defaultHorseId}?tab=timeline`);
       } else {
         router.push(`/${tenantSlug}/sanidad`);

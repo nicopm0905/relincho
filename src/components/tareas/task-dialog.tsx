@@ -49,12 +49,14 @@ export function TaskDialog({
   task,
   horses,
   assignees,
+  quickMode = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: EditableTask;
   horses: TaskOption[];
   assignees: TaskOption[];
+  quickMode?: boolean;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(task?.title ?? "");
@@ -83,9 +85,10 @@ export function TaskDialog({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    const effectiveDueDate = quickMode ? toDateInput(new Date()) : dueDate;
     const base = {
       title: title.trim(),
-      dueDate: new Date(`${dueDate}T12:00:00`),
+      dueDate: new Date(`${effectiveDueDate}T12:00:00`),
     };
     if (task) {
       update.mutate({
@@ -114,9 +117,15 @@ export function TaskDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
-          <DialogTitle>{task ? "Editar tarea" : "Nueva tarea"}</DialogTitle>
+          <DialogTitle>
+            {task ? "Editar tarea" : quickMode ? "Tarea rápida" : "Nueva tarea"}
+          </DialogTitle>
           <DialogDescription>
-            {task ? "Cambia lo que haga falta." : "Algo que hay que hacer en la cuadra."}
+            {task
+              ? "Cambia lo que haga falta."
+              : quickMode
+                ? "Escribe qué hay que hacer. La tarea quedará sin asignar y vencerá hoy."
+                : "Algo que hay que hacer en la cuadra."}
           </DialogDescription>
         </DialogHeader>
 
@@ -130,72 +139,87 @@ export function TaskDialog({
               maxLength={200}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ej. Llamar al herrador para Llorona V"
+              placeholder={
+                quickMode ? "Ej. Revisar el bebedero" : "Ej. Llamar al herrador para Llorona V"
+              }
+              className={quickMode ? "h-12 text-base" : undefined}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {!quickMode && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="task-due">Para cuándo</Label>
+                  <Input
+                    id="task-due"
+                    type="date"
+                    required
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="task-assignee">Quién</Label>
+                  <Select value={assignee} onValueChange={(v) => setAssignee(v as string)}>
+                    <SelectTrigger id="task-assignee">
+                      <SelectValue>{(v: string) => assigneeLabel(v)}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>Sin asignar</SelectItem>
+                      {assignees.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="task-horse">Caballo (opcional)</Label>
+                <Select value={horseId} onValueChange={(v) => setHorseId(v as string)}>
+                  <SelectTrigger id="task-horse">
+                    <SelectValue>{(v: string) => horseLabel(v)}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Ninguno</SelectItem>
+                    {horses.map((h) => (
+                      <SelectItem key={h.id} value={h.id}>
+                        {h.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+
+          {!quickMode && (
             <div className="space-y-1.5">
-              <Label htmlFor="task-due">Para cuándo</Label>
-              <Input
-                id="task-due"
-                type="date"
-                required
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+              <Label htmlFor="task-notes">Notas</Label>
+              <Textarea
+                id="task-notes"
+                rows={3}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="task-assignee">Quién</Label>
-              <Select value={assignee} onValueChange={(v) => setAssignee(v as string)}>
-                <SelectTrigger id="task-assignee">
-                  <SelectValue>{(v: string) => assigneeLabel(v)}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>Sin asignar</SelectItem>
-                  {assignees.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="task-horse">Caballo (opcional)</Label>
-            <Select value={horseId} onValueChange={(v) => setHorseId(v as string)}>
-              <SelectTrigger id="task-horse">
-                <SelectValue>{(v: string) => horseLabel(v)}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>Ninguno</SelectItem>
-                {horses.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>
-                    {h.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="task-notes">Notas</Label>
-            <Textarea
-              id="task-notes"
-              rows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={busy}>
-              {busy ? "Guardando…" : task ? "Guardar cambios" : "Crear tarea"}
+              {busy
+                ? "Guardando…"
+                : task
+                  ? "Guardar cambios"
+                  : quickMode
+                    ? "Añadir tarea"
+                    : "Crear tarea"}
             </Button>
           </div>
         </form>

@@ -53,6 +53,7 @@ interface ParsedHorse {
   coat?: string;
   birthDate?: string;
   uelnCode?: string;
+  lgNumber?: string;
   microchip?: string;
   hierro?: string;
   boxLocation?: string;
@@ -66,6 +67,8 @@ interface RowError {
 interface Preview {
   valid: ParsedHorse[];
   errors: RowError[];
+  unmappedColumns: string[];
+  truncatedRows: number;
   totalRows: number;
 }
 
@@ -143,16 +146,16 @@ export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outlin
         onClick={() => setOpen(true)}
       >
         <FileXls weight="bold" />
-        Importar desde Excel
+        Importar desde Excel o CSV
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Importar caballos desde Excel</DialogTitle>
+            <DialogTitle>Importar caballos desde Excel o CSV</DialogTitle>
             <DialogDescription>
-              Descarga la plantilla, rellena una fila por caballo y súbela. No se
-              guarda nada hasta que confirmes.
+              Sube el Excel o CSV que ya usas, o descarga nuestra plantilla. Revisaremos
+              los datos antes de importar; no se guarda nada hasta que confirmes.
             </DialogDescription>
           </DialogHeader>
 
@@ -164,6 +167,9 @@ export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outlin
                   Descargar plantilla
                 </a>
               </Button>
+              <span className="text-xs text-muted-foreground">
+                Excel .xlsx o CSV · hasta 1.000 filas · nombre y sexo obligatorios
+              </span>
               <Button
                 size="sm"
                 onClick={() => fileRef.current?.click()}
@@ -174,7 +180,7 @@ export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outlin
                 ) : (
                   <UploadSimple weight="bold" className="mr-2 h-4 w-4" />
                 )}
-                {parsing ? "Leyendo…" : "Subir Excel"}
+                {parsing ? "Leyendo…" : "Subir archivo"}
               </Button>
               {fileName && (
                 <span className="text-xs text-muted-foreground truncate max-w-[180px]">
@@ -184,7 +190,7 @@ export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outlin
               <input
                 ref={fileRef}
                 type="file"
-                accept=".xlsx"
+                accept=".xlsx,.csv,text/csv"
                 className="hidden"
                 onChange={handleFile}
               />
@@ -208,6 +214,26 @@ export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outlin
                   )}
                 </div>
 
+                {preview.totalRows > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Se han revisado {preview.totalRows} filas: {preview.valid.length} se importarán y {preview.errors.length} se omitirán por errores.
+                  </p>
+                )}
+
+                {preview.truncatedRows > 0 && (
+                  <p className="rounded-md border border-red-300 bg-red-50 p-3 text-xs text-red-900">
+                    El archivo contiene más filas de las permitidas: {preview.truncatedRows} filas al final no se revisaron ni se importarán. Divide el archivo y vuelve a intentarlo.
+                  </p>
+                )}
+
+                {preview.unmappedColumns.length > 0 && (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
+                    <p className="font-semibold">Estas columnas no se importarán</p>
+                    <p className="mt-1">{preview.unmappedColumns.join(", ")}</p>
+                    <p className="mt-1 text-amber-900">No se han reconocido automáticamente. Revisa la vista previa antes de confirmar.</p>
+                  </div>
+                )}
+
                 {preview.errors.length > 0 && (
                   <div className="max-h-32 overflow-y-auto rounded-md border bg-muted/30 p-2 text-xs">
                     {preview.errors.map((err) => (
@@ -228,6 +254,7 @@ export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outlin
                           <TableHead>Sexo</TableHead>
                           <TableHead>Estado</TableHead>
                           <TableHead>Raza</TableHead>
+                          <TableHead>Libro PRE</TableHead>
                           <TableHead>Nacimiento</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -240,6 +267,7 @@ export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outlin
                               {STATUS_LABEL[h.status] ?? h.status}
                             </TableCell>
                             <TableCell>{h.breed ?? "—"}</TableCell>
+                            <TableCell>{h.lgNumber ?? "—"}</TableCell>
                             <TableCell>
                               {h.birthDate
                                 ? new Date(h.birthDate).toLocaleDateString("es-ES")
@@ -267,17 +295,22 @@ export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outlin
             <Button
               onClick={handleImport}
               disabled={
-                !preview || preview.valid.length === 0 || bulkImport.isPending
+                !preview ||
+                preview.valid.length === 0 ||
+                preview.truncatedRows > 0 ||
+                bulkImport.isPending
               }
             >
               {bulkImport.isPending && (
                 <CircleNotch weight="bold" className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {preview && preview.valid.length > 0
-                ? `Importar ${preview.valid.length} caballo${
-                    preview.valid.length === 1 ? "" : "s"
-                  }`
-                : "Importar"}
+              {preview?.truncatedRows
+                ? "Divide el archivo para importarlo"
+                : preview && preview.valid.length > 0
+                  ? `Importar ${preview.valid.length} caballo${
+                      preview.valid.length === 1 ? "" : "s"
+                    }`
+                  : "Importar"}
             </Button>
           </div>
         </DialogContent>

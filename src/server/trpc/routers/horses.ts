@@ -196,8 +196,14 @@ export const horsesRouter = createTRPCRouter({
               breed: z.string().optional(),
               coat: z.string().optional(),
               birthDate: z.coerce.date().optional(),
-              uelnCode: z.string().optional(),
-              microchip: z.string().optional(),
+              uelnCode: identifier(isValidUeln, "El UELN tiene 15 caracteres"),
+              lgNumber: z
+                .string()
+                .trim()
+                .max(40)
+                .optional()
+                .transform((value) => (value ? value.toUpperCase() : undefined)),
+              microchip: identifier(isValidMicrochip, "El microchip tiene 15 dígitos"),
               hierro: z.string().optional(),
               boxLocation: z.string().optional(),
             }),
@@ -236,15 +242,19 @@ export const horsesRouter = createTRPCRouter({
             : [];
 
         const takenChips = new Set(
-          existing.map((h) => h.microchip).filter(Boolean),
+          existing.map((h) => h.microchip).filter((value): value is string => Boolean(value)),
         );
         const takenUeln = new Set(
-          existing.map((h) => h.uelnCode).filter(Boolean),
+          existing.map((h) => h.uelnCode).filter((value): value is string => Boolean(value)),
         );
 
+        // También evita duplicados entre filas del mismo archivo, no solo con
+        // caballos que ya existían antes de iniciar la importación.
         const toCreate = input.rows.filter((row) => {
           if (row.microchip && takenChips.has(row.microchip)) return false;
           if (row.uelnCode && takenUeln.has(row.uelnCode)) return false;
+          if (row.microchip) takenChips.add(row.microchip);
+          if (row.uelnCode) takenUeln.add(row.uelnCode);
           return true;
         });
 

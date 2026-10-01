@@ -70,9 +70,11 @@ function suggestNextDate(type: MassType, from: string) {
 
 export function MassHealthDialog({
   horses,
+  compact = false,
 }: {
   horses: { id: string; name: string; excludedFromFoodChain?: boolean }[]
   tenantSlug: string
+  compact?: boolean
 }) {
   const router = useRouter()
   const today = toDateInput(new Date())
@@ -154,9 +156,17 @@ export function MassHealthDialog({
         if (!value) reset()
       }}
     >
-      <DialogTrigger render={<Button variant="outline" size="lg" className="shadow-sm" />}>
-        <Heartbeat weight="bold" className="mr-2 h-4 w-4" />
-        Tratamiento Múltiple
+      <DialogTrigger
+        render={
+          <Button
+            variant="outline"
+            size={compact ? "default" : "lg"}
+            className={compact ? undefined : "shadow-sm"}
+          />
+        }
+      >
+        <Heartbeat weight="bold" />
+        {compact ? "Mismo cuidado a varios" : "Tratamiento Múltiple"}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[550px] p-0 max-h-[92dvh] overflow-y-auto bg-white rounded-3xl">
         <div className="p-6 pb-0">
@@ -166,7 +176,7 @@ export function MassHealthDialog({
               Nuevo Tratamiento Masivo
             </DialogTitle>
             <DialogDescription>
-              Aplica una vacuna, desparasitación o revisión a varios caballos a la vez.
+              Aplica una vacuna, desparasitación o revisión a varios caballos a la vez. Revisa la selección antes de guardar: el registro se añadirá a todos los caballos marcados.
             </DialogDescription>
           </DialogHeader>
         </div>

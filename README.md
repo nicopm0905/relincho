@@ -242,6 +242,11 @@ npm run db:studio      # Abre Prisma Studio
 npm run db:seed        # Carga datos demo
 ```
 
+La definición de producto, las personas objetivo, los principios y las prioridades
+están en [`docs/product-definition.md`](docs/product-definition.md). Es una hipótesis
+de producto que debe validarse con pruebas reales; no representa feedback atribuido
+a una persona concreta.
+
 La checklist de regresión visual, responsive y accesibilidad está en
 [`docs/visual-regression-checklist.md`](docs/visual-regression-checklist.md). Debe
 usarse junto con las comprobaciones automáticas antes de publicar cambios de
@@ -288,13 +293,13 @@ prisma/
 - [x] Stripe (suscripción SaaS + portal, con aviso de impago)
 - [x] Reproducción (ciclos, cubriciones, gestación)
 - [x] Portal propietario externo (OWNER_EXTERNAL)
-- [x] Importador Excel de caballos
+- [x] Importación de caballos desde Excel/CSV con vista previa y exportación CSV de datos básicos de ficha (no es una copia completa de la yeguada)
 - [x] Rendimiento (periodización, carga, alertas de tendón)
 - [x] Gestor documental (bucket privado, URLs firmadas)
 - [x] i18n inglés en escaparate y acceso
 - [ ] Módulo Veri*Factu AEAT (la obligación se aplazó a 2027; hasta entonces
       la web no lo anuncia como disponible)
 - [ ] Dashboard de costes por caballo
-- [ ] Exportar los datos de una yeguada (CSV o Excel)
+- [ ] Exportación completa de los datos de una yeguada (la exportación CSV actual cubre los datos principales de caballos, no todos los módulos)
 - [ ] Monitorización con servicio externo (Sentry) en lugar del webhook actual
 - [ ] Limpiar los errores de lint heredados (`no-explicit-any` en 20 ficheros)

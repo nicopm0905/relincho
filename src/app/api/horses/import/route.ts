@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic";
 const MAX_BYTES = 4 * 1024 * 1024; // 4 MB
 
 /**
- * Lee el Excel rellenado con la plantilla y devuelve una vista previa:
- * filas validas + filas con errores. NO crea ningun caballo; eso lo hace
- * despues la mutacion horses.bulkImport cuando el usuario confirma.
+ * Lee un Excel o CSV de caballos y devuelve una vista previa:
+ * filas válidas + filas con errores. NO crea ningún caballo; eso lo hace
+ * después la mutación horses.bulkImport cuando el usuario confirma.
  *
  * POST /api/horses/import  (multipart/form-data, campo "file")
  */
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   const file = form.get("file");
   if (!(file instanceof File)) {
     return NextResponse.json(
-      { error: "Adjunta el archivo Excel en el campo \"file\"." },
+      { error: "Adjunta el archivo Excel o CSV en el campo \"file\"." },
       { status: 400 },
     );
   }
@@ -49,15 +49,19 @@ export async function POST(request: NextRequest) {
       { status: 413 },
     );
   }
-  if (!/\.xlsx$/i.test(file.name)) {
+  const extension = file.name.split(".").at(-1)?.toLowerCase();
+  if (extension !== "xlsx" && extension !== "csv") {
     return NextResponse.json(
-      { error: "Sube el archivo en formato .xlsx (Excel)." },
+      { error: "Sube un archivo .xlsx o .csv." },
       { status: 400 },
     );
   }
 
   try {
-    const result = await parseHorseImport(await file.arrayBuffer());
+    const result = await parseHorseImport(
+      await file.arrayBuffer(),
+      extension === "csv" ? "csv" : "xlsx",
+    );
     return NextResponse.json({
       valid: result.valid.map((horse) => ({
         ...horse,
@@ -66,6 +70,8 @@ export async function POST(request: NextRequest) {
           : undefined,
       })),
       errors: result.errors,
+      unmappedColumns: result.unmappedColumns,
+      truncatedRows: result.truncatedRows,
       totalRows: result.totalRows,
     });
   } catch (error) {
