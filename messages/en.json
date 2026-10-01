@@ -74,7 +74,7 @@
     "navigation": "Main navigation",
     "actions": {
       "login": "Sign in",
-      "startFree": "Start for free",
+      "startFree": "Try 21 days free",
       "goToPanel": "Go to dashboard",
       "openMenu": "Open menu",
       "closeMenu": "Close menu"
@@ -86,11 +86,11 @@
       "titleHighlight": "equine management",
       "titleTail": "software for stud farms.",
       "subtitle": "Health, breeding, boarding, invoicing and training performance. All in one place. No hassle.",
-      "ctaPrimary": "Try it for free",
+      "ctaPrimary": "Try it free for 21 days",
       "ctaSecondary": "See features",
-      "disclaimer": "No credit card · Cancel anytime",
+      "disclaimer": "21 days free · No credit card",
       "trust": [
-        "No credit card",
+        "21 days free, no card",
         "Made in Jerez",
         "Your data stays in the EU"
       ]
@@ -172,20 +172,21 @@
           "answer": "Invoicing works today: series and numbering per year, per-line taxes, automatic boarding fees and SEPA direct debits. Veri*Factu is an AEAT obligation that was postponed to 2027, and we would rather not advertise it as ready until it is: when it arrives we will tell every stud farm. If you need to invoice under Veri*Factu right now, write to us and we will tell you straight before you sign up."
         },
         {
-          "question": "Can I try Relincho before subscribing?",
-          "answer": "Of course! The Cuaderno plan costs nothing and needs no card: create your account and add up to 5 horses. When the yard grows, move up to Cuadra (breeding, voice and nutrition) or Rendimiento (periodisation and tendon alerts), from €69/mo excl. VAT."
+          "question": "Can I try Relincho before paying?",
+          "answer": "Yes. When you sign up you get 21 days of the full Rendimiento plan, no card: health and treatment book, breeding, periodisation and the fitness traffic light. Bring your Excel and your yard is in within ten minutes. At the end you pick a plan, from €69/month excl. VAT, and choosing early doesn't cost you the days you have left. If you stop, nothing is deleted: the account becomes read-only and you can download your treatment book."
         }
       ]
     },
     "pricing": {
       "title": "Simple pricing. No surprises.",
-      "subtitle": "Start for free and move up when your yard grows. You pay per yard and per horse, never per person entering the data.",
+      "subtitle": "Try the full Rendimiento plan for 21 days, no card. Then pick a plan. You pay per yard and per horse, never per person entering data.",
       "recommended": "Recommended",
       "perMonth": "/mo",
       "perYear": "/yr",
       "monthly": "Monthly",
       "annual": "Annual",
       "annualNote": "Pay 10 months, use 12",
+      "trialNote": "Start with {days} free days of the full Rendimiento plan, no card. If you don't pick a plan, your data is not deleted: it stays read-only.",
       "from": "from",
       "perHorse": "{price} per horse per month with a full plan",
       "equivalent": "works out at {price}/mo",
@@ -234,12 +235,12 @@
         "cuadra": {
           "name": "Cuadra",
           "description": "For the yard that wants its day-to-day in order.",
-          "cta": "Choose Cuadra"
+          "cta": "Try free for {days} days"
         },
         "rendimiento": {
           "name": "Rendimiento",
           "description": "To protect performance and stop the injury before it arrives.",
-          "cta": "Choose Rendimiento"
+          "cta": "Try free for {days} days"
         },
         "yeguada": {
           "name": "Yeguada",
@@ -323,10 +324,10 @@
     "badge": "Demo",
     "title": "This is Relincho from the inside",
     "subtitle": "These are real screens from the app, using the demo stud farm. No sign-up, no call and no card just to look.",
-    "ctaPrimary": "Create a free account",
+    "ctaPrimary": "Try 21 days free",
     "ctaSecondary": "Talk to us",
     "tryNow": "Try it without signing up",
-    "ctaNote": "The Cuaderno plan needs no card: up to 5 horses.",
+    "ctaNote": "21 days of the full Rendimiento plan, no card. If you stop, your data is not deleted.",
     "performance": {
       "eyebrow": "What you will not find anywhere else",
       "title": "Performance and injury prevention",
@@ -647,7 +648,7 @@
       "pricing": "Pricing",
       "faq": "FAQ",
       "login": "Log in",
-      "startFree": "Start for free",
+      "startFree": "Try 21 days free",
       "goToPanel": "Go to dashboard"
     },
     "hero": {

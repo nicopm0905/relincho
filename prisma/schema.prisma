@@ -93,6 +93,10 @@ model Tenant {
   billingModule     Boolean            @default(false)
   /// Entró en el programa de fundadores (-40 % de por vida, 30 plazas).
   founder           Boolean            @default(false)
+  /// Fin de la prueba gratuita (21 días de Rendimiento, ver `src/lib/trial.ts`).
+  /// Sin suscripción después de esta fecha, la yeguada queda en modo lectura.
+  /// null = alta anterior a la prueba: conserva su plan de la beta.
+  trialEndsAt       DateTime?
   verifactuMode     VerifactuMode      @default(NO_VERIFACTU)
   /// De donde vino esta yeguada (flyer, feria, boca a boca). Se rellena en el
   /// alta a partir del primer toque con `?src=`.

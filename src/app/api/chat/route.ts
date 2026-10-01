@@ -1,3 +1,5 @@
+import { TRIAL_ENDED_MESSAGE } from "@/lib/trial";
+import { isTrialEnded } from "@/server/services/billing/trial";
 import { google } from "@ai-sdk/google";
 import { streamText, tool, convertToModelMessages, isStepCount } from "ai";
 import type { UIMessage } from "ai";
@@ -65,6 +67,11 @@ export async function POST(req: Request) {
       ? memberships.find((m) => m.tenant.slug === tenantSlug) ?? memberships[0]
       : memberships[0];
     const tenantId = membership.tenantId;
+
+    // El asistente apunta registros: con la prueba terminada, modo lectura.
+    if (await isTrialEnded(tenantId)) {
+      return new Response(TRIAL_ENDED_MESSAGE, { status: 402 });
+    }
 
     const quota = consumeQuota(tenantId);
     if (!quota.ok) {

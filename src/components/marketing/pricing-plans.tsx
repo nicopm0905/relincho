@@ -5,14 +5,15 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TRIAL_DAYS } from "@/lib/trial";
 import {
   PLAN_DEFINITIONS,
-  PLAN_ORDER,
+  PLAN_FEATURES,
+  PUBLIC_PLANS,
   annualMonthlyEquivalent,
   formatEuro,
   founderPrice,
   isComingSoon,
-  newFeaturesOf,
   planPrice,
   pricePerHorseMonth,
   type BillingInterval,
@@ -65,10 +66,13 @@ export function PricingPlans({
           ))}
         </div>
         <p className="text-sm font-medium text-primary-ink">{t("annualNote")}</p>
+        <p className="max-w-xl text-center text-sm text-muted-foreground">
+          {t("trialNote", { days: TRIAL_DAYS })}
+        </p>
       </div>
 
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {PLAN_ORDER.map((key) => (
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-3">
+        {PUBLIC_PLANS.map((key) => (
           <PlanCard
             key={key}
             planKey={key}
@@ -105,12 +109,15 @@ function PlanCard({
 
   const price = planPrice(planKey, interval);
   const perHorse = pricePerHorseMonth(planKey);
-  const idx = PLAN_ORDER.indexOf(planKey);
-  const previous = idx > 0 ? PLAN_ORDER[idx - 1] : null;
-  const features = newFeaturesOf(planKey);
+  // Sin plan gratis, el primero de la web enseña todo lo que incluye; los
+  // demás, solo lo que añaden sobre el anterior.
+  const idx = PUBLIC_PLANS.indexOf(planKey);
+  const previous = idx > 0 ? PUBLIC_PLANS[idx - 1] : null;
+  const previousFeatures = new Set(previous ? PLAN_FEATURES[previous] : []);
+  const features = PLAN_FEATURES[planKey].filter((f) => !previousFeatures.has(f));
 
-  const cta = t(`plans.${planKey}.cta`);
-  // Con 4 columnas el texto del botón no cabe en una línea a ~1280 px: se
+  const cta = t(`plans.${planKey}.cta`, { days: TRIAL_DAYS });
+  // Si el texto del botón no cabe en una línea, se
   // deja partir en vez de cortarlo.
   const buttonClass = "h-auto min-h-12 w-full py-3 text-base whitespace-normal";
 
@@ -137,8 +144,7 @@ function PlanCard({
 
       <div className="mb-2">
         {/* "desde" va en su propia línea, reservada en todas las tarjetas para
-            que las cifras queden a la misma altura. El precio nunca se parte:
-            con 4 columnas "3490 €" no cabía y el € bajaba a otra línea. */}
+            que las cifras queden a la misma altura. El precio nunca se parte. */}
         <p
           className="h-5 text-sm font-medium text-muted-foreground"
           aria-hidden={!plan.startsAt}
