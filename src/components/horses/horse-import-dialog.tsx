@@ -72,7 +72,7 @@ interface Preview {
   totalRows: number;
 }
 
-export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "outline" | "ghost" }) {
+export function HorseImportDialog({ triggerVariant }: { triggerVariant?: "default" | "outline" | "ghost" }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);

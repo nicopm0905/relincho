@@ -754,5 +754,96 @@
       "card3Title": "Clasificación automática",
       "card3Body": "Cada gasto, tratamiento y movimiento se archiva solo en su categoría, y el sistema afina con cada mes que pasa."
     }
+  },
+  "home": {
+    "metaTitle": "Inicio",
+    "title": "Hoy",
+    "subtitle": "{date} · Temporada {season}",
+    "attention": {
+      "title": "Requiere tu atención",
+      "summary": "{total, plural, one {# asunto} other {# asuntos}} · {overdue, plural, =0 {nada vencido} one {# vencido} other {# vencidos}}",
+      "allClear": "Todo al día",
+      "allClearBody": "No hay partos cerca, ecografías pendientes, sanidad vencida ni tareas para hoy.",
+      "viewAll": "Ver todo",
+      "more": "{count, plural, one {# más} other {# más}}"
+    },
+    "groups": {
+      "foaling": "Partos próximos",
+      "repro": "Reproducción",
+      "health": "Sanidad",
+      "tasks": "Tareas de hoy",
+      "other": "Otros avisos"
+    },
+    "due": {
+      "overdue": "{days, plural, =0 {Vence hoy} one {Venció ayer} other {Venció hace # días}}",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "inDays": "En {days} días",
+      "until": "Hasta el {date}",
+      "alert": "Aviso"
+    },
+    "foaling": {
+      "subtitle": "Parto hacia el {date} · día {day} de gestación"
+    },
+    "kpi": {
+      "pregnant": "Yeguas gestantes",
+      "pregnantHint": "{covered, plural, =0 {Ninguna pendiente de diagnóstico} one {+# cubierta pendiente de eco} other {+# cubiertas pendientes de eco}}",
+      "fertility": "Fertilidad {season}",
+      "fertilityUp": "+{diff} puntos frente a {previous}",
+      "fertilityDown": "{diff} puntos frente a {previous}",
+      "fertilitySame": "Igual que {previous}",
+      "fertilityCycles": "{pregnant} de {cycles} ciclos cubiertos",
+      "fertilityNone": "Sin cubriciones esta temporada",
+      "foalings": "Partos este mes",
+      "foalingsNext": "Próximo: {name}, hacia el {date}",
+      "foalingsNone": "Ninguno previsto este mes",
+      "census": "Caballos en el censo",
+      "censusHint": "{mares} yeguas · {stallions} sementales · {young} potros"
+    },
+    "activity": {
+      "title": "Actividad reciente",
+      "empty": "Aún no hay actividad registrada.",
+      "exam": "Exploración ginecológica",
+      "examFollicle": "Exploración · folículo de {mm} mm",
+      "birth": "Nacimiento",
+      "taskDone": "Tarea hecha"
+    },
+    "healthTypes": {
+      "VACCINE": "Vacuna",
+      "DEWORMING": "Desparasitación",
+      "DENTAL": "Dental",
+      "FARRIER": "Herrador",
+      "VET_CHECKUP": "Revisión",
+      "TREATMENT": "Tratamiento",
+      "INJURY": "Lesión",
+      "OTHER": "Otro"
+    },
+    "performance": {
+      "tendon": "Historial de tendón",
+      "exhausted": "Margen de recuperación agotado"
+    },
+    "invoice": {
+      "title": "Cobro vencido · {client}",
+      "subtitle": "Factura {label} · {amount} pendientes"
+    },
+    "quickActions": {
+      "title": "Acciones rápidas",
+      "description": "Anota algo sin salir del inicio.",
+      "quickTask": "Tarea rápida",
+      "newTask": "Nueva tarea",
+      "recordCare": "Registrar cuidado",
+      "needHorse": "Para registrar un cuidado, primero añade un caballo activo.",
+      "careDescription": "Añade una vacuna, desparasitación, visita veterinaria u otro evento sanitario."
+    },
+    "empty": {
+      "title": "Empieza por tu censo",
+      "body": "Importa el Excel o CSV que ya usas y en unos minutos tendrás aquí los partos, las ecografías y los vencimientos de tu yeguada.",
+      "add": "Añadir un caballo a mano",
+      "stepHorses": "Importa o registra tus caballos",
+      "stepHealth": "Apunta vacunas y desparasitaciones",
+      "stepRepro": "Inicia la temporada de tus yeguas",
+      "stepsLabel": "Primeros pasos"
+    },
+    "loading": "Cargando el inicio"
   }
 }

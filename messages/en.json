@@ -754,5 +754,96 @@
       "card3Title": "Automatic classification",
       "card3Body": "Every expense, treatment and entry files itself under the right category, and the system gets sharper every month."
     }
+  },
+  "home": {
+    "metaTitle": "Home",
+    "title": "Today",
+    "subtitle": "{date} · {season} season",
+    "attention": {
+      "title": "Needs your attention",
+      "summary": "{total, plural, one {# item} other {# items}} · {overdue, plural, =0 {nothing overdue} other {# overdue}}",
+      "allClear": "All up to date",
+      "allClearBody": "No foalings close, scans pending, overdue health care or tasks for today.",
+      "viewAll": "View all",
+      "more": "{count, plural, other {# more}}"
+    },
+    "groups": {
+      "foaling": "Upcoming foalings",
+      "repro": "Breeding",
+      "health": "Health",
+      "tasks": "Today's tasks",
+      "other": "Other alerts"
+    },
+    "due": {
+      "overdue": "{days, plural, =0 {Due today} one {Due yesterday} other {Overdue by # days}}",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays": "In {days} days",
+      "until": "Until {date}",
+      "alert": "Alert"
+    },
+    "foaling": {
+      "subtitle": "Due around {date} · day {day} of gestation"
+    },
+    "kpi": {
+      "pregnant": "Pregnant mares",
+      "pregnantHint": "{covered, plural, =0 {None awaiting diagnosis} one {+# covered, awaiting scan} other {+# covered, awaiting scan}}",
+      "fertility": "{season} fertility",
+      "fertilityUp": "+{diff} points vs {previous}",
+      "fertilityDown": "{diff} points vs {previous}",
+      "fertilitySame": "Same as {previous}",
+      "fertilityCycles": "{pregnant} of {cycles} cycles bred",
+      "fertilityNone": "No coverings this season",
+      "foalings": "Foalings this month",
+      "foalingsNext": "Next: {name}, around {date}",
+      "foalingsNone": "None expected this month",
+      "census": "Horses on the farm",
+      "censusHint": "{mares} mares · {stallions} stallions · {young} foals"
+    },
+    "activity": {
+      "title": "Recent activity",
+      "empty": "No activity recorded yet.",
+      "exam": "Reproductive exam",
+      "examFollicle": "Exam · {mm} mm follicle",
+      "birth": "Birth",
+      "taskDone": "Task done"
+    },
+    "healthTypes": {
+      "VACCINE": "Vaccine",
+      "DEWORMING": "Deworming",
+      "DENTAL": "Dental",
+      "FARRIER": "Farrier",
+      "VET_CHECKUP": "Check-up",
+      "TREATMENT": "Treatment",
+      "INJURY": "Injury",
+      "OTHER": "Other"
+    },
+    "performance": {
+      "tendon": "Tendon history",
+      "exhausted": "Recovery margin used up"
+    },
+    "invoice": {
+      "title": "Overdue payment · {client}",
+      "subtitle": "Invoice {label} · {amount} outstanding"
+    },
+    "quickActions": {
+      "title": "Quick actions",
+      "description": "Log something without leaving home.",
+      "quickTask": "Quick task",
+      "newTask": "New task",
+      "recordCare": "Record care",
+      "needHorse": "Add an active horse before recording care.",
+      "careDescription": "Add a vaccine, deworming, vet visit or other health event."
+    },
+    "empty": {
+      "title": "Start with your horses",
+      "body": "Import the Excel or CSV you already use and in a few minutes you'll see your farm's foalings, scans and due dates here.",
+      "add": "Add a horse manually",
+      "stepHorses": "Import or add your horses",
+      "stepHealth": "Log vaccines and deworming",
+      "stepRepro": "Start your mares' season",
+      "stepsLabel": "First steps"
+    },
+    "loading": "Loading home"
   }
 }
