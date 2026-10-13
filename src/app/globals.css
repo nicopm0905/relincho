@@ -312,7 +312,10 @@
     scroll-padding-top: 6rem;
   }
   body {
-    @apply bg-background text-foreground;
+    /* `font-sans` aqui y no en <html>: next/font define --font-jakarta en el
+       <body>, y en <html> la variable no existe. Sin esto la app entera se
+       pintaba en la fuente del sistema (Segoe UI en Windows). */
+    @apply bg-background font-sans text-foreground;
     /* Titulos de la app en la misma sans; `.brand-serif` los pasa al serif de
        marca. Va en una variable para que tambien lo hereden los dialogos, que
        se montan fuera del arbol de la pagina. */
