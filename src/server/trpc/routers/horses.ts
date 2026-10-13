@@ -96,6 +96,19 @@ async function assertHorseRefs(
 
 const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
+// Pedigrí: cada nivel es un literal para que Prisma infiera el tipo exacto.
+const ancestorFields = { id: true, name: true, coat: true, birthDate: true } as const;
+const grandparentSelect = {
+  ...ancestorFields,
+  sire: { select: ancestorFields },
+  dam: { select: ancestorFields },
+} as const;
+const parentSelect = {
+  ...ancestorFields,
+  sire: { select: grandparentSelect },
+  dam: { select: grandparentSelect },
+} as const;
+
 export const horsesRouter = createTRPCRouter({
   list: tenantProcedure
     .input(
@@ -159,8 +172,9 @@ export const horsesRouter = createTRPCRouter({
             breeder: { select: { id: true, name: true } },
             feedingPlan: true,
             vetProfile: { select: { baseWeightKg: true } },
-            sire: { select: { id: true, name: true, sire: { select: { id: true, name: true } }, dam: { select: { id: true, name: true } } } },
-            dam: { select: { id: true, name: true, sire: { select: { id: true, name: true } }, dam: { select: { id: true, name: true } } } },
+            // Tres generaciones (padres, abuelos, bisabuelos) para el pedigrí.
+            sire: { select: parentSelect },
+            dam: { select: parentSelect },
             healthEvents: { orderBy: { date: "desc" }, take: 10 },
             documents: { orderBy: { createdAt: "desc" } },
             reproCycles: {
