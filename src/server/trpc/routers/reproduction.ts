@@ -4,7 +4,7 @@ import { assertHorseAccess, horseScope } from "../access";
 import { TRPCError } from "@trpc/server";
 import { withTenant, type PrismaClient } from "@/server/db/prisma";
 import { CHECK_RESULTS, coveringResult } from "@/lib/reproduction";
-import { reproSettingsInputSchema } from "@/lib/repro-settings";
+import { hasBreedingAge, reproSettingsInputSchema } from "@/lib/repro-settings";
 import { mareInsight, SEASON_CATEGORIES } from "@/lib/repro-engine";
 import { EXAM_TREATMENTS, MARE_CONDITIONS } from "@/lib/repro-labels";
 import { seasonStats } from "@/lib/repro-stats";
@@ -306,13 +306,16 @@ export const reproductionRouter = createTRPCRouter({
             ...(input.mareIds ? { id: { in: input.mareIds } } : {}),
             reproCycles: { none: { season: input.season } },
           },
-          select: { id: true },
+          select: { id: true, birthDate: true },
         });
-        if (mares.length === 0) return { created: 0 };
+        // Mismo criterio que el aviso de Reproducción: sin potras.
+        const settings = await loadReproSettings(tx, ctx.tenantId);
+        const eligible = input.mareIds ? mares : mares.filter((m) => hasBreedingAge(m.birthDate, settings));
+        if (eligible.length === 0) return { created: 0 };
         await tx.reproductionCycle.createMany({
-          data: mares.map((m) => ({ tenantId: ctx.tenantId, mareId: m.id, season: input.season })),
+          data: eligible.map((m) => ({ tenantId: ctx.tenantId, mareId: m.id, season: input.season })),
         });
-        return { created: mares.length };
+        return { created: eligible.length };
       });
     }),
 

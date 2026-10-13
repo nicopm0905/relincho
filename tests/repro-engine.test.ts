@@ -9,7 +9,7 @@ import {
   seasonCategory,
   type ExamInput,
 } from "../src/lib/repro-engine";
-import { DEFAULT_REPRO_SETTINGS as S, parseReproSettings } from "../src/lib/repro-settings";
+import { DEFAULT_REPRO_SETTINGS as S, hasBreedingAge, parseReproSettings } from "../src/lib/repro-settings";
 
 const d = (iso: string) => new Date(iso);
 const ovulated = (iso: string): ExamInput => ({ date: iso, ovulated: true });
@@ -207,4 +207,17 @@ test("categoría de temporada: doncella, parida, vacía, pérdida y descansada",
   ];
   assert.equal(seasonCategory(lost, 2026), "SLIPPED");
   assert.equal(seasonCategory(neg, 2027), "RESTED");
+});
+
+test("edad mínima de reproducción: las potras no cuentan como yeguas", () => {
+  const now = d("2026-10-13T12:00:00Z");
+  assert.equal(S.minBreedingAgeYears, 2);
+  assert.equal(hasBreedingAge(d("2026-04-15"), S, now), false, "potra del año");
+  assert.equal(hasBreedingAge(d("2024-11-01"), S, now), false, "aún no cumple 2 años");
+  assert.equal(hasBreedingAge(d("2024-10-01"), S, now), true, "ya cumplió 2 años");
+  assert.equal(hasBreedingAge(null, S, now), true, "sin fecha no se excluye");
+  // Cada yeguada la ajusta: con 3 años, una de 2 y medio queda fuera.
+  const three = parseReproSettings({ minBreedingAgeYears: 3 });
+  assert.equal(hasBreedingAge(d("2024-04-01"), three, now), false);
+  assert.equal(hasBreedingAge(d("2023-04-01"), three, now), true);
 });

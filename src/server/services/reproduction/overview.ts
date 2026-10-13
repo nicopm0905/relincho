@@ -1,6 +1,6 @@
 import "server-only";
 import type { PrismaClient } from "@/server/db/prisma";
-import { parseReproSettings, type ReproSettings } from "@/lib/repro-settings";
+import { hasBreedingAge, parseReproSettings, type ReproSettings } from "@/lib/repro-settings";
 import {
   mareInsight,
   seasonCategory,
@@ -147,6 +147,9 @@ export async function buildReproOverview(
     const carriesPregnancy = insight.gestation !== null;
     const recentlyFoaled = insight.phase === "POSTPARTUM";
     if (!cycle && !carriesPregnancy && !recentlyFoaled) {
+      // Una potra no es una yegua sin temporada: no se ofrece hasta que tenga
+      // la edad mínima de la yeguada.
+      if (!hasBreedingAge(mare.birthDate, settings, now)) continue;
       untracked.push({ id: mare.id, name: mare.name, birthDate: mare.birthDate });
       continue;
     }
