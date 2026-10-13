@@ -1,5 +1,18 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
+
+// Los tamanos de la escala tipografica (globals.css) no son de Tailwind: sin
+// esto, twMerge cree que `text-title` es un color y lo descarta al lado de
+// `text-foreground`.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        { text: ["display", "title", "heading", "body", "label", "caption", "micro"] },
+      ],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
