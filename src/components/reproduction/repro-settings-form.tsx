@@ -172,6 +172,9 @@ export function ReproSettingsForm({ initial, canEdit }: { initial: ReproSettings
           description="La yegua es poliéstrica estacional: cicla con días largos y entra en anestro en invierno. Cada yegua aprende su propio ciclo a partir de sus ovulaciones."
         >
           <div className="grid gap-4 sm:grid-cols-3">
+            {num("minBreedingAgeYears", "Edad mínima para reproducción", "años", { step: 0.5 })}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
             {num("cycleLengthDays", "Duración del ciclo", "días")}
             {num("estrusLengthDays", "Duración del celo", "días")}
             {num("estrusFollicleMm", "Folículo que indica celo", "mm")}

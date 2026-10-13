@@ -78,6 +78,10 @@ export const reproSettingsSchema = z.object({
   /** Temporada de cubriciones de la yeguada. */
   breedingSeasonStartMonth: z.number().int().min(1).max(12).default(2),
   breedingSeasonEndMonth: z.number().int().min(1).max(12).default(7),
+  /** Edad (años) desde la que una hembra entra en reproducción. Las potras
+   *  más jóvenes no se ofrecen para iniciar temporada. Cada yeguada la fija:
+   *  unas cubren con 3 años, otras esperan a los 4. */
+  minBreedingAgeYears: z.number().min(1).max(8).default(2),
 
   // Ovulacion
   preovulatoryFollicleMm: z.number().int().min(25).max(55).default(35),
@@ -148,6 +152,19 @@ export const DEFAULT_REPRO_SETTINGS: ReproSettings = reproSettingsSchema.parse({
  * Lee el JSON guardado. Si esta corrupto no rompe la pantalla: se descarta lo
  * que no valida campo a campo y se quedan los valores por defecto.
  */
+/** ¿Tiene ya edad de reproducción? Sin fecha de nacimiento no se excluye. */
+export function hasBreedingAge(
+  birthDate: Date | string | null | undefined,
+  settings: Pick<ReproSettings, "minBreedingAgeYears">,
+  now: Date = new Date(),
+): boolean {
+  if (!birthDate) return true;
+  const born = new Date(birthDate);
+  const threshold = new Date(born);
+  threshold.setMonth(threshold.getMonth() + Math.round(settings.minBreedingAgeYears * 12));
+  return threshold.getTime() <= now.getTime();
+}
+
 export function parseReproSettings(raw: unknown): ReproSettings {
   const input = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const full = reproSettingsSchema.safeParse(input);
