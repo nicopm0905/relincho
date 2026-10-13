@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Heartbeat, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ export function QuickActions({
   assignees: TaskOption[];
   canRecordHealth: boolean;
 }) {
+  const t = useTranslations("home.quickActions");
   const [creatingTask, setCreatingTask] = useState(false);
   const [creatingQuickTask, setCreatingQuickTask] = useState(false);
   const [creatingHealthEvent, setCreatingHealthEvent] = useState(false);
@@ -33,24 +35,22 @@ export function QuickActions({
   return (
     <section
       aria-labelledby="quick-actions-heading"
-      className="rounded-2xl border border-border bg-card p-4 sm:p-5"
+      className="space-y-3"
     >
-      <div className="mb-3">
-        <h2 id="quick-actions-heading" className="text-sm font-semibold text-foreground">
-          Acciones rápidas
+      <div>
+        <h2 id="quick-actions-heading" className="text-heading font-semibold text-foreground">
+          {t("title")}
         </h2>
-        <p className="text-xs text-muted-foreground">
-          Anota algo sin salir del inicio.
-        </p>
+        <p className="text-label text-muted-foreground">{t("description")}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button onClick={() => setCreatingQuickTask(true)}>
           <Plus weight="bold" />
-          Tarea rápida
+          {t("quickTask")}
         </Button>
         <Button variant="outline" onClick={() => setCreatingTask(true)}>
           <Plus weight="bold" />
-          Nueva tarea
+          {t("newTask")}
         </Button>
         {canRecordHealth && (
           <Button
@@ -59,7 +59,7 @@ export function QuickActions({
             disabled={activeHorses.length === 0}
           >
             <Heartbeat weight="bold" />
-            Registrar cuidado
+            {t("recordCare")}
           </Button>
         )}
         {canRecordHealth && activeHorses.length > 1 && (
@@ -71,18 +71,14 @@ export function QuickActions({
         )}
       </div>
       {canRecordHealth && activeHorses.length === 0 && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Para registrar un cuidado, primero añade un caballo activo.
-        </p>
+        <p className="text-caption text-muted-foreground">{t("needHorse")}</p>
       )}
       {creatingHealthEvent && activeHorses.length > 0 && (
         <Dialog open onOpenChange={setCreatingHealthEvent}>
           <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
             <DialogHeader>
-              <DialogTitle>Registrar cuidado</DialogTitle>
-              <DialogDescription>
-                Añade una vacuna, desparasitación, visita veterinaria u otro evento sanitario.
-              </DialogDescription>
+              <DialogTitle>{t("recordCare")}</DialogTitle>
+              <DialogDescription>{t("careDescription")}</DialogDescription>
             </DialogHeader>
             <HealthEventForm
               tenantSlug={tenantSlug}

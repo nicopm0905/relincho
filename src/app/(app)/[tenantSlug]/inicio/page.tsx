@@ -1,31 +1,30 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { createServerCaller } from "@/lib/trpc/server";
+import { getFormatter, getTranslations } from "next-intl/server";
 import {
-  Horse,
-  Heartbeat,
-  CheckSquare,
-  Plus,
-  CaretRight,
-  Sun,
-  Warning,
   Baby,
-  Receipt,
+  CheckSquare,
+  Heartbeat,
+  Horse,
+  Stethoscope,
+  Warning,
 } from "@phosphor-icons/react/dist/ssr";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
-import { PageHeader, SectionHeading } from "@/components/layout/page-header";
+import { createServerCaller } from "@/lib/trpc/server";
+import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ui/stat-card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { ListRow, ListRows, RowIcon } from "@/components/ui/list-row";
+import { InicioSkeleton } from "@/components/inicio/inicio-skeleton";
 import { SessionCheckIn } from "@/components/rendimiento/session-check-in";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
-import { FirstSteps } from "@/components/onboarding/first-steps";
-import { QuickActions } from "@/components/inicio/quick-actions";
 import { HeatCard } from "@/components/rendimiento/heat-card";
-import { calendarDayOffset, dayWindowUtc, relativeDayLabel } from "@/lib/day-window";
+import { QuickActions } from "@/components/inicio/quick-actions";
+import {
+  AttentionBoard,
+  type AttentionGroup,
+  type AttentionItem,
+  type AttentionTone,
+} from "@/components/inicio/attention-board";
+import { RecentActivity, type ActivityEntry } from "@/components/inicio/recent-activity";
+import { InicioEmpty } from "@/components/inicio/inicio-empty";
+import { calendarDayOffset } from "@/lib/day-window";
+import { pendingHealthDue } from "@/lib/health-due";
 import { getSession } from "@/server/auth";
 import { getTenantAccess } from "@/server/tenant-access";
 
@@ -34,36 +33,22 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { tenantSlug } = await params;
-  return { title: `Inicio — ${tenantSlug}` };
+  const [{ tenantSlug }, t] = await Promise.all([params, getTranslations("home")]);
+  return { title: `${t("metaTitle")} — ${tenantSlug}` };
 }
 
-const healthTypeLabels: Record<string, string> = {
-  VACCINE: "Vacuna",
-  DEWORMING: "Desparasitación",
-  DENTAL: "Dental",
-  FARRIER: "Herrador",
-  VET_CHECKUP: "Revisión",
-  TREATMENT: "Tratamiento",
-  INJURY: "Lesión",
-  OTHER: "Otro",
-};
+/** Días por delante que cuentan como "ya" en cada bloque. */
+const REPRO_AHEAD_DAYS = 2;
+const HEALTH_AHEAD_DAYS = 7;
+/** Por debajo de esta edad un caballo cuenta como potro en el censo. */
+const YOUNG_YEARS = 3;
+const YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const euros = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
-const formatEuros = (value: number) => euros.format(value);
-
-/** "Vencía hace 3 días" / "Hoy" / "En 12 días" — relative beats a raw date
- *  when the whole point of the row is urgency. */
-function dueLabel(due: Date, now: Date) {
-  const days = calendarDayOffset(due, now);
-  return { text: relativeDayLabel(days), overdue: days <= 0 };
-}
+type Due = AttentionItem["due"] & { overdue: boolean };
 
 export default function InicioPage({ params }: PageProps) {
   return (
-    <Suspense fallback={<PageSkeleton rows={6} />}>
+    <Suspense fallback={<InicioSkeleton />}>
       <InicioContent params={params} />
     </Suspense>
   );
@@ -71,17 +56,23 @@ export default function InicioPage({ params }: PageProps) {
 
 async function InicioContent({ params }: PageProps) {
   const { tenantSlug } = await params;
-  const [caller, session] = await Promise.all([
+  const now = new Date();
+  const season = now.getFullYear();
+  const [caller, session, t, format] = await Promise.all([
     createServerCaller(tenantSlug),
     getSession(),
+    getTranslations("home"),
+    getFormatter(),
   ]);
   const [{ membership }, data] = await Promise.all([
     getTenantAccess(tenantSlug, session?.user?.id),
     Promise.all([
       caller.horses.list(),
-      caller.health.upcoming({ days: 30 }),
+      caller.health.list({}),
       caller.reproduction.overview({}),
+      caller.reproduction.stats({ season }),
       caller.tasks.list({ done: false }),
+      caller.tasks.list({ done: true }),
       caller.performance.overview(),
       caller.performance.pendingCheckIns({}),
       // Facturacion es solo del personal: un veterinario externo ve el Inicio
@@ -92,311 +83,350 @@ async function InicioContent({ params }: PageProps) {
       caller.weather.heat().catch(() => null),
     ]),
   ]);
-  const [horses, upcomingHealth, repro, openTasks, performance, pendingCheckIns, receivables, assignees, heat] = data;
+  const [
+    horses,
+    healthEvents,
+    repro,
+    stats,
+    openTasks,
+    doneTasks,
+    performance,
+    pendingCheckIns,
+    receivables,
+    assignees,
+    heat,
+  ] = data;
+
+  // Una yeguada recién creada no necesita un panel de ceros: necesita saber
+  // por dónde empezar.
+  if (horses.length === 0) {
+    return (
+      <div className="animate-in fade-in-0 space-y-8 duration-300">
+        <PageHeader title={t("title")} description={format.dateTime(now, { dateStyle: "full" })} />
+        <InicioEmpty tenantSlug={tenantSlug} />
+      </div>
+    );
+  }
+
   const canRecordHealth = ["OWNER", "MANAGER", "GROOM", "VET_EXTERNAL"].includes(
     membership?.role ?? "",
   );
+  const shortDate = (date: Date) => format.dateTime(date, { day: "numeric", month: "short" });
 
-  const now = new Date();
-  const today = dayWindowUtc(0, now).start.getTime();
+  // ── Cuándo vence cada cosa, en palabras ───────────────────────────────────
+  const pointDue = (date: Date): Due => {
+    const offset = calendarDayOffset(date, now);
+    if (offset < 0) return { label: t("due.overdue", { days: -offset }), tone: "alert", overdue: true };
+    if (offset === 0) return { label: t("due.today"), tone: "alert", overdue: false };
+    if (offset === 1) return { label: t("due.tomorrow"), tone: "neutral", overdue: false };
+    return { label: t("due.inDays", { days: offset }), tone: "neutral", overdue: false };
+  };
+  /** Ventanas (eco del día 28 al 35, celo...): solo vencen cuando se cierran. */
+  const windowDue = (from: Date, to: Date, overdue: boolean): Due => {
+    if (overdue) {
+      const days = Math.max(0, -calendarDayOffset(to, now));
+      return { label: t("due.overdue", { days }), tone: "alert", overdue: true };
+    }
+    if (calendarDayOffset(from, now) > 0) return pointDue(from);
+    if (calendarDayOffset(to, now) <= 0) return pointDue(to);
+    return { label: t("due.until", { date: shortDate(to) }), tone: "alert", overdue: false };
+  };
 
-  const activeHorses = horses.filter((h) => h.status === "ACTIVE").length;
-  const DAYS = (n: number) => n * DAY_MS;
+  const mareHref = (m: (typeof repro.tracked)[number]) => {
+    const id = m.cycle?.id ?? m.latestCycleId;
+    return id ? `/${tenantSlug}/reproduccion/${id}` : `/${tenantSlug}/caballos/${m.mare.id}`;
+  };
+  const horseHref = (id: string) => `/${tenantSlug}/caballos/${id}`;
 
-  // Lo propio de una yeguada de cria, del mismo motor que la pantalla de
-  // Reproduccion: celos, ventanas de cubricion, ecografias y partos.
-  const tracked = repro.tracked;
-  const pregnantMares = tracked.filter((m) => m.insight.gestation).length;
-  const foalingsIn60 = tracked.filter(
-    (m) => m.insight.gestation && m.insight.gestation.windowFrom.getTime() <= today + DAYS(60),
-  ).length;
-  // Solo lo que toca esta semana o ya va tarde.
-  const reproDue = tracked.flatMap((m) =>
-    m.insight.actions
-      .filter((a) => a.overdue || a.from.getTime() <= today + DAYS(7))
-      .map((action) => ({ mare: m, action })),
+  const item = ({ due, ...entry }: Omit<AttentionItem, "due" | "overdue"> & { due: Due }): AttentionItem => ({
+    ...entry,
+    due: { label: due.label, tone: due.tone },
+    overdue: due.overdue,
+  });
+  const notice = (tone: AttentionTone): Due => ({ label: t("due.alert"), tone, overdue: false });
+
+  // ── Partos ──────────────────────────────────────────────────────────────
+  const foaling = repro.tracked
+    .filter((m) => m.insight.phase === "FOALING_SOON" && m.insight.gestation)
+    .sort((a, b) => +a.insight.gestation!.expected - +b.insight.gestation!.expected)
+    .map((m) => {
+      const g = m.insight.gestation!;
+      // La vigilancia preparto (ubre, calcio) es lo más urgente de la pantalla.
+      const watch = m.insight.alerts.find((a) => a.key === "foaling_watch" && a.level !== "info");
+      const due = windowDue(g.windowFrom, g.windowTo, false);
+      return item({
+        id: `foaling-${m.mare.id}`,
+        title: m.mare.name,
+        subtitle: watch?.message ?? t("foaling.subtitle", { date: shortDate(g.expected), day: g.days }),
+        href: mareHref(m),
+        due: watch ? { ...due, tone: "danger" } : due,
+      });
+    });
+
+  // ── Reproducción: avisos, ecografías, celos e hitos de gestación ─────────
+  const reproAlerts = repro.tracked.flatMap((m) =>
+    m.insight.alerts
+      .filter((a) => a.level !== "info" && a.key !== "foaling_watch")
+      .map((a) =>
+        item({
+          id: `alert-${m.mare.id}-${a.key}`,
+          title: m.mare.name,
+          subtitle: a.message,
+          href: mareHref(m),
+          due: notice(a.level === "danger" ? "danger" : "alert"),
+        }),
+      ),
+  );
+  const reproActions = repro.tracked
+    .flatMap((m) =>
+      m.insight.actions
+        .filter((a) => a.kind !== "foaling_watch")
+        .filter((a) => a.overdue || calendarDayOffset(new Date(a.from), now) <= REPRO_AHEAD_DAYS)
+        .map((a) => ({ m, a })),
+    )
+    .sort(
+      (x, y) =>
+        Number(y.a.overdue) - Number(x.a.overdue) || +new Date(x.a.from) - +new Date(y.a.from),
+    )
+    .map(({ m, a }) =>
+      item({
+        id: `action-${m.mare.id}-${a.kind}-${+new Date(a.from)}`,
+        title: m.mare.name,
+        subtitle: a.label,
+        href: mareHref(m),
+        due: windowDue(new Date(a.from), new Date(a.to), a.overdue),
+      }),
+    );
+
+  // ── Sanidad: vencido o en los próximos días ──────────────────────────────
+  const healthType = (type: string) => t(`healthTypes.${type}` as "healthTypes.OTHER");
+  const health = pendingHealthDue(healthEvents, { withinDays: HEALTH_AHEAD_DAYS, now }).map(
+    ({ event, due }) =>
+      item({
+        id: `health-${event.id}`,
+        title: event.horse.name,
+        subtitle: `${healthType(event.type)} · ${event.name}`,
+        href: horseHref(event.horse.id),
+        due: pointDue(due),
+      }),
   );
 
-  // One prioritised worklist instead of two parallel lists the user has to
-  // cross-reference. Everything that has a date lands here, soonest first.
-  const attention = [
-    // Las alertas de rendimiento saltan de la ficha del caballo al inicio: un
-    // tendon tocado es mas urgente que la mayoria de vencimientos sanitarios.
-    ...performance
-      .filter(
-        (horse) =>
-          horse.tendonHistoryAlert || horse.bufferStatus === "exhausted",
-      )
-      .map((horse) => ({
-        id: `performance-${horse.horseId}`,
-        due: new Date(today),
-        title: horse.name,
-        subtitle: [
-          horse.tendonHistoryAlert ? "Historial de tendón" : null,
-          horse.bufferStatus === "exhausted"
-            ? "Margen de recuperación agotado"
-            : null,
-        ]
-          .filter(Boolean)
-          .join(" · "),
-        href: `/${tenantSlug}/rendimiento/${horse.horseId}`,
-        icon: <Warning />,
-      })),
-    ...upcomingHealth
-      .filter((event) => event.nextDueDate)
-      .map((event) => ({
-        id: `health-${event.id}`,
-        due: new Date(event.nextDueDate!),
-        title: event.name,
-        subtitle: `${event.horse.name} · ${healthTypeLabels[event.type] ?? event.type}`,
-        href: `/${tenantSlug}/sanidad`,
-        icon: <Heartbeat />,
-      })),
-    ...reproDue.map(({ mare, action }, idx) => ({
-      id: `repro-${mare.mare.id}-${action.kind}-${idx}`,
-      due: action.from,
-      title: `${action.label} · ${mare.mare.name}`,
-      subtitle:
-        action.kind === "foaling_watch" && mare.insight.gestation
-          ? `Hacia el ${format(mare.insight.gestation.expected, "d 'de' MMMM", { locale: es })} · día ${mare.insight.gestation.days} de gestación`
-          : `${format(action.from, "d MMM, HH:mm", { locale: es })} – ${format(action.to, "d MMM, HH:mm", { locale: es })}`,
-      href: `/${tenantSlug}/reproduccion/${mare.cycle?.id ?? mare.latestCycleId ?? ""}`,
-      icon: <Baby />,
-    })),
-    ...(receivables?.overdue ?? []).map((invoice) => ({
-      id: `invoice-${invoice.id}`,
-      due: invoice.dueDate ? new Date(invoice.dueDate) : new Date(today),
-      title: `Cobro vencido · ${invoice.client}`,
-      subtitle: `Factura ${invoice.label} · ${formatEuros(invoice.pending)} pendientes`,
-      href: `/${tenantSlug}/facturacion/${invoice.id}`,
-      icon: <Receipt />,
-    })),
-    ...openTasks
-      .filter((task) => task.dueDate)
-      .map((task) => ({
+  // ── Tareas de hoy y atrasadas ────────────────────────────────────────────
+  const tasks = openTasks
+    .filter((task) => calendarDayOffset(new Date(task.dueDate), now) <= 0)
+    .map((task) =>
+      item({
         id: `task-${task.id}`,
-        due: new Date(task.dueDate),
         title: task.title,
-        subtitle: [task.horseName, task.assigneeName].filter(Boolean).join(" · ") || "Tarea pendiente",
+        subtitle: [task.horseName, task.assigneeName].filter(Boolean).join(" · ") || undefined,
         href: `/${tenantSlug}/tareas`,
-        icon: <CheckSquare />,
-      })),
-  ].sort((a, b) => a.due.getTime() - b.due.getTime());
+        due: pointDue(new Date(task.dueDate)),
+      }),
+    );
 
-  const overdueCount = attention.filter(
-    (item) => calendarDayOffset(item.due, now) <= 0,
+  // ── Otros: tendones y cobros vencidos ────────────────────────────────────
+  const euros = (value: number) => format.number(value, { style: "currency", currency: "EUR" });
+  const other = [
+    ...performance
+      .filter((h) => h.tendonHistoryAlert || h.bufferStatus === "exhausted")
+      .map((h) =>
+        item({
+          id: `performance-${h.horseId}`,
+          title: h.name,
+          subtitle: [
+            h.tendonHistoryAlert ? t("performance.tendon") : null,
+            h.bufferStatus === "exhausted" ? t("performance.exhausted") : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          href: `/${tenantSlug}/rendimiento/${h.horseId}`,
+          due: notice("alert"),
+        }),
+      ),
+    ...(receivables?.overdue ?? []).map((invoice) =>
+      item({
+        id: `invoice-${invoice.id}`,
+        title: t("invoice.title", { client: invoice.client }),
+        subtitle: t("invoice.subtitle", { label: invoice.label, amount: euros(invoice.pending) }),
+        href: `/${tenantSlug}/facturacion/${invoice.id}`,
+        due: pointDue(invoice.dueDate ? new Date(invoice.dueDate) : now),
+      }),
+    ),
+  ];
+
+  const groups: AttentionGroup[] = [
+    { key: "foaling", title: t("groups.foaling"), icon: <Baby />, href: `/${tenantSlug}/reproduccion`, items: foaling },
+    {
+      key: "repro",
+      title: t("groups.repro"),
+      icon: <Stethoscope />,
+      href: `/${tenantSlug}/reproduccion`,
+      items: [...reproAlerts, ...reproActions],
+    },
+    { key: "health", title: t("groups.health"), icon: <Heartbeat />, href: `/${tenantSlug}/sanidad`, items: health },
+    { key: "tasks", title: t("groups.tasks"), icon: <CheckSquare />, href: `/${tenantSlug}/tareas`, items: tasks },
+    { key: "other", title: t("groups.other"), icon: <Warning />, href: `/${tenantSlug}/rendimiento`, items: other },
+  ];
+  const attentionItems = groups.flatMap((g) => g.items);
+  const overdueCount = attentionItems.filter((i) => i.overdue).length;
+
+  // ── KPIs de cría ─────────────────────────────────────────────────────────
+  const pregnant = repro.tracked.filter((m) => m.insight.gestation).length;
+  const covered = repro.tracked.filter((m) => m.insight.phase === "COVERED").length;
+
+  const { current, previous } = stats;
+  const points = (rate: number) => Math.round(rate * 100);
+  const fertilityHint = (() => {
+    if (current.perCycleRate === null) return t("kpi.fertilityNone");
+    if (previous.perCycleRate === null) {
+      return t("kpi.fertilityCycles", { pregnant: current.pregnantCycles, cycles: current.cyclesBred });
+    }
+    const diff = points(current.perCycleRate) - points(previous.perCycleRate);
+    if (diff > 0) return t("kpi.fertilityUp", { diff, previous: previous.season });
+    if (diff < 0) return t("kpi.fertilityDown", { diff, previous: previous.season });
+    return t("kpi.fertilitySame", { previous: previous.season });
+  })();
+
+  const gestations = repro.tracked
+    .filter((m) => m.insight.gestation)
+    .map((m) => ({ name: m.mare.name, expected: new Date(m.insight.gestation!.expected) }))
+    .sort((a, b) => +a.expected - +b.expected);
+  const foalingsThisMonth = gestations.filter(
+    (g) => g.expected.getFullYear() === now.getFullYear() && g.expected.getMonth() === now.getMonth(),
   ).length;
+  const nextFoaling = gestations.find((g) => calendarDayOffset(g.expected, now) >= 0);
 
-  const recentHorses = horses.filter((h) => h.status === "ACTIVE").slice(0, 6);
+  const census = horses.filter((h) => h.status === "ACTIVE" || h.status === "IN_TRAINING");
+  const isYoung = (h: (typeof horses)[number]) =>
+    h.birthDate !== null && now.getTime() - new Date(h.birthDate).getTime() < YOUNG_YEARS * YEAR_MS;
+  const young = census.filter(isYoung).length;
+  const mares = census.filter((h) => h.sex === "FEMALE" && !isYoung(h)).length;
+  const stallions = census.filter((h) => h.sex === "MALE" && !isYoung(h)).length;
+
+  // ── Actividad reciente: contexto, no cosas que hacer ─────────────────────
+  const activity: (Omit<ActivityEntry, "when"> & { at: Date })[] = [
+    ...healthEvents
+      .filter((e) => new Date(e.date) <= now)
+      .slice(0, 8)
+      .map((e) => ({
+        id: `h-${e.id}`,
+        at: new Date(e.date),
+        icon: <Heartbeat />,
+        title: e.horse.name,
+        subtitle: `${healthType(e.type)} · ${e.name}`,
+        href: horseHref(e.horse.id),
+      })),
+    ...repro.tracked
+      .filter((m) => m.insight.lastExam && new Date(m.insight.lastExam.date) <= now)
+      .map((m) => ({
+        id: `e-${m.mare.id}`,
+        at: new Date(m.insight.lastExam!.date),
+        icon: <Stethoscope />,
+        title: m.mare.name,
+        subtitle: m.insight.lastExam!.follicleMm
+          ? t("activity.examFollicle", { mm: m.insight.lastExam!.follicleMm })
+          : t("activity.exam"),
+        href: mareHref(m),
+      })),
+    ...doneTasks
+      .filter((task) => task.doneAt)
+      .map((task) => ({
+        id: `t-${task.id}`,
+        at: new Date(task.doneAt!),
+        icon: <CheckSquare />,
+        title: task.title,
+        subtitle: [t("activity.taskDone"), task.horseName].filter(Boolean).join(" · "),
+        href: `/${tenantSlug}/tareas`,
+      })),
+    ...horses
+      .filter((h) => h.birthDate && calendarDayOffset(new Date(h.birthDate), now) >= -60)
+      .map((h) => ({
+        id: `b-${h.id}`,
+        at: new Date(h.birthDate!),
+        icon: <Horse />,
+        title: h.name,
+        subtitle: t("activity.birth"),
+        href: horseHref(h.id),
+      })),
+  ]
+    .sort((a, b) => +b.at - +a.at)
+    .slice(0, 6);
 
   return (
-    <div className="animate-in fade-in-0 space-y-8 duration-300">
+    <div className="animate-in fade-in-0 space-y-10 duration-300">
       <PageHeader
-        title="Inicio"
-        description={format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
-        actions={
-          <Button asChild>
-            <Link href={`/${tenantSlug}/caballos/nuevo`}>
-              <Plus weight="bold" />
-              Añadir caballo
-            </Link>
-          </Button>
-        }
+        title={t("title")}
+        description={t("subtitle", {
+          date: format.dateTime(now, { weekday: "long", day: "numeric", month: "long" }),
+          season,
+        })}
       />
 
-      {/* Una yeguada recién creada no necesita estadísticas: necesita saber
-          por dónde empezar. */}
-      {horses.length < 3 && <FirstSteps tenantSlug={tenantSlug} />}
-
-      <SessionCheckIn sessions={pendingCheckIns} />
-
-      <HeatCard heat={heat} tenantSlug={tenantSlug} collapseWhenNormal />
-
-      <QuickActions
-        tenantSlug={tenantSlug}
-        horses={horses.map((horse) => ({
-          id: horse.id,
-          name: horse.name,
-          status: horse.status,
-          excludedFromFoodChain: horse.excludedFromFoodChain,
-          weightKg: horse.weightKg,
-        }))}
-        assignees={assignees}
-        canRecordHealth={canRecordHealth}
+      <AttentionBoard
+        groups={groups}
+        summary={t("attention.summary", { total: attentionItems.length, overdue: overdueCount })}
       />
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <section aria-label={t("kpi.census")} className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatCard
-          label="Caballos activos"
-          value={activeHorses}
-          hint={`${horses.length} en total`}
-          href={`/${tenantSlug}/caballos`}
+          prominent
+          label={t("kpi.pregnant")}
+          value={pregnant}
+          hint={t("kpi.pregnantHint", { covered })}
+          href={`/${tenantSlug}/reproduccion`}
         />
         <StatCard
-          label="Requiere atención"
-          value={overdueCount}
-          hint={
-            overdueCount === 0
-              ? "Nada vencido"
-              : "Vencido o para hoy"
+          prominent
+          label={t("kpi.fertility", { season })}
+          value={
+            current.perCycleRate === null
+              ? "—"
+              : format.number(current.perCycleRate, { style: "percent" })
           }
-          emphasis={overdueCount > 0}
-          // Lleva al motivo mas urgente: puede ser sanidad, una tarea o la
-          // alerta de tendon de un caballo.
-          href={attention[0]?.href}
+          hint={fertilityHint}
+          href={`/${tenantSlug}/reproduccion/estadisticas`}
         />
         <StatCard
-          label="Yeguas preñadas"
-          value={pregnantMares}
+          prominent
+          label={t("kpi.foalings")}
+          value={foalingsThisMonth}
           hint={
-            foalingsIn60 > 0
-              ? `${foalingsIn60} ${foalingsIn60 === 1 ? "parto" : "partos"} en 60 días`
-              : `${tracked.length} yeguas en seguimiento`
+            nextFoaling
+              ? t("kpi.foalingsNext", { name: nextFoaling.name, date: shortDate(nextFoaling.expected) })
+              : t("kpi.foalingsNone")
           }
           href={`/${tenantSlug}/reproduccion`}
         />
-        {receivables ? (
-          <StatCard
-            label="Pendiente de cobro"
-            value={formatEuros(receivables.pendingTotal)}
-            hint={
-              receivables.overdue.length > 0
-                ? `${receivables.overdue.length} ${receivables.overdue.length === 1 ? "factura vencida" : "facturas vencidas"}`
-                : `${receivables.openCount} ${receivables.openCount === 1 ? "factura emitida" : "facturas emitidas"}`
-            }
-            emphasis={receivables.overdue.length > 0}
-            href={`/${tenantSlug}/facturacion`}
+        <StatCard
+          prominent
+          label={t("kpi.census")}
+          value={census.length}
+          hint={t("kpi.censusHint", { mares, stallions, young })}
+          href={`/${tenantSlug}/caballos`}
+        />
+      </section>
+
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <RecentActivity
+          entries={activity.map(({ at, ...entry }) => ({ ...entry, when: shortDate(at) }))}
+        />
+        <div className="space-y-8">
+          <QuickActions
+            tenantSlug={tenantSlug}
+            horses={horses.map((horse) => ({
+              id: horse.id,
+              name: horse.name,
+              status: horse.status,
+              excludedFromFoodChain: horse.excludedFromFoodChain,
+              weightKg: horse.weightKg,
+            }))}
+            assignees={assignees}
+            canRecordHealth={canRecordHealth}
           />
-        ) : (
-          <StatCard
-            label="Tareas abiertas"
-            value={openTasks.length}
-            hint="Sin completar"
-            href={`/${tenantSlug}/tareas`}
-          />
-        )}
+          <HeatCard heat={heat} tenantSlug={tenantSlug} collapseWhenNormal />
+          <SessionCheckIn sessions={pendingCheckIns} />
+        </div>
       </div>
-
-      <section className="space-y-3">
-        <SectionHeading
-          title="Requiere tu atención"
-          description="Sanidad, ecografías, partos, cobros y tareas: lo más urgente primero"
-          action={
-            attention.length > 0 && (
-              <Button asChild variant="ghost" size="sm">
-                <Link href={attention[0].href}>
-                  Resolver primero
-                  <CaretRight weight="bold" />
-                </Link>
-              </Button>
-            )
-          }
-        />
-        {attention.length === 0 ? (
-          <EmptyState
-            icon={<Sun />}
-            title="Todo al día"
-            description="No hay vencimientos, ecografías, partos cercanos ni cobros vencidos."
-          />
-        ) : (
-          <ListRows>
-            {attention.slice(0, 8).map((item) => {
-              const due = dueLabel(item.due, now);
-              return (
-                <ListRow
-                  key={item.id}
-                  href={item.href}
-                  leading={
-                    <RowIcon tone={due.overdue ? "alert" : "neutral"}>
-                      {item.icon}
-                    </RowIcon>
-                  }
-                  title={item.title}
-                  subtitle={item.subtitle}
-                  meta={
-                    <span
-                      className={
-                        due.overdue
-                          ? "font-semibold text-amber-700"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {due.text}
-                    </span>
-                  }
-                />
-              );
-            })}
-          </ListRows>
-        )}
-      </section>
-
-      <section className="space-y-3">
-        <SectionHeading
-          title="Tu cuadra"
-          description={`${activeHorses} ${activeHorses === 1 ? "caballo activo" : "caballos activos"}`}
-          action={
-            <Button asChild variant="ghost" size="sm">
-              <Link href={`/${tenantSlug}/caballos`}>
-                Ver todos
-                <CaretRight weight="bold" />
-              </Link>
-            </Button>
-          }
-        />
-        {recentHorses.length === 0 ? (
-          <EmptyState
-            icon={<Horse />}
-            title="Sin caballos aún"
-            description="Registra tu primer caballo para empezar a llevar su sanidad y su documentación."
-            action={
-              <Button asChild>
-                <Link href={`/${tenantSlug}/caballos/nuevo`}>
-                  <Plus weight="bold" />
-                  Añadir el primero
-                </Link>
-              </Button>
-            }
-          />
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {recentHorses.map((horse) => (
-              <Link
-                key={horse.id}
-                href={`/${tenantSlug}/caballos/${horse.id}`}
-                className="group overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-foreground/20"
-              >
-                <div className="relative aspect-[4/3] bg-muted">
-                  {horse.photoUrl ? (
-                    <Image
-                      src={horse.photoUrl}
-                      alt=""
-                      fill
-                      sizes="(min-width: 1024px) 12rem, 45vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <span className="absolute inset-0 flex items-center justify-center">
-                      <Horse
-                       
-                        className="h-7 w-7 text-muted-foreground/40"
-                      />
-                    </span>
-                  )}
-                </div>
-                <div className="px-2.5 py-2">
-                  <p className="truncate text-[13px] font-medium text-foreground">
-                    {horse.name}
-                  </p>
-                  <p className="truncate text-[11.5px] text-muted-foreground">
-                    {horse.breed || "Sin raza"}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 }
