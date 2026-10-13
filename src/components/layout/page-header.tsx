@@ -1,55 +1,103 @@
 import Link from "next/link";
-import { CaretLeft } from "@phosphor-icons/react/dist/ssr";
+import { useTranslations } from "next-intl";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
+
+export interface Breadcrumb {
+  label: string;
+  href?: string;
+}
 
 interface PageHeaderProps {
   title: string;
-  description?: string;
-  /** Primary action last, so it lands nearest the page content. */
+  /** Context under the title: what this page covers, or how many items. */
+  description?: React.ReactNode;
+  /** Small marks next to the title, such as a status badge. */
+  meta?: React.ReactNode;
+  /** One primary action, last. Secondary actions before it, or in a menu. */
   actions?: React.ReactNode;
-  /** Renders a quiet back link above the title. */
+  /** Trail of parent pages. The current page is the title, not a crumb. */
+  breadcrumbs?: Breadcrumb[];
+  /** Shorthand for a single parent crumb. */
   backHref?: string;
   backLabel?: string;
   className?: string;
 }
 
+/**
+ * The one page header: trail, serif title, context and the page's primary
+ * action. Every screen opens with it so they all read in the same order.
+ */
 export function PageHeader({
   title,
   description,
+  meta,
   actions,
+  breadcrumbs,
   backHref,
-  backLabel = "Atrás",
+  backLabel,
   className,
 }: PageHeaderProps) {
+  const t = useTranslations("common");
+  const trail =
+    breadcrumbs ?? (backHref ? [{ label: backLabel ?? t("back"), href: backHref }] : []);
+  const parent = [...trail].reverse().find((crumb) => crumb.href);
+
   return (
-    <div className={cn("space-y-3", className)}>
-      {backHref && (
-        <Link
-          href={backHref}
-          className="-ml-1 inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <CaretLeft weight="bold" className="h-3.5 w-3.5" />
-          {backLabel}
-        </Link>
+    <header className={cn("space-y-3", className)}>
+      {trail.length > 0 && (
+        <nav aria-label={t("breadcrumbs")}>
+          {/* Phones only have room for the way back. */}
+          {parent && (
+            <Link
+              href={parent.href!}
+              className="-ml-1 inline-flex min-h-8 items-center gap-1 rounded-md px-1 text-label font-medium text-muted-foreground transition-colors hover:text-foreground sm:hidden"
+            >
+              <CaretLeft weight="bold" aria-hidden className="h-3.5 w-3.5" />
+              {parent.label}
+            </Link>
+          )}
+          <ol className="hidden flex-wrap items-center gap-1 text-label text-muted-foreground sm:flex">
+            {trail.map((crumb, index) => (
+              <li key={`${crumb.label}-${index}`} className="flex items-center gap-1">
+                {crumb.href ? (
+                  <Link
+                    href={crumb.href}
+                    className="rounded-sm font-medium transition-colors hover:text-foreground"
+                  >
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span>{crumb.label}</span>
+                )}
+                <CaretRight aria-hidden weight="bold" className="h-3 w-3 opacity-60" />
+              </li>
+            ))}
+            <li aria-current="page" className="truncate text-foreground">
+              {title}
+            </li>
+          </ol>
+        </nav>
       )}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="min-w-0 space-y-1">
-          <h1 className="text-[22px] leading-tight font-semibold tracking-tight text-foreground sm:text-[26px]">
-            {title}
-          </h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+        <div className="min-w-0 space-y-1.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="font-serif text-title font-medium text-foreground">
+              {title}
+            </h1>
+            {meta}
+          </div>
           {description && (
-            <p className="text-[13.5px] text-muted-foreground">{description}</p>
+            <p className="text-body text-muted-foreground">{description}</p>
           )}
         </div>
-        {/* Stacked and full width on phones; buttons never shrink, so a row
-            is only safe once there is room for it. */}
         {actions && (
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center [&>*]:w-full sm:[&>*]:w-auto">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             {actions}
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -59,25 +107,27 @@ export function SectionHeading({
   description,
   action,
   className,
+  id,
 }: {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
     <div
       className={cn(
-        "flex items-start justify-between gap-3 border-b border-border pb-2.5 sm:items-end sm:gap-4",
+        "flex items-start justify-between gap-3 sm:items-end sm:gap-4",
         className,
       )}
     >
       <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
+        <h2 id={id} className="text-heading font-semibold text-foreground">
           {title}
         </h2>
         {description && (
-          <p className="mt-0.5 text-[13px] text-muted-foreground">
+          <p className="mt-0.5 text-label text-muted-foreground">
             {description}
           </p>
         )}
