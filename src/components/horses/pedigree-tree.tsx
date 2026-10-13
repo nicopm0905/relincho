@@ -1,16 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { GenderMale, GenderFemale, TreeStructure } from "@phosphor-icons/react";
+import { MotionConfig, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
-type Ancestor = {
+export type Ancestor = {
   id: string;
   name: string;
-  sire?: { id: string; name: string } | null;
-  dam?: { id: string; name: string } | null;
-} | null;
+  coat: string | null;
+  birthDate: Date | string | null;
+  sire?: Ancestor;
+  dam?: Ancestor;
+} | null | undefined;
 
 interface PedigreeTreeProps {
   tenantSlug: string;
@@ -19,117 +21,152 @@ interface PedigreeTreeProps {
   dam: Ancestor;
 }
 
-function AncestorCard({ 
-  tenantSlug, 
-  ancestor, 
-  role, 
-  className 
-}: { 
-  tenantSlug: string; 
-  ancestor: { id: string; name: string } | null | undefined; 
+/** Padres, abuelos y bisabuelos. */
+const GENERATIONS = 3;
+const cardWidth = ["w-52", "w-48", "w-44"] as const;
+
+function AncestorCard({
+  tenantSlug,
+  ancestor,
+  role,
+  depth,
+}: {
+  tenantSlug: string;
+  ancestor: Ancestor;
   role: "sire" | "dam";
-  className?: string;
+  depth: number;
 }) {
-  const isSire = role === "sire";
-  
+  const t = useTranslations("horseDetail.pedigree");
+  const width = cardWidth[depth - 1];
+  // Padre a la izquierda en azul, madre en ciruela: el mismo par de tonos
+  // que el resto de estados, sin rosa y azul de manual.
+  const accent = role === "sire" ? "border-l-state-covered" : "border-l-state-foaled";
+
   if (!ancestor) {
     return (
-      <div className={cn("px-4 py-2 bg-muted/20 border border-border/50 border-dashed rounded-xl text-xs text-muted-foreground/60 italic flex items-center justify-center min-w-[120px] h-[42px]", className)}>
-        Desconocido
+      <div
+        className={cn(
+          "flex h-12 items-center rounded-lg border border-dashed border-border px-3 text-caption text-muted-foreground",
+          width,
+        )}
+      >
+        {t("unknown")}
       </div>
     );
   }
 
+  const year = ancestor.birthDate ? new Date(ancestor.birthDate).getFullYear() : null;
+  const meta = [ancestor.coat, year].filter(Boolean).join(" · ");
+
   return (
-    <Link 
-      href={`/${tenantSlug}/caballos/${ancestor.id}`} 
+    <Link
+      href={`/${tenantSlug}/caballos/${ancestor.id}`}
       className={cn(
-        "relative flex items-center gap-2 px-3 py-2 bg-white hover:bg-muted/30 border border-border/60 rounded-xl font-semibold text-sm text-foreground transition-all shadow-sm min-w-[120px]", 
-        isSire ? "hover:border-blue-200" : "hover:border-pink-200",
-        className
+        "group flex flex-col justify-center rounded-lg border border-l-[3px] border-border bg-card px-3 shadow-card transition-[border-color,box-shadow] hover:shadow-raised",
+        accent,
+        depth === 1 ? "min-h-16 py-2" : "min-h-12 py-1.5",
+        width,
       )}
     >
-      <div className={cn(
-        "h-6 w-6 rounded-full flex items-center justify-center shrink-0 border",
-        isSire ? "bg-blue-50 border-blue-100 text-blue-500" : "bg-pink-50 border-pink-100 text-pink-500"
-      )}>
-        {isSire ? <GenderMale weight="bold" className="h-3 w-3" /> : <GenderFemale weight="bold" className="h-3 w-3" />}
-      </div>
-      <span className="truncate">{ancestor.name}</span>
+      {depth === 1 && (
+        <span className="text-micro font-semibold text-muted-foreground uppercase">
+          {t(role)}
+        </span>
+      )}
+      <span
+        className={cn(
+          "truncate font-semibold text-foreground group-hover:text-primary-ink",
+          depth === 1 ? "font-serif text-heading font-medium" : "text-label",
+        )}
+      >
+        {ancestor.name}
+      </span>
+      {meta && <span className="truncate text-caption text-muted-foreground">{meta}</span>}
     </Link>
   );
 }
 
-export function PedigreeTree({ tenantSlug, horseName, sire, dam }: PedigreeTreeProps) {
+/** A pair of parents, joined to their child by a bracket. */
+function Branch({
+  tenantSlug,
+  sire,
+  dam,
+  depth,
+}: {
+  tenantSlug: string;
+  sire: Ancestor;
+  dam: Ancestor;
+  depth: number;
+}) {
   return (
-    <div className="w-full overflow-x-auto pb-4">
-      <div className="min-w-[600px] flex items-center justify-start p-4">
-        
-        {/* Generación 1: El caballo actual */}
-        <div className="flex flex-col justify-center items-end relative z-10 w-[180px]">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="px-4 py-3 bg-primary text-primary-foreground rounded-2xl font-bold shadow-md border border-primary/20 flex items-center gap-2"
-          >
-            <TreeStructure className="h-5 w-5" />
-            <span className="truncate max-w-[120px]">{horseName}</span>
-          </motion.div>
-        </div>
+    <motion.div
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: depth * 0.08, duration: 0.25 }}
+      className="flex flex-col"
+    >
+      {(["sire", "dam"] as const).map((role) => {
+        const ancestor = role === "sire" ? sire : dam;
+        return (
+          <div key={role} className="relative flex items-center py-1.5 pl-6">
+            {/* Media línea vertical hacia el centro del par y el trazo horizontal. */}
+            <span
+              aria-hidden
+              className={cn(
+                "absolute left-0 w-px bg-border",
+                role === "sire" ? "top-1/2 bottom-0" : "top-0 bottom-1/2",
+              )}
+            />
+            <span aria-hidden className="absolute top-1/2 left-0 h-px w-6 bg-border" />
+            <AncestorCard tenantSlug={tenantSlug} ancestor={ancestor} role={role} depth={depth} />
+            {depth < GENERATIONS && (
+              <>
+                <span aria-hidden className="h-px w-6 shrink-0 bg-border" />
+                <Branch
+                  tenantSlug={tenantSlug}
+                  sire={ancestor?.sire}
+                  dam={ancestor?.dam}
+                  depth={depth + 1}
+                />
+              </>
+            )}
+          </div>
+        );
+      })}
+    </motion.div>
+  );
+}
 
-        {/* Líneas conectoras Gen 1 -> Gen 2 */}
-        <div className="flex flex-col justify-between h-[160px] w-[40px] relative">
-          <div className="absolute left-0 top-1/2 w-1/2 h-px bg-border/80" />
-          <div className="absolute left-1/2 top-[20px] bottom-[20px] w-px bg-border/80" />
-          <div className="absolute left-1/2 top-[20px] w-1/2 h-px bg-border/80" />
-          <div className="absolute left-1/2 bottom-[20px] w-1/2 h-px bg-border/80" />
-        </div>
+/**
+ * Three generations laid out like a stud-book certificate. The structure is
+ * always complete (unknown ancestors keep their slot) so the brackets line up
+ * whatever is missing.
+ */
+export function PedigreeTree({ tenantSlug, horseName, sire, dam }: PedigreeTreeProps) {
+  const t = useTranslations("horseDetail.pedigree");
+  const headers = [t("parents"), t("grandparents"), t("greatGrandparents")];
 
-        {/* Generación 2: Padres */}
-        <div className="flex flex-col justify-between h-[200px] w-[180px] py-4">
-          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="relative">
-            <p className="absolute -top-5 left-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Padre</p>
-            <AncestorCard tenantSlug={tenantSlug} ancestor={sire} role="sire" className="w-full shadow-sm" />
-          </motion.div>
-          
-          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="relative">
-             <p className="absolute -top-5 left-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Madre</p>
-            <AncestorCard tenantSlug={tenantSlug} ancestor={dam} role="dam" className="w-full shadow-sm" />
-          </motion.div>
+  return (
+    <MotionConfig reducedMotion="user">
+      <figure aria-label={t("label", { name: horseName })} className="overflow-x-auto pb-2">
+        <div className="w-max min-w-full">
+          <div aria-hidden className="mb-2 flex text-micro font-semibold text-muted-foreground uppercase">
+            <span className="w-36 shrink-0" />
+            {headers.map((header, index) => (
+              <span key={header} className={cn("ml-12 shrink-0", cardWidth[index])}>
+                {header}
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center">
+            <div className="flex w-36 shrink-0 items-center rounded-xl bg-primary px-4 py-3 text-primary-foreground shadow-card">
+              <span className="truncate font-serif text-heading font-medium">{horseName}</span>
+            </div>
+            <span aria-hidden className="h-px w-6 shrink-0 bg-border" />
+            <Branch tenantSlug={tenantSlug} sire={sire} dam={dam} depth={1} />
+          </div>
         </div>
-
-        {/* Líneas conectoras Gen 2 -> Gen 3 (Abuelos) */}
-        <div className="flex flex-col justify-between h-[200px] w-[40px] relative">
-            {/* Sire connectors */}
-            <div className="absolute left-0 top-[20px] w-1/2 h-px bg-border/60" />
-            <div className="absolute left-1/2 top-0 bottom-[140px] w-px bg-border/60" />
-            <div className="absolute left-1/2 top-0 w-1/2 h-px bg-border/60" />
-            <div className="absolute left-1/2 top-[60px] w-1/2 h-px bg-border/60" />
-            
-            {/* Dam connectors */}
-            <div className="absolute left-0 bottom-[20px] w-1/2 h-px bg-border/60" />
-            <div className="absolute left-1/2 top-[140px] bottom-0 w-px bg-border/60" />
-            <div className="absolute left-1/2 bottom-[60px] w-1/2 h-px bg-border/60" />
-            <div className="absolute left-1/2 bottom-0 w-1/2 h-px bg-border/60" />
-        </div>
-
-        {/* Generación 3: Abuelos */}
-        <div className="flex flex-col justify-between h-[240px] w-[160px] py-0">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="h-[42px] flex items-center">
-            <AncestorCard tenantSlug={tenantSlug} ancestor={sire?.sire} role="sire" />
-          </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="h-[42px] flex items-center">
-            <AncestorCard tenantSlug={tenantSlug} ancestor={sire?.dam} role="dam" />
-          </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="h-[42px] flex items-center mt-4">
-            <AncestorCard tenantSlug={tenantSlug} ancestor={dam?.sire} role="sire" />
-          </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="h-[42px] flex items-center">
-            <AncestorCard tenantSlug={tenantSlug} ancestor={dam?.dam} role="dam" />
-          </motion.div>
-        </div>
-
-      </div>
-    </div>
+      </figure>
+    </MotionConfig>
   );
 }

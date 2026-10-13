@@ -1,112 +1,130 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "next-intl";
+import { CheckCircle, Warning } from "@phosphor-icons/react/dist/ssr";
+import type { ReproPhase } from "@/lib/repro-engine";
+import { ageInYears, horseCategory } from "@/lib/horse-category";
+import { cn } from "@/lib/utils";
+import { StateBadge } from "@/components/ui/state-badge";
+import { ReproPhaseBadge } from "@/components/reproduction/repro-phase-badge";
 
-const statusLabels: Record<string, string> = {
-  ACTIVE: "Activo",
-  SOLD: "Vendido",
-  DEAD: "Fallecido",
-  RETIRED: "Retirado",
-  IN_TRAINING: "En doma",
+export type HorseRow = {
+  id: string;
+  name: string;
+  sex: string;
+  status: string;
+  breed: string | null;
+  coat: string | null;
+  birthDate: Date | null;
+  photoUrl: string | null;
+  uelnCode: string | null;
+  boxLocation?: string | null;
+  /** Fase reproductiva de las yeguas en seguimiento. */
+  phase?: ReproPhase;
+  /** Lo más urgente de sanidad, ya en palabras. */
+  healthNote?: { label: string; overdue: boolean };
 };
 
-const sexLabels: Record<string, string> = {
-  MALE: "Semental",
-  FEMALE: "Yegua",
-  GELDING: "Castrado",
-};
-
-const statusBadgeVariant: Record<
-  string,
-  "success" | "secondary" | "destructive" | "outline" | "info" | "warning"
-> = {
-  ACTIVE: "success",
-  SOLD: "secondary",
-  DEAD: "destructive",
-  RETIRED: "outline",
-  IN_TRAINING: "info",
-};
-
-function ageInYears(birthDate: Date) {
-  const ms = Date.now() - new Date(birthDate).getTime();
-  return Math.max(0, Math.floor(ms / (365.25 * 24 * 60 * 60 * 1000)));
+/** Photo, or the initial as a portrait when there is none. */
+export function HorseAvatar({
+  horse,
+  className,
+}: {
+  horse: Pick<HorseRow, "name" | "photoUrl">;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10",
+        className,
+      )}
+    >
+      {horse.photoUrl ? (
+        <Image src={horse.photoUrl} alt="" fill sizes="64px" className="object-cover" />
+      ) : (
+        <span aria-hidden className="font-serif text-heading font-medium text-primary-ink">
+          {horse.name.charAt(0).toUpperCase()}
+        </span>
+      )}
+    </span>
+  );
 }
 
-interface HorseCardProps {
-  horse: {
-    id: string;
-    name: string;
-    sex: string;
-    status: string;
-    breed: string | null;
-    coat: string | null;
-    birthDate: Date | null;
-    photoUrl: string | null;
-    uelnCode: string | null;
-    boxLocation?: string | null;
-  };
-  tenantSlug: string;
+export function useHorseFacts() {
+  const t = useTranslations("horses");
+  return (horse: HorseRow) =>
+    [
+      t(`category.${horseCategory(horse)}`),
+      horse.birthDate ? t("age", { years: ageInYears(horse.birthDate) }) : null,
+      horse.coat,
+    ]
+      .filter(Boolean)
+      .join(" · ");
 }
 
-export function HorseCard({ horse, tenantSlug }: HorseCardProps) {
-  const age = horse.birthDate ? ageInYears(horse.birthDate) : null;
-  // "Activo" es lo normal: solo se marca lo que se sale de ahi.
-  const showStatus = horse.status !== "ACTIVE";
+export function HorseHealthNote({ note }: { note?: HorseRow["healthNote"] }) {
+  const t = useTranslations("horses");
+  if (!note) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
+        <CheckCircle aria-hidden weight="fill" className="h-3.5 w-3.5 text-state-ok" />
+        {t("healthOk")}
+      </span>
+    );
+  }
+  return (
+    <span
+      className={cn(
+        "inline-flex min-w-0 items-center gap-1.5 text-caption",
+        note.overdue ? "font-semibold text-state-alert-ink" : "text-muted-foreground",
+      )}
+    >
+      <Warning
+        aria-hidden
+        weight={note.overdue ? "fill" : "regular"}
+        className={cn("h-3.5 w-3.5 shrink-0", note.overdue && "text-state-alert")}
+      />
+      <span className="truncate">{note.label}</span>
+    </span>
+  );
+}
+
+/**
+ * One horse at a glance: who it is, what state it is in and whether anything
+ * is due. Wide rather than tall, so a screen holds a whole paddock.
+ */
+export function HorseCard({ horse, tenantSlug }: { horse: HorseRow; tenantSlug: string }) {
+  const t = useTranslations("horses");
+  const facts = useHorseFacts();
+  const inactive = horse.status !== "ACTIVE";
 
   return (
     <Link
       href={`/${tenantSlug}/caballos/${horse.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-bento outline-none transition-[border-color,box-shadow] duration-200 hover:border-foreground/15 hover:shadow-raised focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="group flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-card transition-[border-color,box-shadow] duration-200 hover:border-primary/30 hover:shadow-raised"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-        {horse.photoUrl ? (
-          <Image
-            src={horse.photoUrl}
-            alt={horse.name}
-            fill
-            sizes="(min-width: 1280px) 18rem, (min-width: 640px) 45vw, 100vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          />
-        ) : (
-          // Sin foto, el nombre hace de retrato: distingue mejor que un icono
-          // repetido en toda la cuadricula.
-          <div
-            aria-hidden
-            className="absolute inset-0 flex items-center justify-center bg-primary/[0.07]"
-          >
-            <span className="text-5xl font-bold text-primary-ink/35 transition-colors group-hover:text-primary-ink/50">
-              {horse.name.charAt(0).toUpperCase()}
-            </span>
+      <div className="flex items-start gap-3">
+        <HorseAvatar horse={horse} className="h-14 w-14" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="truncate text-body font-semibold text-foreground group-hover:text-primary-ink">
+              {horse.name}
+            </h3>
+            {horse.phase ? (
+              <ReproPhaseBadge phase={horse.phase} />
+            ) : inactive ? (
+              <StateBadge tone="empty">{t(`status.${horse.status}` as "status.ACTIVE")}</StateBadge>
+            ) : null}
           </div>
-        )}
-        {showStatus && (
-          <Badge
-            variant={statusBadgeVariant[horse.status] ?? "secondary"}
-            className="absolute top-2.5 left-2.5 shadow-xs"
-          >
-            {statusLabels[horse.status] ?? horse.status}
-          </Badge>
-        )}
+          <p className="truncate text-label text-muted-foreground">{facts(horse)}</p>
+          {horse.boxLocation && (
+            <p className="truncate text-caption text-muted-foreground">{horse.boxLocation}</p>
+          )}
+        </div>
       </div>
-
-      <div className="flex flex-1 flex-col gap-1 px-3.5 py-3">
-        <h3 className="truncate text-[15px] font-semibold text-foreground">
-          {horse.name}
-        </h3>
-        <p className="truncate text-[12.5px] text-muted-foreground">
-          {[
-            sexLabels[horse.sex] ?? horse.sex,
-            age !== null ? `${age} ${age === 1 ? "año" : "años"}` : null,
-            horse.coat,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        {horse.boxLocation && (
-          <p className="mt-auto truncate pt-1 text-[12px] font-medium text-foreground/70">
-            {horse.boxLocation}
-          </p>
-        )}
+      <div className="mt-auto border-t border-border/70 pt-2.5">
+        <HorseHealthNote note={horse.healthNote} />
       </div>
     </Link>
   );

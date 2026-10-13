@@ -25,6 +25,7 @@ import { RecentActivity, type ActivityEntry } from "@/components/inicio/recent-a
 import { InicioEmpty } from "@/components/inicio/inicio-empty";
 import { calendarDayOffset } from "@/lib/day-window";
 import { pendingHealthDue } from "@/lib/health-due";
+import { horseCategory } from "@/lib/horse-category";
 import { getSession } from "@/server/auth";
 import { getTenantAccess } from "@/server/tenant-access";
 
@@ -40,9 +41,6 @@ export async function generateMetadata({ params }: PageProps) {
 /** Días por delante que cuentan como "ya" en cada bloque. */
 const REPRO_AHEAD_DAYS = 2;
 const HEALTH_AHEAD_DAYS = 7;
-/** Por debajo de esta edad un caballo cuenta como potro en el censo. */
-const YOUNG_YEARS = 3;
-const YEAR_MS = 365.25 * 24 * 60 * 60 * 1000;
 
 type Due = AttentionItem["due"] & { overdue: boolean };
 
@@ -206,7 +204,7 @@ async function InicioContent({ params }: PageProps) {
         id: `health-${event.id}`,
         title: event.horse.name,
         subtitle: `${healthType(event.type)} · ${event.name}`,
-        href: horseHref(event.horse.id),
+        href: `${horseHref(event.horse.id)}?tab=sanidad`,
         due: pointDue(due),
       }),
   );
@@ -297,11 +295,10 @@ async function InicioContent({ params }: PageProps) {
   const nextFoaling = gestations.find((g) => calendarDayOffset(g.expected, now) >= 0);
 
   const census = horses.filter((h) => h.status === "ACTIVE" || h.status === "IN_TRAINING");
-  const isYoung = (h: (typeof horses)[number]) =>
-    h.birthDate !== null && now.getTime() - new Date(h.birthDate).getTime() < YOUNG_YEARS * YEAR_MS;
-  const young = census.filter(isYoung).length;
-  const mares = census.filter((h) => h.sex === "FEMALE" && !isYoung(h)).length;
-  const stallions = census.filter((h) => h.sex === "MALE" && !isYoung(h)).length;
+  const categories = census.map((h) => horseCategory(h, now));
+  const young = categories.filter((c) => c === "colt" || c === "filly").length;
+  const mares = categories.filter((c) => c === "mare").length;
+  const stallions = categories.filter((c) => c === "stallion").length;
 
   // ── Actividad reciente: contexto, no cosas que hacer ─────────────────────
   const activity: (Omit<ActivityEntry, "when"> & { at: Date })[] = [
