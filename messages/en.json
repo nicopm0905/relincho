@@ -1056,5 +1056,136 @@
     },
     "unknownSire": "unknown sire",
     "unknownDam": "unknown dam"
+  },
+  "repro": {
+    "metaTitle": "Breeding",
+    "title": "Breeding",
+    "description": "{season} season · {count, plural, one {# mare tracked} other {# mares tracked}}",
+    "newSeason": "New season",
+    "nav": {
+      "label": "Breeding sections",
+      "panel": "Board",
+      "stats": "Statistics",
+      "semen": "Semen",
+      "settings": "Settings"
+    },
+    "untracked": "{count, plural, one {# mare without a {season} season} other {# mares without a {season} season}}",
+    "kpi": {
+      "fertility": "{season} fertility",
+      "fertilityUp": "+{diff} points vs {previous}",
+      "fertilityDown": "{diff} points vs {previous}",
+      "fertilitySame": "Same as {previous}",
+      "fertilityCycles": "{pregnant} of {cycles} cycles bred",
+      "fertilityNone": "No coverings this season",
+      "cost": "Semen cost per pregnancy",
+      "costHint": "{total} in AI semen this season",
+      "costNone": "No coverings with semen cost",
+      "foalings": "Foalings in 60 days",
+      "foalingsNext": "Next: {name}, around {date}",
+      "foalingsNone": "None expected"
+    },
+    "views": {
+      "label": "View",
+      "board": "Board",
+      "calendar": "Calendar"
+    },
+    "stages": {
+      "empty": "Open",
+      "heat": "Heat and monitoring",
+      "covered": "Covered",
+      "pregnant": "Pregnant",
+      "foaled": "Foaled"
+    },
+    "stageNone": "None",
+    "summary": {
+      "follicle": "{mm} mm follicle",
+      "ovulation": "ovulation around {date}",
+      "heatSigns": "Signs of heat at the last exam",
+      "check": "{label}: {date}",
+      "pendingScan": "Scan pending",
+      "gestation": "Day {days} · due around {date}",
+      "pregnant": "Pregnant",
+      "foalHeat": "Foal heat {from} to {to}",
+      "foaled": "Recently foaled",
+      "nextEstrus": "Next heat around {date}",
+      "cycling": "Cycling",
+      "anestrus": "Seasonal anoestrus",
+      "noData": "Record an exam to start predicting"
+    },
+    "action": {
+      "eco": "Record scan",
+      "exploracion": "Record exam",
+      "cubricion": "Record covering",
+      "vigilancia": "Foaling watch",
+      "parto": "Record foaling"
+    },
+    "actionFor": "{action}: {mare}",
+    "alerts": {
+      "title": "Alerts",
+      "empty": "No alerts."
+    },
+    "agenda": {
+      "title": "Agenda",
+      "description": "Overdue and next 14 days",
+      "overdue": "Overdue",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "empty": "Nothing due in the next 14 days.",
+      "foaling": "Expected foaling",
+      "until": "until {date}"
+    },
+    "calendar": {
+      "label": "12-week calendar",
+      "mare": "Mare",
+      "estrus": "Expected heat",
+      "breeding": "Breeding window",
+      "scan": "Scan",
+      "foalHeat": "Foal heat",
+      "foaling": "Foaling window",
+      "ovulation": "Ovulation"
+    },
+    "empty": {
+      "title": "No mares tracked",
+      "body": "Start your mares' season to record exams, predict heats and ovulations, and follow coverings, pregnancies and foalings.",
+      "action": "Start a season"
+    },
+    "stats": {
+      "metaTitle": "Breeding statistics",
+      "title": "Breeding statistics",
+      "description": "By covering season. Foalings from a season fall in the following year.",
+      "seasons": "Seasons",
+      "empty": "No coverings in {season}.",
+      "perCycle": "Pregnancy per cycle",
+      "maresPregnant": "Mares pregnant",
+      "cyclesPerPregnancy": "Cycles per pregnancy",
+      "losses": "Pregnancy losses",
+      "lossesHint": "{count, plural, one {# loss} other {# losses}}",
+      "maresBred": "Mares bred",
+      "cyclesBred": "{count, plural, one {# cycle bred} other {# cycles bred}}",
+      "liveFoals": "Live foals",
+      "liveFoalsHint": "{rate} of mares bred",
+      "doses": "Doses per pregnancy",
+      "dosesHint": "Only coverings with a semen batch",
+      "twins": "Twins",
+      "ofCycles": "{pregnant} of {cycles} cycles",
+      "ofMares": "{pregnant} of {mares} mares",
+      "compare": "{season} vs {previous}",
+      "compareNone": "No previous season to compare with.",
+      "byStallion": "By stallion",
+      "byMethod": "By method",
+      "mares": "Mares",
+      "cycles": "Cycles",
+      "pregnant": "Pregnant",
+      "rate": "Pregnancy per cycle",
+      "rateOf": "Pregnancy per cycle for {label}",
+      "none": "No data.",
+      "footnote": "A cycle is a mare's coverings in the same heat (less than 10 days apart). It counts as pregnant if any scan was positive, even if later lost. Cost per pregnancy only includes semen with a recorded cost, including heats that did not take.",
+      "cost": "Semen cost per pregnancy",
+      "costNone": "No coverings with semen cost",
+      "costTotal": "{total} in semen this season",
+      "liveFoalsPending": "Born in {year}"
+    },
+    "stageMore": "+{count} more",
+    "loading": "Loading breeding"
   }
 }

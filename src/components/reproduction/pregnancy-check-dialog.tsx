@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import * as z from "zod";
 import {
   Dialog,
@@ -69,13 +69,16 @@ const formSchema = z.object({
 
 interface PregnancyCheckDialogProps {
   coveringId: string;
+  /** Abierto al montar: para llegar desde el panel con un solo clic. */
+  defaultOpen?: boolean;
 }
 
-export function PregnancyCheckDialog({ coveringId }: PregnancyCheckDialogProps) {
-  const [open, setOpen] = useState(false);
+export function PregnancyCheckDialog({ coveringId, defaultOpen = false }: PregnancyCheckDialogProps) {
+  const [open, setOpen] = useState(defaultOpen);
   const router = useRouter();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema) as any,
+  // Entrada y salida difieren (los números llegan como texto del input).
+  const form = useForm<z.input<typeof formSchema>, unknown, z.output<typeof formSchema>>({
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       date: format(new Date(), "yyyy-MM-dd"),
       result: "POSITIVE",
@@ -142,7 +145,7 @@ export function PregnancyCheckDialog({ coveringId }: PregnancyCheckDialogProps) 
                   <FormItem>
                     <FormLabel>Día de Gestación (Ej. 14, 45)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} value={(field.value as string | number | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -185,7 +188,7 @@ export function PregnancyCheckDialog({ coveringId }: PregnancyCheckDialogProps) 
                   <FormItem>
                     <FormLabel>Vesícula (mm)</FormLabel>
                     <FormControl>
-                      <Input type="number" inputMode="numeric" {...field} value={field.value ?? ""} />
+                      <Input type="number" inputMode="numeric" {...field} value={(field.value as string | number | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -151,7 +151,11 @@ export function Sidebar({
     })
     .sort((a, b) => b.length - a.length)[0];
   const isActive = (href: string) => href === activeHref;
-  const sheetActive = mobileSheetGroups.some((group) =>
+  // En el móvil la pestaña "Cría" cubre todo el módulo, también Estadísticas.
+  const inBreeding = activeHref?.startsWith(reproduction.href) ?? false;
+  const isTabActive = (href: string) =>
+    isActive(href) || (href === reproduction.href && inBreeding);
+  const sheetActive = !inBreeding && mobileSheetGroups.some((group) =>
     group.items.some((navItem) => isActive(navItem.href)),
   ) || isActive(settings.href);
 
@@ -293,7 +297,7 @@ export function Sidebar({
       <nav aria-label={t("navigation")} className="safe-area-bottom fixed right-0 bottom-0 left-0 z-40 border-t border-sidebar-border bg-sidebar/95 backdrop-blur-lg md:hidden">
         <div className="flex h-16 items-stretch">
           {mobileTabs.map(({ key, href, icon: Icon }) => {
-            const active = isActive(href);
+            const active = isTabActive(href);
             return (
               <Link
                 key={href}

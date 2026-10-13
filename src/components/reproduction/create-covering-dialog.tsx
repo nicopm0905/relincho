@@ -24,9 +24,16 @@ const semenForMethod: Partial<Record<CoveringMethodKey, string>> = {
   AI_FROZEN: "FROZEN",
 };
 
-export function CreateCoveringDialog({ cycleId }: { cycleId: string }) {
+export function CreateCoveringDialog({
+  cycleId,
+  defaultOpen = false,
+}: {
+  cycleId: string;
+  /** Abierto al montar: para llegar desde el panel con un solo clic. */
+  defaultOpen?: boolean;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
   const [method, setMethod] = useState<CoveringMethodKey>("NATURAL");
   const [stallion, setStallion] = useState("");

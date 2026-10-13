@@ -791,12 +791,17 @@ export const reproductionRouter = createTRPCRouter({
             dosesUsed: true,
             externalStallionName: true,
             stallion: { select: { id: true, name: true } },
+            semenBatch: { select: { costPerDose: true } },
             pregnancyChecks: { select: { date: true, result: true } },
             foaling: { select: { alive: true } },
           },
         });
-        const rows = coverings.map((c) => ({
+        const rows = coverings.map(({ semenBatch, ...c }) => ({
           ...c,
+          semenCost:
+            semenBatch?.costPerDose != null && c.dosesUsed != null
+              ? Number(semenBatch.costPerDose) * c.dosesUsed
+              : null,
           stallionKey: c.stallion?.id ?? `ext:${c.externalStallionName ?? "?"}`,
           stallionName: c.stallion?.name ?? c.externalStallionName ?? "Sin semental",
         }));
