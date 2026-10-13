@@ -1187,5 +1187,17 @@
     },
     "stageMore": "+{count} más",
     "loading": "Cargando reproducción"
+  },
+  "tenantPicker": {
+    "metaTitle": "Tus yeguadas",
+    "title": "Tus yeguadas",
+    "description": "Elige la yeguada que quieres gestionar.",
+    "roles": {
+      "OWNER": "Propietario",
+      "MANAGER": "Gestor",
+      "GROOM": "Mozo de cuadra",
+      "VET_EXTERNAL": "Veterinario externo",
+      "OWNER_EXTERNAL": "Propietario externo"
+    }
   }
 }

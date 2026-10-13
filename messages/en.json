@@ -1187,5 +1187,17 @@
     },
     "stageMore": "+{count} more",
     "loading": "Loading breeding"
+  },
+  "tenantPicker": {
+    "metaTitle": "Your farms",
+    "title": "Your farms",
+    "description": "Choose the farm you want to manage.",
+    "roles": {
+      "OWNER": "Owner",
+      "MANAGER": "Manager",
+      "GROOM": "Groom",
+      "VET_EXTERNAL": "External vet",
+      "OWNER_EXTERNAL": "External owner"
+    }
   }
 }
