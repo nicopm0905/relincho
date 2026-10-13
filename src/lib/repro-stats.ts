@@ -17,6 +17,8 @@ export type StatsCovering = {
   stallionKey: string;
   stallionName: string;
   dosesUsed?: number | null;
+  /** Coste del semen de esta cubrición (dosis × coste por dosis), si se conoce. */
+  semenCost?: number | null;
   pregnancyChecks: { date: Date | string; result: string }[];
   foaling?: { alive?: boolean | null } | null;
 };
@@ -51,6 +53,14 @@ export type SeasonStats = {
   liveFoalRate: number | null;
   /** Dosis gastadas por gestacion (solo cubriciones con dosis registradas). */
   dosesPerPregnancy: number | null;
+  /** Semen gastado en los celos cubiertos con semen de coste conocido. */
+  semenCostTotal: number;
+  /**
+   * Coste de semen por gestación: lo gastado en esos celos (también en los que
+   * no quedaron) entre las gestaciones de esos mismos celos. La monta natural
+   * sin coste registrado no entra, ni como cero ni como dato.
+   */
+  semenCostPerPregnancy: number | null;
   byStallion: RateRow[];
   byMethod: RateRow[];
 };
@@ -131,6 +141,12 @@ export function seasonStats(
   const withDoses = pregnantCycles.flatMap((c) => c.coverings).filter((c) => typeof c.dosesUsed === "number");
   const pregnantWithDoses = pregnantCycles.filter((c) => c.coverings.some((k) => typeof k.dosesUsed === "number")).length;
 
+  const costedCycles = cycles.filter((c) => c.coverings.some((k) => typeof k.semenCost === "number"));
+  const semenCostTotal = costedCycles
+    .flatMap((c) => c.coverings)
+    .reduce((n, k) => n + (k.semenCost ?? 0), 0);
+  const costedPregnancies = costedCycles.filter((c) => c.pregnant).length;
+
   return {
     season,
     maresBred: mares.size,
@@ -148,6 +164,8 @@ export function seasonStats(
     dosesPerPregnancy: pregnantWithDoses
       ? withDoses.reduce((n, c) => n + (c.dosesUsed ?? 0), 0) / pregnantWithDoses
       : null,
+    semenCostTotal,
+    semenCostPerPregnancy: costedPregnancies ? semenCostTotal / costedPregnancies : null,
     byStallion: breakdown(cycles, (c) => [c.stallionKey, c.stallionName]),
     byMethod: breakdown(cycles, (c) => [c.method, methodLabel(c.method)]),
   };
