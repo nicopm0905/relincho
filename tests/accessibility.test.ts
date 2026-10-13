@@ -114,3 +114,70 @@ test("los campos del diálogo de movimientos conservan sus relaciones label-cont
   assert.match(content, /aria-pressed=\{direction === "IN"\}/);
   assert.match(content, /aria-pressed=\{direction === "OUT"\}/);
 });
+
+/* Contraste de los tokens: si alguien cambia un color de globals.css y rompe
+   AA, falla aqui y no en una demo. Texto 4.5:1; anillos, barras y puntos 3:1
+   (WCAG 1.4.3 y 1.4.11). Se mide en claro y en oscuro. */
+function themeTokens(css: string, selector: ":root" | ".dark") {
+  const start = css.indexOf(`${selector} {`);
+  assert.notEqual(start, -1, `globals.css no define ${selector}`);
+  const block = css.slice(start, css.indexOf("\n}", start));
+  const tokens: Record<string, string> = {};
+  for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
+    tokens[name!] = value!;
+  }
+  return tokens;
+}
+
+function luminance(hex: string) {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+function contrast(a: string, b: string) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+}
+
+test("los tokens de color cumplen contraste AA en claro y en oscuro", () => {
+  const css = source("src/app/globals.css");
+  const states = ["empty", "heat", "covered", "pregnant", "foaled", "alert", "danger", "ok"];
+  const text: [string, string][] = [
+    ["foreground", "background"],
+    ["foreground", "card"],
+    ["muted-foreground", "background"],
+    ["muted-foreground", "card"],
+    ["muted-foreground", "muted"],
+    ["muted-foreground", "sidebar"],
+    ["primary-foreground", "primary"],
+    ["primary-ink", "card"],
+    ["primary-ink", "background"],
+    ["destructive", "card"],
+    ...states.flatMap((s): [string, string][] => [
+      [`state-${s}-ink`, `state-${s}-soft`],
+      [`state-${s}-ink`, "card"],
+    ]),
+  ];
+  const ui: [string, string][] = [
+    ["ring", "card"],
+    ["ring", "background"],
+    ...states.map((s): [string, string] => [`state-${s}`, "card"]),
+  ];
+
+  for (const selector of [":root", ".dark"] as const) {
+    const tokens = themeTokens(css, selector);
+    for (const [pairs, min] of [[text, 4.5], [ui, 3]] as const) {
+      for (const [fg, bg] of pairs) {
+        assert.ok(tokens[fg] && tokens[bg], `${selector} no define --${fg} o --${bg}`);
+        const ratio = contrast(tokens[fg]!, tokens[bg]!);
+        assert.ok(
+          ratio >= min,
+          `${selector}: --${fg} sobre --${bg} da ${ratio.toFixed(2)}:1 (mínimo ${min}:1)`,
+        );
+      }
+    }
+  }
+});

@@ -44,6 +44,64 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+
+  /* Estados con tres tonos cada uno: `base` para barras y puntos (>=3:1 sobre
+     la tarjeta), `ink` para texto (>=4.5:1 sobre `soft` y sobre la tarjeta) y
+     `soft` para fondos. Badge, pipeline, calendario y tarjetas usan solo
+     estos: nada de amber-500 o sky-400 sueltos. Ver docs/design-tokens.md. */
+  --color-state-empty: var(--state-empty);
+  --color-state-empty-ink: var(--state-empty-ink);
+  --color-state-empty-soft: var(--state-empty-soft);
+  --color-state-heat: var(--state-heat);
+  --color-state-heat-ink: var(--state-heat-ink);
+  --color-state-heat-soft: var(--state-heat-soft);
+  --color-state-covered: var(--state-covered);
+  --color-state-covered-ink: var(--state-covered-ink);
+  --color-state-covered-soft: var(--state-covered-soft);
+  --color-state-pregnant: var(--state-pregnant);
+  --color-state-pregnant-ink: var(--state-pregnant-ink);
+  --color-state-pregnant-soft: var(--state-pregnant-soft);
+  --color-state-foaled: var(--state-foaled);
+  --color-state-foaled-ink: var(--state-foaled-ink);
+  --color-state-foaled-soft: var(--state-foaled-soft);
+  --color-state-alert: var(--state-alert);
+  --color-state-alert-ink: var(--state-alert-ink);
+  --color-state-alert-soft: var(--state-alert-soft);
+  --color-state-danger: var(--state-danger);
+  --color-state-danger-ink: var(--state-danger-ink);
+  --color-state-danger-soft: var(--state-danger-soft);
+  --color-state-ok: var(--state-ok);
+  --color-state-ok-ink: var(--state-ok-ink);
+  --color-state-ok-soft: var(--state-ok-soft);
+
+  /* Escala tipografica cerrada. Antes habia once tamanos sueltos (10.5px,
+     12.5px, 13.5px...); ahora cada texto elige un papel, no un numero. */
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.025em;
+  --text-display--font-weight: 600;
+  --text-title: 1.875rem;
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.01em;
+  --text-heading: 1.0625rem;
+  --text-heading--line-height: 1.35;
+  --text-heading--letter-spacing: -0.01em;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.5;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.3;
+  --text-micro--letter-spacing: 0.06em;
+
+  /* Tres alturas: lo que descansa, lo que se levanta al pasar y lo que flota. */
+  --shadow-card: var(--elevation-1);
+  --shadow-raised: var(--elevation-2);
+  --shadow-overlay: var(--elevation-3);
+
   --radius-sm: calc(var(--radius) * 0.4);
   --radius-md: calc(var(--radius) * 0.6);
   --radius-lg: var(--radius);
@@ -78,7 +136,8 @@
   --popover: #ffffff;
   --popover-foreground: #111111;
   
-  --primary: #71852b; /* Accessible olive green */
+  /* #71852b daba 4.1:1 con texto blanco (falla AA); #647825 da 4.9:1. */
+  --primary: #647825;
   --primary-foreground: #ffffff;
   /* Readable olive for text/icons placed on a translucent primary tint. */
   --primary-ink: #55691d;
@@ -92,89 +151,154 @@
   --accent: #f2f2f0;
   --accent-foreground: #111111;
   
-  --destructive: #ef4444;
+  /* #ef4444 se usa como texto (`text-destructive`) y daba 3.8:1. */
+  --destructive: #c0362c;
   --border: #dfe4d8; /* Quiet green-tinted borders */
   --input: #d6ddcd;
-  --ring: #8ea644; /* Visible focus ring without shouting */
-  
-  --success: #6b8e23; 
+  /* El anillo de foco necesita 3:1 contra la tarjeta (#8ea644 daba 2.7:1). */
+  --ring: #7a9130;
+
+  --success: #3f6212;
   --success-foreground: #ffffff;
-  
-  --warning: #f59e0b;
+
+  --warning: #92400e;
   --warning-foreground: #ffffff;
-  
+
+  --state-empty: #868d7d;
+  --state-empty-ink: #555c4d;
+  --state-empty-soft: #eff1eb;
+  --state-heat: #c27400;
+  --state-heat-ink: #9a4a0b;
+  --state-heat-soft: #fdf1e4;
+  --state-covered: #3b82c4;
+  --state-covered-ink: #1d5a8a;
+  --state-covered-soft: #e8f1f9;
+  --state-pregnant: #7a9130;
+  --state-pregnant-ink: #4b5e17;
+  --state-pregnant-soft: #eef3de;
+  --state-foaled: #8b5cc0;
+  --state-foaled-ink: #643a8c;
+  --state-foaled-soft: #f3edf9;
+  --state-alert: #c27400;
+  --state-alert-ink: #92400e;
+  --state-alert-soft: #fdf3e1;
+  --state-danger: #c0362c;
+  --state-danger-ink: #a32a20;
+  --state-danger-soft: #fdeceb;
+  --state-ok: #7a9130;
+  --state-ok-ink: #3f6212;
+  --state-ok-soft: #eef5e3;
+
   --chart-1: #a3b846;
   --chart-2: #222222;
   --chart-3: #f59e0b;
   --chart-4: #8b5cf6;
   --chart-5: #ef4444;
-  
-  --radius: 0.625rem; /* Base radius; cards step up from here */
-  
+
+  /* Antes 0.625rem: las tarjetas (2xl) quedaban en 20px y la app parecia de
+     juguete. 0.5rem las deja en 16px y los botones (xl) en 12px. */
+  --radius: 0.5rem;
+
+  /* Sombras teñidas del oliva del texto, no negras: sobre el fondo calido una
+     sombra gris ensucia. */
+  --elevation-1: 0 1px 2px rgb(28 33 20 / 0.05), 0 1px 1px rgb(28 33 20 / 0.03);
+  --elevation-2: 0 2px 4px rgb(28 33 20 / 0.05), 0 12px 28px rgb(28 33 20 / 0.08);
+  --elevation-3: 0 4px 8px rgb(28 33 20 / 0.06), 0 24px 48px rgb(28 33 20 / 0.14);
+
   --sidebar: #f1f4ec;
   --sidebar-foreground: #1c2114;
-  --sidebar-primary: #71852b;
+  --sidebar-primary: #647825;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #e7eddc;
   --sidebar-accent-foreground: #1c2114;
   --sidebar-border: #dfe4d8;
-  --sidebar-ring: #8ea644;
+  --sidebar-ring: #7a9130;
 }
 
 .dark {
-  /* Granola-inspired Dark Palette */
-  --background: #111111; /* Charcoal */
-  --foreground: #f9f9f6; /* Off-white */
+  /* Oscuro calido: el mismo oliva del modo claro bajado de luz, no el gris
+     neutro de antes (#111), que hacia del oscuro otra marca. */
+  --background: #12130f;
+  --foreground: #f3f4ee;
 
   /* Mismos cuatro tonos, escalonados para la superficie oscura. */
   --phase-acumulacion: #3987e5;
   --phase-transmutacion: #d95926;
   --phase-realizacion: #199e70;
   --phase-transicion: #c98500;
-  
-  --card: #1c1c1c; 
-  --card-foreground: #f9f9f6;
-  
-  --popover: #1c1c1c;
-  --popover-foreground: #f9f9f6;
-  
-  --primary: #a3b846; 
-  --primary-foreground: #111111;
+
+  --card: #1a1c16;
+  --card-foreground: #f3f4ee;
+
+  --popover: #1f211a;
+  --popover-foreground: #f3f4ee;
+
+  --primary: #a3b846;
+  --primary-foreground: #12130f;
   --primary-ink: #c3d66a;
-  
-  --secondary: #2a2a2a;
-  --secondary-foreground: #f9f9f6;
-  
-  --muted: #2a2a2a;
-  --muted-foreground: #a1a1aa;
-  
-  --accent: #2a2a2a;
-  --accent-foreground: #f9f9f6;
-  
-  --destructive: #ef4444;
-  --border: #2a2a2a;
-  --input: #2a2a2a;
+
+  --secondary: #24271f;
+  --secondary-foreground: #f3f4ee;
+
+  --muted: #24271f;
+  --muted-foreground: #a6ab9b;
+
+  --accent: #24271f;
+  --accent-foreground: #f3f4ee;
+
+  --destructive: #e5675b;
+  --border: #2d3127;
+  --input: #33382c;
   --ring: #a3b846;
-  
-  --success: #6b8e23;
-  --success-foreground: #ffffff;
-  
-  --warning: #f59e0b;
-  --warning-foreground: #ffffff;
-  
+
+  --success: #b5d47a;
+  --success-foreground: #12130f;
+
+  --warning: #f5b453;
+  --warning-foreground: #12130f;
+
+  --state-empty: #7d8473;
+  --state-empty-ink: #b4b9a8;
+  --state-empty-soft: #26291f;
+  --state-heat: #e0912f;
+  --state-heat-ink: #f2b36d;
+  --state-heat-soft: #3a2a17;
+  --state-covered: #5b9bd5;
+  --state-covered-ink: #8cc0ec;
+  --state-covered-soft: #1b2c3b;
+  --state-pregnant: #a3b846;
+  --state-pregnant-ink: #c3d66a;
+  --state-pregnant-soft: #2a3317;
+  --state-foaled: #a57fd6;
+  --state-foaled-ink: #c9a8ec;
+  --state-foaled-soft: #2e2340;
+  --state-alert: #e5a033;
+  --state-alert-ink: #f5b453;
+  --state-alert-soft: #382a12;
+  --state-danger: #e5675b;
+  --state-danger-ink: #f49b92;
+  --state-danger-soft: #3d1d1a;
+  --state-ok: #a3b846;
+  --state-ok-ink: #b5d47a;
+  --state-ok-soft: #263116;
+
   --chart-1: #a3b846;
-  --chart-2: #f9f9f6;
+  --chart-2: #f3f4ee;
   --chart-3: #f59e0b;
   --chart-4: #8b5cf6;
   --chart-5: #ef4444;
-  
-  --sidebar: #111111;
-  --sidebar-foreground: #f9f9f6;
+
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.3);
+  --elevation-2: 0 2px 4px rgb(0 0 0 / 0.25), 0 12px 28px rgb(0 0 0 / 0.35);
+  --elevation-3: 0 4px 8px rgb(0 0 0 / 0.3), 0 24px 48px rgb(0 0 0 / 0.5);
+
+  --sidebar: #0f100c;
+  --sidebar-foreground: #f3f4ee;
   --sidebar-primary: #a3b846;
-  --sidebar-primary-foreground: #111111;
-  --sidebar-accent: #1c1c1c;
-  --sidebar-accent-foreground: #f9f9f6;
-  --sidebar-border: #2a2a2a;
+  --sidebar-primary-foreground: #12130f;
+  --sidebar-accent: #1a1c16;
+  --sidebar-accent-foreground: #f3f4ee;
+  --sidebar-border: #2d3127;
   --sidebar-ring: #a3b846;
 }
 
@@ -218,31 +342,15 @@
   }
 }
 
-/* Granola specific styles */
 @layer utilities {
+  /* Alias historico: decenas de tarjetas lo usan. Ahora sale del token de
+     elevacion en vez de llevar su propia sombra flotante. `shadow-raised` y
+     `shadow-overlay` los genera Tailwind desde @theme. */
   .shadow-bento {
-    box-shadow:
-      0 1px 2px rgb(35 49 18 / 0.035),
-      0 8px 24px rgb(35 49 18 / 0.045);
-  }
-  .shadow-raised {
-    box-shadow:
-      0 1px 2px rgba(17, 17, 17, 0.05),
-      0 8px 24px rgba(17, 17, 17, 0.06);
-  }
-  .dark .shadow-bento {
-    box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.2), 0px 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--elevation-1);
   }
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  
-  .glass-panel {
-    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)];
-  }
-  
-  .dark .glass-panel {
-    @apply bg-[#1c1c1c]/70 border-[#2a2a2a]/40 shadow-[0_8px_32px_rgba(0,0,0,0.2)];
   }
 }
 /* ── Layout & scroll helpers ─────────────────────────────── */
@@ -284,9 +392,7 @@
   }
   .card-hover:hover {
     transform: translateY(-2px);
-    box-shadow:
-      0px 8px 30px rgba(0, 0, 0, 0.04),
-      0px 2px 4px rgba(0, 0, 0, 0.02);
+    box-shadow: var(--elevation-2);
   }
 
   .skeleton-shimmer {
@@ -320,8 +426,8 @@
   }
 
   .cn-toast {
-    border-radius: 0.875rem !important;
-    box-shadow: 0 8px 24px rgb(35 49 18 / 0.12) !important;
+    border-radius: var(--radius-xl) !important;
+    box-shadow: var(--elevation-3) !important;
     font-size: 0.875rem !important;
     font-weight: 600 !important;
   }

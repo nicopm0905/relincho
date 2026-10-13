@@ -6,7 +6,8 @@ import { Analytics } from "@vercel/analytics/next";
 import { getBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
-// El serif es solo de marca (web, legales, acceso): la app va entera en sans.
+// Newsreader: marca (web, legales, acceso) y, dentro de la app, solo títulos de
+// página y el nombre del caballo (`font-serif`). El resto va en sans.
 const newsreader = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin"],
