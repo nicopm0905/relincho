@@ -845,5 +845,216 @@
       "stepsLabel": "First steps"
     },
     "loading": "Loading home"
+  },
+  "reproPhase": {
+    "ANESTRUS": "Anoestrus",
+    "UNTRACKED": "Not tracked",
+    "DIESTRUS": "Monitoring",
+    "IN_HEAT": "In heat",
+    "COVERED": "Covered",
+    "PREGNANT": "Pregnant",
+    "FOALING_SOON": "Foaling soon",
+    "POSTPARTUM": "Foaled"
+  },
+  "horses": {
+    "metaTitle": "Horses",
+    "title": "Horses",
+    "description": "{count, plural, one {# horse on the farm} other {# horses on the farm}}",
+    "actions": {
+      "add": "Add horse",
+      "weigh": "Weigh-in",
+      "export": "Export CSV"
+    },
+    "search": {
+      "placeholder": "Search by name, coat or UELN…",
+      "label": "Search horses",
+      "clear": "Clear search"
+    },
+    "filters": {
+      "categoryLabel": "Filter by category",
+      "statusLabel": "Status",
+      "alertsOnly": "With alerts",
+      "reset": "Clear filters",
+      "category": {
+        "all": "All",
+        "mare": "Mares",
+        "stallion": "Stallions",
+        "young": "Foals",
+        "gelding": "Geldings"
+      },
+      "status": {
+        "census": "On the farm",
+        "IN_TRAINING": "In training",
+        "RETIRED": "Retired",
+        "SOLD": "Sold",
+        "DEAD": "Deceased",
+        "all": "All"
+      }
+    },
+    "results": "{shown, plural, one {# horse} other {# horses}}",
+    "resultsOf": "{shown} of {total}",
+    "view": {
+      "label": "View",
+      "cards": "Cards",
+      "table": "Table"
+    },
+    "empty": {
+      "title": "No horses yet",
+      "body": "Add your first horse or import your spreadsheet to start tracking health, breeding and paperwork.",
+      "add": "Add the first one"
+    },
+    "noMatch": {
+      "title": "No horse matches",
+      "body": "Try another term or remove a filter."
+    },
+    "category": {
+      "mare": "Mare",
+      "stallion": "Stallion",
+      "gelding": "Gelding",
+      "filly": "Filly",
+      "colt": "Colt"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "IN_TRAINING": "In training",
+      "RETIRED": "Retired",
+      "SOLD": "Sold",
+      "DEAD": "Deceased"
+    },
+    "age": "{years, plural, =0 {Under 1 year} one {# year} other {# years}}",
+    "health": {
+      "overdue": "{type} overdue",
+      "soon": "{type} in {days, plural, one {# day} other {# days}}",
+      "today": "{type} today"
+    },
+    "columns": {
+      "name": "Name",
+      "category": "Category",
+      "age": "Age",
+      "coat": "Coat",
+      "location": "Location",
+      "repro": "Breeding",
+      "health": "Health",
+      "ueln": "UELN"
+    },
+    "healthOk": "Up to date"
+  },
+  "horseDetail": {
+    "back": "Horses",
+    "actions": {
+      "saleSheet": "Sale sheet",
+      "edit": "Edit"
+    },
+    "childOf": "{sex, select, FEMALE {Daughter of} other {Son of}}",
+    "and": "and",
+    "unknown": "unknown",
+    "ids": {
+      "ueln": "UELN",
+      "microchip": "Microchip",
+      "lg": "Stud book",
+      "hierro": "Brand"
+    },
+    "facts": {
+      "born": "Born",
+      "location": "Location",
+      "unassigned": "Unassigned",
+      "nextHealth": "Next health care",
+      "overdueHealth": "Health care overdue",
+      "nothingDue": "Nothing due",
+      "repro": "Breeding",
+      "noCoverings": "No coverings",
+      "dueDate": "Due on {date}",
+      "gestationDay": "Day {day} of gestation",
+      "weight": "Weight",
+      "condition": "Condition {value} of 9"
+    },
+    "withdrawal": {
+      "title": "Under withdrawal until {date}",
+      "body": "Because of {name} ({date}). Until then it cannot be slaughtered for human consumption. If the passport excludes it from the food chain, mark it on the record and this notice disappears."
+    },
+    "tabs": {
+      "label": "Record sections",
+      "summary": "Summary",
+      "repro": "Breeding",
+      "health": "Health",
+      "pedigree": "Pedigree",
+      "journal": "Journal",
+      "documents": "Documents"
+    },
+    "summary": {
+      "identification": "Identification",
+      "breed": "Breed",
+      "coat": "Coat",
+      "breeder": "Breeder",
+      "owner": "Owner",
+      "theFarm": "The farm"
+    },
+    "repro": {
+      "title": "Breeding record",
+      "description": "Seasons, coverings and scans",
+      "startCycle": "Start season",
+      "empty": "No breeding seasons yet.",
+      "season": "{season} season",
+      "lastCover": "Last covering",
+      "stallion": "Stallion",
+      "unknownStallion": "Unknown",
+      "scan": "Scan",
+      "openCycle": "Season open, no coverings yet.",
+      "viewCycle": "View season",
+      "gestation": "Gestation",
+      "gestationOf": "of ~{days} days",
+      "expected": "Due date",
+      "progress": "Gestation progress"
+    },
+    "mareState": {
+      "EMPTY": "Open",
+      "COVERED": "Covered (scan pending)",
+      "PREGNANT": "Pregnant",
+      "TWINS": "Pregnant with twins",
+      "LOST": "Pregnancy loss",
+      "FOALED": "Foaled"
+    },
+    "health": {
+      "pendingTitle": "Due",
+      "pendingDescription": "Overdue and next 30 days",
+      "none": "Nothing due in the next 30 days.",
+      "record": "Record health care",
+      "training": "Training",
+      "exportPdf": "Export PDF",
+      "history": "History",
+      "historyDescription": "Health, training and movements of {name}"
+    },
+    "pedigree": {
+      "title": "Pedigree",
+      "description": "Three generations of {name}",
+      "label": "Pedigree of {name}",
+      "parents": "Parents",
+      "grandparents": "Grandparents",
+      "greatGrandparents": "Great-grandparents",
+      "unknown": "Unknown",
+      "sire": "Sire",
+      "dam": "Dam"
+    },
+    "journal": {
+      "history": "Journal history"
+    },
+    "loading": "Loading record",
+    "timeline": {
+      "error": "The history could not be loaded.",
+      "empty": "Nothing recorded yet.",
+      "training": "Training session",
+      "minutes": "{minutes} min",
+      "withRider": "{minutes} min with {rider}",
+      "movementIn": "Arrival at the farm",
+      "movementOut": "Departure from the farm",
+      "movement": "Movement recorded",
+      "covering": "Covering",
+      "coveringWith": "With {stallion}",
+      "foaling": "Foaling",
+      "foalAlive": "Live foal",
+      "foalComplications": "With complications"
+    },
+    "unknownSire": "unknown sire",
+    "unknownDam": "unknown dam"
   }
 }

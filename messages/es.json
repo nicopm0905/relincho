@@ -845,5 +845,216 @@
       "stepsLabel": "Primeros pasos"
     },
     "loading": "Cargando el inicio"
+  },
+  "reproPhase": {
+    "ANESTRUS": "Anestro",
+    "UNTRACKED": "Sin seguimiento",
+    "DIESTRUS": "En seguimiento",
+    "IN_HEAT": "En celo",
+    "COVERED": "Cubierta",
+    "PREGNANT": "Gestante",
+    "FOALING_SOON": "Parto próximo",
+    "POSTPARTUM": "Parida"
+  },
+  "horses": {
+    "metaTitle": "Caballos",
+    "title": "Caballos",
+    "description": "{count, plural, one {# caballo en el censo} other {# caballos en el censo}}",
+    "actions": {
+      "add": "Añadir caballo",
+      "weigh": "Pesaje",
+      "export": "Exportar CSV"
+    },
+    "search": {
+      "placeholder": "Buscar por nombre, capa o UELN…",
+      "label": "Buscar caballos",
+      "clear": "Borrar búsqueda"
+    },
+    "filters": {
+      "categoryLabel": "Filtrar por categoría",
+      "statusLabel": "Estado",
+      "alertsOnly": "Con avisos",
+      "reset": "Limpiar filtros",
+      "category": {
+        "all": "Todos",
+        "mare": "Yeguas",
+        "stallion": "Sementales",
+        "young": "Potros",
+        "gelding": "Castrados"
+      },
+      "status": {
+        "census": "En la yeguada",
+        "IN_TRAINING": "En doma",
+        "RETIRED": "Retirados",
+        "SOLD": "Vendidos",
+        "DEAD": "Fallecidos",
+        "all": "Todos"
+      }
+    },
+    "results": "{shown, plural, one {# caballo} other {# caballos}}",
+    "resultsOf": "{shown} de {total}",
+    "view": {
+      "label": "Vista",
+      "cards": "Tarjetas",
+      "table": "Tabla"
+    },
+    "empty": {
+      "title": "Sin caballos aún",
+      "body": "Registra tu primer caballo o importa tu Excel para empezar a llevar su sanidad, su reproducción y su documentación.",
+      "add": "Añadir el primero"
+    },
+    "noMatch": {
+      "title": "Ningún caballo coincide",
+      "body": "Prueba con otro término o quita algún filtro."
+    },
+    "category": {
+      "mare": "Yegua",
+      "stallion": "Semental",
+      "gelding": "Castrado",
+      "filly": "Potra",
+      "colt": "Potro"
+    },
+    "status": {
+      "ACTIVE": "Activo",
+      "IN_TRAINING": "En doma",
+      "RETIRED": "Retirado",
+      "SOLD": "Vendido",
+      "DEAD": "Fallecido"
+    },
+    "age": "{years, plural, =0 {Menos de 1 año} one {# año} other {# años}}",
+    "health": {
+      "overdue": "{type} vencida",
+      "soon": "{type} en {days, plural, one {# día} other {# días}}",
+      "today": "{type} hoy"
+    },
+    "columns": {
+      "name": "Nombre",
+      "category": "Categoría",
+      "age": "Edad",
+      "coat": "Capa",
+      "location": "Ubicación",
+      "repro": "Reproducción",
+      "health": "Sanidad",
+      "ueln": "UELN"
+    },
+    "healthOk": "Al día"
+  },
+  "horseDetail": {
+    "back": "Caballos",
+    "actions": {
+      "saleSheet": "Ficha de venta",
+      "edit": "Editar"
+    },
+    "childOf": "{sex, select, FEMALE {Hija de} other {Hijo de}}",
+    "and": "y",
+    "unknown": "desconocido",
+    "ids": {
+      "ueln": "UELN",
+      "microchip": "Microchip",
+      "lg": "Libro Genealógico",
+      "hierro": "Hierro"
+    },
+    "facts": {
+      "born": "Nacimiento",
+      "location": "Ubicación",
+      "unassigned": "Sin asignar",
+      "nextHealth": "Próxima sanidad",
+      "overdueHealth": "Sanidad vencida",
+      "nothingDue": "Nada pendiente",
+      "repro": "Reproducción",
+      "noCoverings": "Sin cubriciones",
+      "dueDate": "Parto previsto el {date}",
+      "gestationDay": "Día {day} de gestación",
+      "weight": "Peso",
+      "condition": "Condición {value} de 9"
+    },
+    "withdrawal": {
+      "title": "En tiempo de espera hasta el {date}",
+      "body": "Por {name} ({date}). Hasta esa fecha no puede ir a sacrificio para consumo humano. Si en el pasaporte está excluido de consumo, márcalo en la ficha y este aviso desaparece."
+    },
+    "tabs": {
+      "label": "Secciones de la ficha",
+      "summary": "Resumen",
+      "repro": "Reproducción",
+      "health": "Sanidad",
+      "pedigree": "Pedigrí",
+      "journal": "Diario",
+      "documents": "Documentos"
+    },
+    "summary": {
+      "identification": "Identificación",
+      "breed": "Raza",
+      "coat": "Capa",
+      "breeder": "Criador",
+      "owner": "Propietario",
+      "theFarm": "La yeguada"
+    },
+    "repro": {
+      "title": "Cuaderno de parideras",
+      "description": "Temporadas, cubriciones y ecografías",
+      "startCycle": "Iniciar temporada",
+      "empty": "Todavía no hay temporadas reproductivas.",
+      "season": "Temporada {season}",
+      "lastCover": "Último salto",
+      "stallion": "Semental",
+      "unknownStallion": "Desconocido",
+      "scan": "Ecografía",
+      "openCycle": "Temporada abierta, sin saltos registrados.",
+      "viewCycle": "Ver temporada",
+      "gestation": "Gestación",
+      "gestationOf": "de ~{days} días",
+      "expected": "Parto previsto",
+      "progress": "Progreso de la gestación"
+    },
+    "mareState": {
+      "EMPTY": "Vacía",
+      "COVERED": "Cubierta (pdte. eco)",
+      "PREGNANT": "Gestante",
+      "TWINS": "Gestante de gemelos",
+      "LOST": "Pérdida gestacional",
+      "FOALED": "Parida"
+    },
+    "health": {
+      "pendingTitle": "Pendiente",
+      "pendingDescription": "Vencido y próximos 30 días",
+      "none": "Nada pendiente en los próximos 30 días.",
+      "record": "Registrar sanidad",
+      "training": "Entrenamiento",
+      "exportPdf": "Exportar PDF",
+      "history": "Historial",
+      "historyDescription": "Sanidad, entrenamientos y movimientos de {name}"
+    },
+    "pedigree": {
+      "title": "Pedigrí",
+      "description": "Tres generaciones de {name}",
+      "label": "Árbol genealógico de {name}",
+      "parents": "Padres",
+      "grandparents": "Abuelos",
+      "greatGrandparents": "Bisabuelos",
+      "unknown": "Desconocido",
+      "sire": "Padre",
+      "dam": "Madre"
+    },
+    "journal": {
+      "history": "Historial del diario"
+    },
+    "loading": "Cargando la ficha",
+    "timeline": {
+      "error": "No se pudo cargar el historial.",
+      "empty": "Todavía no hay nada registrado.",
+      "training": "Sesión de entrenamiento",
+      "minutes": "{minutes} min",
+      "withRider": "{minutes} min con {rider}",
+      "movementIn": "Entrada en la explotación",
+      "movementOut": "Salida de la explotación",
+      "movement": "Movimiento registrado",
+      "covering": "Cubrición",
+      "coveringWith": "Con {stallion}",
+      "foaling": "Parto",
+      "foalAlive": "Potro vivo",
+      "foalComplications": "Con complicaciones"
+    },
+    "unknownSire": "padre desconocido",
+    "unknownDam": "madre desconocida"
   }
 }
