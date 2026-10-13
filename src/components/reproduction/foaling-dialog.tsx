@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import * as z from "zod";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,13 +51,16 @@ const formSchema = z.object({
 
 interface FoalingDialogProps {
   coveringId: string;
+  /** Abierto al montar: para llegar desde el panel con un solo clic. */
+  defaultOpen?: boolean;
 }
 
-export function FoalingDialog({ coveringId }: FoalingDialogProps) {
-  const [open, setOpen] = useState(false);
+export function FoalingDialog({ coveringId, defaultOpen = false }: FoalingDialogProps) {
+  const [open, setOpen] = useState(defaultOpen);
   const router = useRouter();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema) as any,
+  // Entrada y salida difieren (el esquema tiene valores por defecto).
+  const form = useForm<z.input<typeof formSchema>, unknown, z.output<typeof formSchema>>({
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       date: format(new Date(), "yyyy-MM-dd"),
       alive: true,

@@ -111,13 +111,16 @@ export function ExamDialog({
   cycleId,
   exam,
   trigger = "button",
+  defaultOpen = false,
 }: {
   cycleId: string;
   exam?: ExamValues;
   trigger?: "button" | "icon";
+  /** Abierto al montar: para llegar desde el panel con un solo clic. */
+  defaultOpen?: boolean;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [v, setV] = useState<ExamValues>(exam ?? empty());
   const [dateText, setDateText] = useState(format(new Date(v.date), "yyyy-MM-dd'T'HH:mm"));

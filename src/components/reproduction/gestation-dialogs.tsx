@@ -49,8 +49,15 @@ function useDone(message: string, close: () => void) {
 // Vigilancia preparto
 // ---------------------------------------------------------------------------
 
-export function FoalingWatchDialog({ coveringId }: { coveringId: string }) {
-  const [open, setOpen] = useState(false);
+export function FoalingWatchDialog({
+  coveringId,
+  defaultOpen = false,
+}: {
+  coveringId: string;
+  /** Abierto al montar: para llegar desde el panel con un solo clic. */
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   const [date, setDate] = useState("");
   const [udder, setUdder] = useState<number | null>(null);
   const [wax, setWax] = useState(false);

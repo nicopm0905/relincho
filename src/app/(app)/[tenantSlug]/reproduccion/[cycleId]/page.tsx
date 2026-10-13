@@ -43,7 +43,7 @@ import {
 import { ExamDialog } from "@/components/reproduction/exam-dialog";
 import { MareProfileDialog } from "@/components/reproduction/mare-profile-dialog";
 import { FollicleChart } from "@/components/reproduction/follicle-chart";
-import { PhaseBadge } from "@/components/reproduction/phase-badge";
+import { ReproPhaseBadge } from "@/components/reproduction/repro-phase-badge";
 import {
   DeleteWatchButton,
   FoalingWatchDialog,
@@ -64,6 +64,8 @@ const FoalingDialog = dynamic(() => import("@/components/reproduction/foaling-di
 
 interface PageProps {
   params: Promise<{ tenantSlug: string; cycleId: string }>;
+  /** `accion` abre su diálogo al llegar: el panel enlaza la siguiente acción. */
+  searchParams?: Promise<{ accion?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -117,8 +119,9 @@ function Fact({ label, value, hint, tone }: { label: string; value: React.ReactN
   );
 }
 
-export default async function CycleDetailPage({ params }: PageProps) {
-  const { tenantSlug, cycleId } = await params;
+export default async function CycleDetailPage({ params, searchParams }: PageProps) {
+  const [{ tenantSlug, cycleId }, query] = await Promise.all([params, searchParams]);
+  const accion = query?.accion;
   const caller = await createServerCaller(tenantSlug);
 
   let cycle;
@@ -133,6 +136,12 @@ export default async function CycleDetailPage({ params }: PageProps) {
   const category: SeasonCategory =
     (cycle.category as SeasonCategory | null) ?? seasonCategory(cycle.coverings, cycle.season);
   const now = new Date();
+  // Las acciones sobre una cubrición (eco, parto, vigilancia) van a la última.
+  const latestCoveringId = [...cycle.coverings].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  )[0]?.id;
+  const opensFor = (action: string, coveringId: string) =>
+    accion === action && coveringId === latestCoveringId;
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -153,8 +162,8 @@ export default async function CycleDetailPage({ params }: PageProps) {
                 preovulatoryFollicleMm: p.preovulatoryFollicleMm,
               }}
             />
-            <CreateCoveringDialog cycleId={cycle.id} />
-            <ExamDialog cycleId={cycle.id} />
+            <CreateCoveringDialog cycleId={cycle.id} defaultOpen={accion === "cubricion"} />
+            <ExamDialog cycleId={cycle.id} defaultOpen={accion === "exploracion"} />
           </>
         }
       />
@@ -180,7 +189,7 @@ export default async function CycleDetailPage({ params }: PageProps) {
       {/* Situacion y predicciones */}
       <section className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <PhaseBadge phase={insight.phase} />
+          <ReproPhaseBadge phase={insight.phase} />
           {insight.lactating && <Badge variant="outline">Lactando</Badge>}
           {insight.lastExam && (
             <span className="text-[12.5px] text-muted-foreground">
@@ -567,7 +576,7 @@ export default async function CycleDetailPage({ params }: PageProps) {
                           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Vigilancia preparto
                           </p>
-                          <FoalingWatchDialog coveringId={covering.id} />
+                          <FoalingWatchDialog coveringId={covering.id} defaultOpen={opensFor("vigilancia", covering.id)} />
                         </div>
                         {covering.foalingWatch.length === 0 ? (
                           <p className="text-[13px] text-muted-foreground">
@@ -726,9 +735,9 @@ export default async function CycleDetailPage({ params }: PageProps) {
                     {/* Action Buttons */}
                     {!covering.foaling && (
                       <div className="flex gap-2 pt-2 justify-end">
-                        <PregnancyCheckDialog coveringId={covering.id} />
+                        <PregnancyCheckDialog coveringId={covering.id} defaultOpen={opensFor("eco", covering.id)} />
                         {isPregnantResult(coveringResult(covering.pregnancyChecks)) && (
-                          <FoalingDialog coveringId={covering.id} />
+                          <FoalingDialog coveringId={covering.id} defaultOpen={opensFor("parto", covering.id)} />
                         )}
                       </div>
                     )}
