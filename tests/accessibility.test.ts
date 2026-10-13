@@ -86,9 +86,15 @@ test("las acciones rápidas de Inicio tienen nombres claros y reutilizan formula
   const home = source("src/app/(app)/[tenantSlug]/inicio/page.tsx");
 
   assert.match(quickActions, /aria-labelledby="quick-actions-heading"/);
-  assert.match(quickActions, /Tarea rápida/);
-  assert.match(quickActions, /Nueva tarea/);
-  assert.match(quickActions, /Registrar cuidado/);
+  // Los nombres salen de next-intl: se comprueba que existen en los dos idiomas.
+  type HomeMessages = { home: { quickActions: Record<string, string> } };
+  for (const locale of ["es", "en"]) {
+    const messages = JSON.parse(source(`messages/${locale}.json`)) as HomeMessages;
+    for (const key of ["quickTask", "newTask", "recordCare"]) {
+      assert.ok(quickActions.includes(`t("${key}")`), `quick-actions no usa t("${key}")`);
+      assert.ok(messages.home.quickActions[key]?.trim(), `${locale}: falta home.quickActions.${key}`);
+    }
+  }
   assert.match(massHealthDialog, /compact \? "Mismo cuidado a varios"/);
   assert.match(quickActions, /MassHealthDialog/);
   assert.match(quickActions, /canRecordHealth/);

@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { InicioSkeleton } from "@/components/inicio/inicio-skeleton";
 
 export default function Loading() {
-  return <PageSkeleton rows={6} />;
+  return <InicioSkeleton />;
 }
