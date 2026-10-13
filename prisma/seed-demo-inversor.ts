@@ -572,11 +572,20 @@ async function main() {
     where: { tenantId, status: { in: ["ACTIVE", "IN_TRAINING"] }, birthDate: { lt: day(-365) } },
     orderBy: { name: "asc" },
   });
+  // Plan al día para todos: la última vacuna y la última desparasitación
+  // vencen en el futuro. Los vencidos de abajo son los únicos de verdad (un
+  // acto más reciente del mismo tipo los daría por renovados).
+  const lapsedFlu = new Set([galante.id]);
+  const lapsedWorm = new Set([gitana!.id, fortuna!.id]);
   for (const [i, h] of active.entries()) {
-    const flu = day(-60 - ((i * 17) % 200));
-    await health(h.id, "VACCINE", "Gripe equina + tétanos", flu, new Date(flu.getTime() + 182 * DAY_MS), { cost: 38, vetId: vet.id, dose: "1 dosis IM" });
-    const worm = day(-30 - ((i * 11) % 80));
-    await health(h.id, "DEWORMING", "Ivermectina + praziquantel", worm, new Date(worm.getTime() + 90 * DAY_MS), { cost: 14 });
+    if (!lapsedFlu.has(h.id)) {
+      const flu = day(-20 - ((i * 17) % 150));
+      await health(h.id, "VACCINE", "Gripe equina + tétanos", flu, new Date(flu.getTime() + 182 * DAY_MS), { cost: 38, vetId: vet.id, dose: "1 dosis IM" });
+    }
+    if (!lapsedWorm.has(h.id)) {
+      const worm = day(-10 - ((i * 11) % 70));
+      await health(h.id, "DEWORMING", "Ivermectina + praziquantel", worm, new Date(worm.getTime() + 90 * DAY_MS), { cost: 14 });
+    }
   }
   // Lo que pide atención hoy
   await health(galante.id, "VACCINE", "Gripe equina + tétanos (refuerzo)", day(-192), day(-10), { cost: 38, vetId: vet.id });
