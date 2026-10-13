@@ -35,17 +35,17 @@ export function ListRow({
     >
       {leading && <div className="shrink-0">{leading}</div>}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[13.5px] font-medium text-foreground">
+        <div className="truncate text-body font-medium text-foreground">
           {title}
         </div>
         {subtitle && (
-          <div className="truncate text-[12.5px] text-muted-foreground">
+          <div className="truncate text-label text-muted-foreground">
             {subtitle}
           </div>
         )}
       </div>
       {meta && (
-        <div className="flex shrink-0 items-center gap-2 text-[12.5px] text-muted-foreground">
+        <div className="flex shrink-0 items-center gap-2 text-label text-muted-foreground">
           {meta}
         </div>
       )}
@@ -73,15 +73,15 @@ export function RowIcon({
   tone = "neutral",
 }: {
   children: React.ReactNode;
-  tone?: "neutral" | "alert";
+  tone?: "neutral" | "alert" | "danger";
 }) {
   return (
     <span
       className={cn(
         "flex h-9 w-9 items-center justify-center rounded-full [&>svg]:h-4 [&>svg]:w-4",
-        tone === "alert"
-          ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
-          : "bg-muted text-muted-foreground",
+        tone === "alert" && "bg-state-alert-soft text-state-alert-ink",
+        tone === "danger" && "bg-state-danger-soft text-state-danger-ink",
+        tone === "neutral" && "bg-muted text-muted-foreground",
       )}
     >
       {children}
