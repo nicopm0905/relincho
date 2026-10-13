@@ -283,6 +283,13 @@ async function wipe() {
   if (!existing) return;
   if (existing.slug !== DEMO_SLUG) throw new Error("Guarda: slug inesperado");
   const where = { tenantId: existing.id };
+  // Si en la demo se emitió una factura: los registros Veri*Factu no dejan
+  // borrar su factura (Restrict) y una rectificativa tampoco a su original.
+  // Borrar sí está permitido (los triggers solo impiden modificar).
+  await prisma.verifactuRecord.deleteMany({ where });
+  await prisma.invoice.deleteMany({ where: { ...where, rectifiesId: { not: null } } });
+  await prisma.invoice.deleteMany({ where });
+  await prisma.boardingContract.deleteMany({ where });
   // Covering.mare no borra en cascada: hay que quitar las cubriciones antes
   // que los caballos. SemenBatch y Movement no cuelgan del tenant.
   await prisma.foaling.deleteMany({ where });
@@ -304,7 +311,8 @@ async function main() {
       slug: DEMO_SLUG,
       name: "Yeguada Valdeolivo",
       fiscalName: "Yeguada Valdeolivo S.L.",
-      nif: "B00000000",
+      // NIF ficticio con dígito de control válido: la emisión lo comprueba.
+      nif: "B92736156",
       address: "Carretera de Los Palacios, km 4",
       city: "Utrera",
       province: "Sevilla",
@@ -342,10 +350,16 @@ async function main() {
   });
   await prisma.contact.create({ data: { tenantId, kind: "FARRIER", name: "Herrador Manuel Ortega", phone: "600000222" } });
   const ownerA = await prisma.contact.create({
-    data: { tenantId, kind: "OWNER", name: "Hacienda Los Llanos", nif: "B00000001", email: "admin@example.com" },
+    data: {
+      tenantId, kind: "OWNER", name: "Hacienda Los Llanos", nif: "B91847368", email: "admin@example.com",
+      address: "Camino de la Ermita, 12, 41710 Utrera (Sevilla)",
+    },
   });
   const ownerB = await prisma.contact.create({
-    data: { tenantId, kind: "OWNER", name: "Carmen Navarro Ruiz", email: "carmen@example.com" },
+    data: {
+      tenantId, kind: "OWNER", name: "Carmen Navarro Ruiz", nif: "48207315M", email: "carmen@example.com",
+      address: "Calle Real, 8, 41700 Dos Hermanas (Sevilla)",
+    },
   });
 
   // ── Pedigrí: tres generaciones por encima de las yeguas jóvenes ─────────
@@ -368,9 +382,9 @@ async function main() {
   const albero = await anc("Albero V", "MALE", "Tordo", 24, hosco.id, bilbaina.id);
   const sevillana = await anc("Sevillana XII", "FEMALE", "Tordo", 23, majestuoso.id, calesera.id);
   const lucero = await anc("Lucero XXX", "MALE", "Tordo", 23, nevado.id, morena.id);
-  const romera = await anc("Romera IV", "FEMALE", "Castaño", 22, brioso.id, tamborilera.id, "RETIRED");
+  const romera = await anc("Romera IV", "FEMALE", "Castaño", 22, brioso.id, tamborilera.id);
   const campero = await anc("Campero VI", "MALE", "Negro", 24, destinado.id, navarra.id);
-  const giralda = await anc("Giralda III", "FEMALE", "Tordo", 22, fogoso.id, altanera.id, "RETIRED");
+  const giralda = await anc("Giralda III", "FEMALE", "Tordo", 22, fogoso.id, altanera.id);
 
   // ── Sementales de la casa ────────────────────────────────────────────────
   const embajador = await horse({
@@ -389,6 +403,8 @@ async function main() {
     data: {
       tenantId, horseId: jerezano.id, direction: "IN", date: yearsAgo(3, 9, 12), cause: "COMPRA",
       originRega: "ES110200000456", reason: "Compra como semental joven", documentType: "Documento de movimiento",
+      documentNumber: "DM-2023-004512", transporterName: "Transportes Ecuestres del Sur (ATES-41-0087)",
+      vehiclePlate: "4821 KLM", trailerPlate: "SE-03917-R",
     },
   });
 
@@ -564,7 +580,48 @@ async function main() {
 
   // ── Jóvenes y caballos de doma ────────────────────────────────────────────
   await horse({ name: "Valiente XXIII", sex: "MALE", coat: "Tordo", birthDate: yearsAgo(3, 4, 11), sireId: embajador.id, damId: soberana.id, status: "IN_TRAINING", boxLocation: "Doma 1", weightKg: 480 });
-  await horse({ name: "Brillante XL", sex: "GELDING", coat: "Castaño", birthDate: yearsAgo(5, 6, 2), sireId: galante.id, status: "IN_TRAINING", boxLocation: "Doma 2", weightKg: 500, ownerId: ownerA.id });
+  const brillante = await horse({ name: "Brillante XL", sex: "GELDING", coat: "Castaño", birthDate: yearsAgo(5, 6, 2), sireId: galante.id, status: "IN_TRAINING", boxLocation: "Doma 2", weightKg: 500, ownerId: ownerA.id });
+
+  // ── Libro de explotación: apertura ───────────────────────────────────────
+  // Todo animal presente tiene que figurar en el libro. Los nacidos aquí y el
+  // semental comprado ya tienen su alta; el resto entra con la apertura (A).
+  const withMovement = new Set(
+    (await prisma.movement.findMany({ where: { tenantId }, select: { horseId: true } })).map((m) => m.horseId),
+  );
+  const present = await prisma.horse.findMany({
+    where: { tenantId, status: { in: ["ACTIVE", "IN_TRAINING"] } },
+    select: { id: true, birthDate: true },
+  });
+  const opened = yearsAgo(4, 1, 10);
+  for (const h of present.filter((h) => !withMovement.has(h.id))) {
+    // Nacido después de abrir el libro: su alta es el nacimiento, no la apertura.
+    const bornHere = h.birthDate !== null && h.birthDate > opened;
+    await prisma.movement.create({
+      data: {
+        tenantId, horseId: h.id, direction: "IN",
+        date: bornHere ? h.birthDate! : opened,
+        cause: bornHere ? "NACIMIENTO" : "APERTURA",
+        reason: bornHere ? "Nacimiento en la explotación" : "Apertura del libro",
+      },
+    });
+  }
+
+  // ── Pupilaje: lo que se factura cada mes (en la demo se genera y emite) ──
+  const contracts: [string, string, number, string[]][] = [
+    [candela.id, ownerA.id, 450, ["Box", "Alimentación", "Manejo reproductivo"]],
+    [brillante.id, ownerA.id, 520, ["Box", "Alimentación", "Doma"]],
+    [sultana!.id, ownerB.id, 450, ["Box", "Alimentación", "Manejo reproductivo"]],
+  ];
+  for (const [horseId, clientId, fee, includes] of contracts) {
+    const contract = await prisma.boardingContract.create({
+      data: { tenantId, horseId, clientId, startDate: day(-240), monthlyFee: fee, includes },
+    });
+    if (horseId === candela.id) {
+      await prisma.boardingContractExtra.create({
+        data: { tenantId, boardingContractId: contract.id, concept: "Ecografías de control", amount: 60 },
+      });
+    }
+  }
 
   // ── Sanidad ─────────────────────────────────────────────────────────────
   // Los potros de este año no entran en el plan vacunal de adultos.
