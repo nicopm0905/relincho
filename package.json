@@ -19,6 +19,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:demo": "tsx prisma/seed-demo-inversor.ts",
     "verify:engines": "tsx scripts/verify-performance-engines.ts",
     "seed:rendimiento": "tsx --conditions=react-server scripts/seed-rendimiento.ts",
     "postinstall": "prisma generate"
