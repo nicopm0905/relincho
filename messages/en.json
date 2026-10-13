@@ -60,7 +60,8 @@
       "label": "Change language",
       "es": "ES",
       "en": "EN"
-    }
+    },
+    "breadcrumbs": "Breadcrumb"
   },
   "marketing": {
     "nav": {
@@ -645,8 +646,9 @@
     "navigation": "Main navigation",
     "home": "Home",
     "groups": {
-      "stable": "Stable",
-      "business": "Business"
+      "daily": "Day to day",
+      "breeding": "Breeding",
+      "management": "Management"
     },
     "sections": {
       "horses": "Horses",
@@ -660,14 +662,18 @@
       "invoicing": "Invoicing",
       "contacts": "Contacts",
       "documents": "Documents",
-      "settings": "Settings"
+      "settings": "Settings",
+      "breedingStats": "Statistics"
     },
     "more": "More",
-    "moreSections": "More sections",
     "moreSheet": "More sections",
     "close": "Close",
     "logout": "Sign out",
-    "account": "Account"
+    "account": "Account",
+    "accountSettings": "Account and settings",
+    "tabs": {
+      "reproduction": "Breeding"
+    }
   },
   "landingV2": {
     "nav": {

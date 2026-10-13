@@ -60,7 +60,8 @@
       "label": "Cambiar idioma",
       "es": "ES",
       "en": "EN"
-    }
+    },
+    "breadcrumbs": "Ruta de navegación"
   },
   "marketing": {
     "nav": {
@@ -645,8 +646,9 @@
     "navigation": "Navegación principal",
     "home": "Inicio",
     "groups": {
-      "stable": "Cuadra",
-      "business": "Negocio"
+      "daily": "Día a día",
+      "breeding": "Cría",
+      "management": "Gestión"
     },
     "sections": {
       "horses": "Caballos",
@@ -660,14 +662,18 @@
       "invoicing": "Facturación",
       "contacts": "Contactos",
       "documents": "Documentos",
-      "settings": "Ajustes"
+      "settings": "Ajustes",
+      "breedingStats": "Estadísticas"
     },
     "more": "Más",
-    "moreSections": "Más secciones",
     "moreSheet": "Más secciones",
     "close": "Cerrar",
     "logout": "Cerrar sesión",
-    "account": "Cuenta"
+    "account": "Cuenta",
+    "accountSettings": "Cuenta y ajustes",
+    "tabs": {
+      "reproduction": "Cría"
+    }
   },
   "landingV2": {
     "nav": {
