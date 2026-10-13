@@ -1056,5 +1056,136 @@
     },
     "unknownSire": "padre desconocido",
     "unknownDam": "madre desconocida"
+  },
+  "repro": {
+    "metaTitle": "Reproducción",
+    "title": "Reproducción",
+    "description": "Temporada {season} · {count, plural, one {# yegua en seguimiento} other {# yeguas en seguimiento}}",
+    "newSeason": "Nueva temporada",
+    "nav": {
+      "label": "Secciones de reproducción",
+      "panel": "Panel",
+      "stats": "Estadísticas",
+      "semen": "Semen",
+      "settings": "Parámetros"
+    },
+    "untracked": "{count, plural, one {# yegua sin temporada {season}} other {# yeguas sin temporada {season}}}",
+    "kpi": {
+      "fertility": "Fertilidad {season}",
+      "fertilityUp": "+{diff} puntos frente a {previous}",
+      "fertilityDown": "{diff} puntos frente a {previous}",
+      "fertilitySame": "Igual que {previous}",
+      "fertilityCycles": "{pregnant} de {cycles} ciclos cubiertos",
+      "fertilityNone": "Sin cubriciones esta temporada",
+      "cost": "Coste de semen por gestación",
+      "costHint": "{total} en semen de IA esta temporada",
+      "costNone": "Sin cubriciones con coste de semen",
+      "foalings": "Partos en 60 días",
+      "foalingsNext": "Próximo: {name}, hacia el {date}",
+      "foalingsNone": "Ninguno previsto"
+    },
+    "views": {
+      "label": "Vista",
+      "board": "Tablero",
+      "calendar": "Calendario"
+    },
+    "stages": {
+      "empty": "Vacías",
+      "heat": "Celo y seguimiento",
+      "covered": "Cubiertas",
+      "pregnant": "Gestantes",
+      "foaled": "Paridas"
+    },
+    "stageNone": "Ninguna",
+    "summary": {
+      "follicle": "Folículo de {mm} mm",
+      "ovulation": "ovulación hacia el {date}",
+      "heatSigns": "Signos de celo en la última exploración",
+      "check": "{label}: {date}",
+      "pendingScan": "Pendiente de ecografía",
+      "gestation": "Día {days} · parto hacia el {date}",
+      "pregnant": "Gestante",
+      "foalHeat": "Celo del potro del {from} al {to}",
+      "foaled": "Recién parida",
+      "nextEstrus": "Próximo celo hacia el {date}",
+      "cycling": "Ciclando",
+      "anestrus": "Anestro estacional",
+      "noData": "Registra una exploración para empezar a predecir"
+    },
+    "action": {
+      "eco": "Registrar eco",
+      "exploracion": "Registrar exploración",
+      "cubricion": "Registrar cubrición",
+      "vigilancia": "Vigilancia preparto",
+      "parto": "Registrar parto"
+    },
+    "actionFor": "{action}: {mare}",
+    "alerts": {
+      "title": "Avisos",
+      "empty": "Sin avisos."
+    },
+    "agenda": {
+      "title": "Agenda",
+      "description": "Atrasado y próximos 14 días",
+      "overdue": "Atrasado",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "empty": "Nada pendiente en los próximos 14 días.",
+      "foaling": "Parto estimado",
+      "until": "hasta el {date}"
+    },
+    "calendar": {
+      "label": "Calendario de 12 semanas",
+      "mare": "Yegua",
+      "estrus": "Celo previsto",
+      "breeding": "Ventana de cubrición",
+      "scan": "Ecografía",
+      "foalHeat": "Celo del potro",
+      "foaling": "Ventana de parto",
+      "ovulation": "Ovulación"
+    },
+    "empty": {
+      "title": "Sin yeguas en seguimiento",
+      "body": "Inicia la temporada de tus yeguas para registrar exploraciones, predecir celos y ovulaciones, y seguir cubriciones, gestaciones y partos.",
+      "action": "Iniciar una temporada"
+    },
+    "stats": {
+      "metaTitle": "Estadísticas reproductivas",
+      "title": "Estadísticas reproductivas",
+      "description": "Por temporada de cubrición. Los partos de una temporada caen al año siguiente.",
+      "seasons": "Temporadas",
+      "empty": "Sin cubriciones en {season}.",
+      "perCycle": "Preñez por ciclo",
+      "maresPregnant": "Yeguas preñadas",
+      "cyclesPerPregnancy": "Ciclos por gestación",
+      "losses": "Pérdidas gestacionales",
+      "lossesHint": "{count, plural, one {# pérdida} other {# pérdidas}}",
+      "maresBred": "Yeguas cubiertas",
+      "cyclesBred": "{count, plural, one {# ciclo cubierto} other {# ciclos cubiertos}}",
+      "liveFoals": "Potros vivos",
+      "liveFoalsHint": "{rate} de las yeguas cubiertas",
+      "doses": "Dosis por gestación",
+      "dosesHint": "Solo cubriciones con lote de semen",
+      "twins": "Gemelares",
+      "ofCycles": "{pregnant} de {cycles} ciclos",
+      "ofMares": "{pregnant} de {mares} yeguas",
+      "compare": "{season} frente a {previous}",
+      "compareNone": "Sin temporada anterior con la que comparar.",
+      "byStallion": "Por semental",
+      "byMethod": "Por método",
+      "mares": "Yeguas",
+      "cycles": "Ciclos",
+      "pregnant": "Preñados",
+      "rate": "Preñez por ciclo",
+      "rateOf": "Preñez por ciclo de {label}",
+      "none": "Sin datos.",
+      "footnote": "Un ciclo son las cubriciones de una yegua en el mismo celo (menos de 10 días entre sí). Cuenta como preñado si alguna ecografía salió positiva, aunque después se perdiera. El coste por gestación incluye solo el semen con coste registrado, también el de los celos que no quedaron.",
+      "cost": "Coste de semen por gestación",
+      "costNone": "Sin cubriciones con coste de semen",
+      "costTotal": "{total} en semen esta temporada",
+      "liveFoalsPending": "Nacen en {year}"
+    },
+    "stageMore": "+{count} más",
+    "loading": "Cargando reproducción"
   }
 }
