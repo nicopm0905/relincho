@@ -66,13 +66,24 @@ function defaultReproductiveStatus(sex: DemoHorse["sex"]) {
 
 /**
  * Reparte los papeles de la demo entre los caballos que ya tenga la cuadra, en
- * vez de exigir unos nombres concretos. La yegua gestante tiene que ser hembra;
- * el resto de papeles valen para cualquiera.
+ * vez de exigir unos nombres concretos. La yegua gestante tiene que ser hembra
+ * (mejor si lo está de verdad en Reproducción); para entrenar se prefieren los
+ * caballos en doma y los machos adultos, y nunca un potro.
  */
 async function assignRoles(tenantId: string) {
   const horses = await prisma.horse.findMany({
     where: { tenantId, status: { in: ["ACTIVE", "IN_TRAINING"] } },
-    select: { id: true, name: true, sex: true },
+    select: {
+      id: true,
+      name: true,
+      sex: true,
+      status: true,
+      birthDate: true,
+      coverings: {
+        where: { foaling: null, pregnancyChecks: { some: { heartbeat: true } } },
+        select: { id: true },
+      },
+    },
     orderBy: { name: "asc" },
   });
   if (horses.length < 5) {
@@ -81,10 +92,20 @@ async function assignRoles(tenantId: string) {
     );
   }
 
-  const mare = horses.find((h) => h.sex === "FEMALE");
+  const mare =
+    horses.find((h) => h.sex === "FEMALE" && h.coverings.length > 0) ??
+    horses.find((h) => h.sex === "FEMALE");
   if (!mare) throw new Error("La demo necesita al menos una yegua para el caso de gestacion.");
 
-  const rest = horses.filter((h) => h.id !== mare.id);
+  const threeYearsAgo = new Date();
+  threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+  const isFoal = (h: (typeof horses)[number]) => Boolean(h.birthDate && h.birthDate > threeYearsAgo);
+  const priority = (h: (typeof horses)[number]) =>
+    h.status === "IN_TRAINING" ? 0 : h.sex !== "FEMALE" ? 1 : 2;
+  const others = horses.filter((h) => h.id !== mare.id);
+  const adults = others.filter((h) => !isFoal(h));
+  // Array.sort es estable: dentro de cada prioridad se mantiene el orden por nombre.
+  const rest = (adults.length >= 4 ? adults : others).sort((a, b) => priority(a) - priority(b));
   const [clean, tendon, overload, missed] = rest;
 
   return {
@@ -294,11 +315,13 @@ async function main() {
   console.log("Fichas veterinarias y dietas base creadas");
 
   // --- Competiciones objetivo ---------------------------------------------
+  // Fechas relativas para que los planes caigan siempre en la misma fase; por
+  // eso ninguna lleva el nombre de una feria con fecha fija (SICAB es en noviembre).
   const sicab = await prisma.competitionTarget.create({
     data: {
       tenantId,
       horseId: espartero.id,
-      name: "SICAB",
+      name: "Concurso Nacional de Doma Clásica",
       targetDate: day(68),
       priority: "ALTA",
     },

@@ -8,7 +8,7 @@
 
 **Estructura:** dolor (Inicio) → profundidad (ficha y reproducción) → escala (facturación Veri\*Factu, libro de explotación, varias yeguadas, móvil).
 
-**Yeguada:** *Yeguada Valdeolivo*, en Utrera, con 26 yeguas, 3 sementales y 6 potros (datos inventados; ver «Preparación»).
+**Yeguada:** *Yeguada Valdeolivo*, en Jerez de la Frontera, con 26 yeguas, 3 sementales y 6 potros (datos inventados; ver «Preparación»).
 
 ---
 

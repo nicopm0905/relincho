@@ -3,6 +3,8 @@
  *
  * Uso:   npm run db:seed:demo
  *        DEMO_OWNER_EMAILS="tu@gmail.com" npm run db:seed:demo
+ *        npm run db:seed:demo -- --publica   (demo pública del QR; después
+ *        `npm run seed:rendimiento` para su módulo de entrenamiento)
  *
  * - Idempotente: borra la yeguada de demo entera y la vuelve a crear. Solo toca
  *   el tenant DEMO_SLUG; se niega a trabajar con cualquier otro.
@@ -19,7 +21,10 @@ import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
 
-const DEMO_SLUG = "yeguada-valdeolivo";
+// `--publica` siembra los mismos datos en la demo pública del QR (solo lectura).
+const PUBLIC_DEMO = process.argv.includes("--publica");
+const DEMO_SLUG = PUBLIC_DEMO ? "yeguada-demo-andalucia" : "yeguada-valdeolivo";
+const DEMO_NAME = PUBLIC_DEMO ? "Yeguada Demo Andalucía" : "Yeguada Valdeolivo";
 const DEMO_USER_EMAIL = "demo@equigest.es";
 
 const pool = new Pool({
@@ -309,15 +314,15 @@ async function main() {
   const tenant = await prisma.tenant.create({
     data: {
       slug: DEMO_SLUG,
-      name: "Yeguada Valdeolivo",
-      fiscalName: "Yeguada Valdeolivo S.L.",
+      name: DEMO_NAME,
+      fiscalName: `${DEMO_NAME} S.L.`,
       // NIF ficticio con dígito de control válido: la emisión lo comprueba.
       nif: "B92736156",
-      address: "Carretera de Los Palacios, km 4",
-      city: "Utrera",
-      province: "Sevilla",
-      postalCode: "41710",
-      regaCode: "ES410950000123",
+      address: "Carretera de Arcos, km 6",
+      city: "Jerez de la Frontera",
+      province: "Cádiz",
+      postalCode: "11408",
+      regaCode: "ES110200000123",
       plan: "yeguada",
       billingModule: true,
       verifactuMode: "VERIFACTU",
@@ -346,19 +351,19 @@ async function main() {
 
   // Contactos
   const vet = await prisma.contact.create({
-    data: { tenantId, kind: "VET", name: "Clínica Veterinaria El Arenal", phone: "955000111", email: "consulta@example.com" },
+    data: { tenantId, kind: "VET", name: "Clínica Veterinaria El Arenal", phone: "956000111", email: "consulta@example.com" },
   });
   await prisma.contact.create({ data: { tenantId, kind: "FARRIER", name: "Herrador Manuel Ortega", phone: "600000222" } });
   const ownerA = await prisma.contact.create({
     data: {
       tenantId, kind: "OWNER", name: "Hacienda Los Llanos", nif: "B91847368", email: "admin@example.com",
-      address: "Camino de la Ermita, 12, 41710 Utrera (Sevilla)",
+      address: "Camino de la Ermita, 12, 11408 Jerez de la Frontera (Cádiz)",
     },
   });
   const ownerB = await prisma.contact.create({
     data: {
       tenantId, kind: "OWNER", name: "Carmen Navarro Ruiz", nif: "48207315M", email: "carmen@example.com",
-      address: "Calle Real, 8, 41700 Dos Hermanas (Sevilla)",
+      address: "Calle Larga, 8, 11500 El Puerto de Santa María (Cádiz)",
     },
   });
 
@@ -668,11 +673,13 @@ async function main() {
   for (const [title, d, horseId] of tasks) {
     await prisma.task.create({ data: { tenantId, title, dueDate: day(d, 9), horseId } });
   }
+  // SICAB tiene fecha fija: no puede moverse con el día del seed.
+  const daysToSicab = Math.ceil((new Date(2026, 10, 17).getTime() - NOW.getTime()) / DAY_MS);
   const events: [string, string, number, number, string | null][] = [
     ["VET_VISIT", "Visita del veterinario: ecografías", 2, 9, null],
     ["FARRIER", "Herrador: sementales", 5, 8, embajador.id],
     ["VET_VISIT", "Revisión del potro de Morisca III", 1, 12, morisca!.id],
-    ["COMPETITION", "SICAB 2026 · Sevilla", 36, 10, null],
+    ["COMPETITION", "SICAB 2026 · Sevilla", daysToSicab, 10, null],
   ];
   for (const [kind, title, d, hour, horseId] of events) {
     await prisma.event.create({ data: { tenantId, kind, title, startsAt: day(d, hour), horseId, location: kind === "COMPETITION" ? "FIBES, Sevilla" : null } });
