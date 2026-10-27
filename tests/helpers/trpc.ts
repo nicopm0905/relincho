@@ -1,6 +1,4 @@
 import type { Role } from "@prisma/client";
-import type { AnyRouter } from "@trpc/server";
-import { createCallerFactory } from "@/server/trpc/init";
 import type { TRPCContext } from "@/server/trpc/context";
 
 export interface FakeMember {
@@ -42,12 +40,19 @@ export function fakeCtx(o: FakeMember | null): TRPCContext {
 }
 
 /**
- * Caller de `router` con el contexto falso de ese miembro.
+ * Caller con el contexto falso de ese miembro. Recibe el `createCaller` del
+ * router (y no el router) para conservar los tipos de cada procedure:
  *
- * - Tests de procedures (sin BD): pasa un router mínimo hecho con
+ *   const createCaller = createCallerFactory(router);
+ *   await callerAs(createCaller, { role: "GROOM" }).staff();
+ *
+ * - Tests de procedures (sin BD): un router mínimo hecho con
  *   `tenantProcedure`, `staffProcedure`, `roleProcedure`…
- * - Tests de integración: pasa `appRouter` (importarlo carga Prisma).
+ * - Tests de integración: `createCallerFactory(appRouter)` (carga Prisma).
  */
-export function callerAs<R extends AnyRouter>(router: R, o: FakeMember | null) {
-  return createCallerFactory(router)(fakeCtx(o));
+export function callerAs<TCaller>(
+  createCaller: (ctx: TRPCContext) => TCaller,
+  o: FakeMember | null,
+): TCaller {
+  return createCaller(fakeCtx(o));
 }

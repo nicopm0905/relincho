@@ -3,13 +3,14 @@ import assert from "node:assert/strict";
 import { TRPCError } from "@trpc/server";
 
 import {
+  createCallerFactory,
   createTRPCRouter,
   protectedProcedure,
   roleProcedure,
   staffProcedure,
   tenantProcedure,
 } from "@/server/trpc/init";
-import { callerAs } from "./helpers/trpc";
+import { callerAs as callerFor, type FakeMember } from "./helpers/trpc";
 
 /**
  * Router mínimo: una query y una mutation por cada puerta de entrada. Prueba
@@ -22,6 +23,8 @@ const router = createTRPCRouter({
   staff: staffProcedure.query(() => "ok"),
   owners: roleProcedure("OWNER").mutation(() => "ok"),
 });
+const createCaller = createCallerFactory(router);
+const callerAs = (o: FakeMember | null) => callerFor(createCaller, o);
 
 async function rejectsWith(p: Promise<unknown>, code: TRPCError["code"]) {
   await assert.rejects(p, (err: unknown) => {
@@ -32,32 +35,32 @@ async function rejectsWith(p: Promise<unknown>, code: TRPCError["code"]) {
 }
 
 test("sin usuario, protectedProcedure responde UNAUTHORIZED", async () => {
-  await rejectsWith(callerAs(router, null).me(), "UNAUTHORIZED");
+  await rejectsWith(callerAs(null).me(), "UNAUTHORIZED");
 });
 
 test("tenantProcedure rechaza a OWNER_EXTERNAL con FORBIDDEN", async () => {
-  await rejectsWith(callerAs(router, { role: "OWNER_EXTERNAL" }).panel(), "FORBIDDEN");
-  assert.equal(await callerAs(router, { role: "MANAGER" }).panel(), "ok");
+  await rejectsWith(callerAs({ role: "OWNER_EXTERNAL" }).panel(), "FORBIDDEN");
+  assert.equal(await callerAs({ role: "MANAGER" }).panel(), "ok");
 });
 
 test("staffProcedure deja pasar a OWNER, MANAGER y GROOM y rechaza a los externos", async () => {
   for (const role of ["OWNER", "MANAGER", "GROOM"] as const) {
-    assert.equal(await callerAs(router, { role }).staff(), "ok", role);
+    assert.equal(await callerAs({ role }).staff(), "ok", role);
   }
   for (const role of ["VET_EXTERNAL", "OWNER_EXTERNAL"] as const) {
-    await rejectsWith(callerAs(router, { role }).staff(), "FORBIDDEN");
+    await rejectsWith(callerAs({ role }).staff(), "FORBIDDEN");
   }
 });
 
 test("una mutation en la demo se corta con FORBIDDEN aunque el rol sea OWNER", async () => {
-  const demo = callerAs(router, { role: "OWNER", isDemo: true });
+  const demo = callerAs({ role: "OWNER", isDemo: true });
   await rejectsWith(demo.owners(), "FORBIDDEN");
   await rejectsWith(demo.panelWrite(), "FORBIDDEN");
   assert.equal(await demo.panel(), "ok");
 });
 
 test("con la prueba terminada, una mutation se corta y una query pasa", async () => {
-  const expired = callerAs(router, { role: "OWNER", trialEnded: true });
+  const expired = callerAs({ role: "OWNER", trialEnded: true });
   await rejectsWith(expired.panelWrite(), "FORBIDDEN");
   assert.equal(await expired.panel(), "ok");
 });
