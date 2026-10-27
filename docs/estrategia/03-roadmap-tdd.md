@@ -428,6 +428,38 @@ Ventana: **4–6 nov**, lejos de SICAB. Si no se aprueba, la alternativa peor es
 
 **Criterio de aceptación de H0 (10 nov):** un push con un test roto se rechaza en local. Una PR con un test roto no se puede fusionar. `npm run deploy` con el CI en rojo se niega. `npm run lint` da 0 errores. El job de integración monta la BD desde cero y pasa.
 
+### 1.9 Reparto en paralelo para dos personas (S0 ∥ S1)
+
+**El S0 y el S1 no se pueden hacer en paralelo tal cual.** La épica E1a (roles) depende de tres tareas del S0:
+
+| E1a necesita… | …de la tarea del S0 | Por qué bloquea |
+|---|---|---|
+| `callerAs` y el contexto falso | **0.3** | Sin ellos no hay `tests/procedures.test.ts` para `professionalProcedure` |
+| Migración base y BD de desarrollo | **0.5** | La migración del enum `Role` no se puede generar ni probar: hoy la BD de `.env` es producción |
+| BD efímera de tests | **0.4** | Los tests de `tests/integration/roles.int.test.ts` no tienen dónde ejecutarse |
+
+**Sí se pueden solapar repartiendo por capas.** La persona A hace primero las tareas que desbloquean a la otra. La persona B empieza por lo que no necesita BD.
+
+| Semana | Persona A: Sprint 0, infraestructura | Persona B: Sprint 1, E1a roles |
+|---|---|---|
+| **Día 0** (antes de empezar, una sola vez) | Bootstrap de Git Flow (ver abajo) | Clonar, `npm install`, **sin credenciales de la BD de producción** |
+| **28 oct – 3 nov** | **0.2** lint a cero (se fusiona el primer día: toca 5 ficheros sueltos) → **0.3** `callerAs` (se fusiona el día 2: es el contrato que usa B) → **0.1** gate, hook y CI | `feature/S1-E1a-permisos`: `src/lib/permissions.ts` y `tests/permissions.test.ts` (motor puro, sin BD ni schema). Guion de entrevistas de SICAB (H1, H2 y H5) |
+| **4 – 10 nov** | **0.5** migración base y BD de desarrollo (ventana del 4 al 6 nov, con aprobación S0-a) → **0.4** BD efímera e integración → **0.6** ruleset y deploy-guard | Cuando 0.3 esté en `develop`: `professionalProcedure` y sus tests en `procedures.test.ts`. Prepara el cambio de `schema.prisma` **sin generar la migración** |
+| **11 – 24 nov** | Entrevistas en SICAB. Soporte del gate | Cuando 0.5 esté en `develop`: genera las dos migraciones de E1a (protocolo de AGENTS.md §6) y escribe los tests de integración de roles en cuanto exista 0.4 |
+
+**Sprints siguientes:** cada persona se queda en un área para no pisarse los ficheros. B lleva **roles y profesionales** (E1a 2/2, E1b invitaciones, E7 visita del herrador, E2 multi-centro). A lleva **avisos y cliente** (E3 avisos, E8a app del cliente, E5 incidencias, E6 feed, E4 push). La regla general: **quien define un contrato (modelo, motor o procedure) lo fusiona primero en una PR pequeña, y la otra persona construye encima.** Si dos épicas de un sprint necesitan migración, se hacen en serie, nunca a la vez.
+
+**Efecto en el calendario:** empezar E1a el 28 oct en vez del 11 nov da unas 2 semanas de margen para H1 (17 dic). Ese margen es el colchón de SICAB; no lo uséis para meter más alcance.
+
+#### Bootstrap de Git Flow (día 0, una persona, unos 30 min)
+
+1. Crear `develop` a partir de `master` y subirla: `git switch -c develop master && git push -u origin develop`.
+2. CI: `quality-gate.yml` se ejecuta en cada PR y en push a `master` y `develop` (ya editado en el repo).
+3. Rulesets de GitHub en `master` **y** `develop`: PR obligatoria, 1 aprobación de la otra persona, el check *Types, tests and accessibility* en verde, sin force-push ni borrado, y sin excepciones. En `master`, además, solo aceptar ramas `release/*` y `hotfix/*` (se controla en la revisión).
+4. Cambiar la rama por defecto de GitHub a `develop`, para que las PR apunten ahí por defecto.
+5. Crear una issue por tarea del S0 (0.1 a 0.6) y por cada parte de E1a, asignadas y con la etiqueta del sprint.
+6. Añadir al colaborador con permiso *Write* (no *Admin*).
+
 ---
 
 ## 2. Decisiones con fecha límite
