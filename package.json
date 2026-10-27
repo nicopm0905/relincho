@@ -8,6 +8,7 @@
     "start": "next start",
     "prepare": "node scripts/setup-hooks.mjs",
     "gate": "npm run check:types && npm run lint && npm run check:tests",
+    "deploy": "node scripts/deploy-guard.mjs && npx vercel --prod --yes",
     "test:one": "tsx --conditions=react-server --test",
     "test:watch": "tsx --conditions=react-server --test --watch \"tests/*.test.ts\"",
     "lint": "eslint --cache --cache-location node_modules/.cache/eslint/ --max-warnings=11",
