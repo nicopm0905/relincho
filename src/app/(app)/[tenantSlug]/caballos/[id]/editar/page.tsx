@@ -49,9 +49,9 @@ export default async function EditarCaballoPage({ params }: PageProps) {
         defaultValues={{
           id: horse.id,
           name: horse.name,
-          sex: horse.sex as any,
+          sex: horse.sex,
           species: horse.species,
-          status: horse.status as any,
+          status: horse.status,
           breed: horse.breed || "",
           coat: horse.coat || "",
           birthDate: horse.birthDate ? horse.birthDate.toISOString().split("T")[0] : "",
