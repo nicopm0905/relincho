@@ -1,0 +1,44 @@
+#!/bin/sh
+# Relincho · pre-push: nada sale de esta máquina sin el gate en verde.
+# Se activa solo con `npm install` (script "prepare") o a mano:
+#   git config core.hooksPath .githooks
+# Saltárselo con --no-verify está prohibido (AGENTS.md) y además no sirve:
+# el ruleset de GitHub exige los mismos checks en CI.
+set -eu
+
+zero=0000000000000000000000000000000000000000
+head_sha=$(git rev-parse HEAD)
+needs_gate=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Borrar una rama remota no necesita tests.
+  [ "$local_sha" = "$zero" ] && continue
+  commit=$(git rev-parse "${local_sha}^{commit}")
+  if [ "$commit" != "$head_sha" ]; then
+    echo "pre-push: empujas $local_ref ($commit) pero tu HEAD es $head_sha." >&2
+    echo "          Cambia a esa rama: el gate prueba el árbol de trabajo, no otra rama." >&2
+    exit 1
+  fi
+  needs_gate=1
+done
+[ "$needs_gate" -eq 0 ] && exit 0
+
+# El gate prueba el árbol de trabajo: si difiere del commit, el verde no vale.
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+  echo "pre-push: hay cambios sin commitear en ficheros versionados." >&2
+  echo "          Haz commit o 'git stash' y vuelve a empujar." >&2
+  exit 1
+fi
+
+echo "pre-push: npm run gate (tipos, lint y tests)..."
+if ! npm run --silent gate; then
+  echo "pre-push: el gate ha fallado. No se sube nada." >&2
+  exit 1
+fi
+
+# Integración: solo si hay una BD efímera local. Si no, la cubre el CI.
+# (check:int llega con S0-0.4.)
+if [ -n "${TEST_DATABASE_URL:-}" ] && npm run 2>/dev/null | grep -q "check:int"; then
+  echo "pre-push: tests de integración contra la BD efímera..."
+  npm run --silent check:int || { echo "pre-push: integración en rojo." >&2; exit 1; }
+fi
