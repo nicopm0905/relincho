@@ -123,6 +123,9 @@ model Tenant {
   /// null = alta anterior a la prueba: conserva su plan de la beta.
   trialEndsAt       DateTime?
   verifactuMode     VerifactuMode      @default(NO_VERIFACTU)
+  /// Días de antelación de los avisos de vencimientos sanitarios (E3). Se
+  /// avisa ese número de días antes y el mismo día.
+  reminderLeadDays  Int                @default(7)
   /// De donde vino esta yeguada (flyer, feria, boca a boca). Se rellena en el
   /// alta a partir del primer toque con `?src=`.
   acquisitionSource   String?
@@ -143,6 +146,7 @@ model Tenant {
   farmBook         FarmBookSettings?
   farmInspections  FarmInspection[]
   farmCaretakers   FarmCaretaker[]
+  notifications    Notification[]
 }
 
 model User {
@@ -155,6 +159,7 @@ model User {
   memberships Membership[]
   accounts    Account[]
   sessions    Session[]
+  notifications Notification[]
   uploadedDocuments Document[] @relation("DocumentUploadedBy")
 }
 
@@ -1289,4 +1294,59 @@ model NutritionPrescription {
 
   @@unique([horseId, date])
   @@index([tenantId, date])
+}
+
+/// Tipo de aviso (E3). Por ahora solo se generan HEALTH_DUE; el resto llega
+/// con sus épicas (incidencias, feed, visitas, reservas, facturas, stock).
+enum NotificationKind {
+  HEALTH_DUE
+  INCIDENT
+  INCIDENT_ESCALATION
+  ANNOUNCEMENT
+  VISIT
+  BOOKING
+  INVOICE
+  STOCK
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+}
+
+/// Aviso a una persona (E3): bandeja dentro de la app y llave de idempotencia.
+/// `dedupeKey` + `userId` únicos: relanzar el cron no crea ni envía otro aviso
+/// (ver `reminderDedupeKey` en `src/lib/reminder-recipients.ts`).
+model Notification {
+  id         String                 @id @default(uuid())
+  tenantId   String
+  userId     String
+  kind       NotificationKind
+  title      String
+  body       String
+  url        String?
+  dedupeKey  String
+  createdAt  DateTime               @default(now())
+  readAt     DateTime?
+  tenant     Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+
+  @@unique([userId, dedupeKey])
+  @@index([tenantId, createdAt])
+  @@index([userId, readAt])
+}
+
+/// Intento de entrega de un aviso por un canal (E3). `status` es SENT, FAILED
+/// o SKIPPED (canal sin configurar); `error` guarda el motivo del fallo.
+model NotificationDelivery {
+  id             String              @id @default(uuid())
+  notificationId String
+  channel        NotificationChannel
+  status         String
+  error          String?
+  at             DateTime            @default(now())
+  notification   Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
 }
