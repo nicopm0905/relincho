@@ -4,14 +4,14 @@ import assert from "node:assert/strict";
 import {
   REQUIRED_CHECKS,
   checksVerdict,
-  migrationsPending,
+  migrationsVerdict,
   productionDbUrl,
 } from "../scripts/lib/deploy-checks.mjs";
 
 const ok = (name: string) => ({ name, status: "completed", conclusion: "success" });
 
 test("los checks requeridos para desplegar coinciden con los del ruleset", () => {
-  assert.deepEqual(REQUIRED_CHECKS, ["Types, tests and accessibility"]);
+  assert.deepEqual(REQUIRED_CHECKS, ["Types, tests and accessibility", "Integration (Postgres)"]);
 });
 
 test("checksVerdict acepta un commit con todos los checks requeridos en verde", () => {
@@ -34,12 +34,29 @@ test("checksVerdict ignora checks no requeridos aunque fallen (la preview de Ver
   assert.equal(checksVerdict([ok("Types, tests and accessibility"), vercel]), null);
 });
 
-test("migrationsPending detecta la salida de prisma migrate status con migraciones sin aplicar", () => {
-  assert.equal(migrationsPending("Database schema is up to date!"), false);
-  assert.equal(
-    migrationsPending("Following migration have not yet been applied:\n20261105000000_base"),
-    true,
-  );
+test("migrationsVerdict solo da por buena la BD si migrate status dice up to date", () => {
+  assert.deepEqual(migrationsVerdict("Database schema is up to date!"), { state: "ok" });
+});
+
+test("migrationsVerdict marca pendientes las migraciones sin aplicar (se despliegan solo revisadas)", () => {
+  const out = ["Following migration have not yet been applied:", "20261201120000_roles"].join("\n");
+  assert.deepEqual(migrationsVerdict(out), { state: "pending" });
+});
+
+test("migrationsVerdict se niega con una migración fallida aunque además haya pendientes (P3009)", () => {
+  const out = [
+    "Following migration have failed:",
+    "20261201120000_roles",
+    "Following migration have not yet been applied:",
+    "20261202120000_avisos",
+    "Error: P3009",
+  ].join("\n");
+  assert.equal(migrationsVerdict(out).state, "error");
+});
+
+test("migrationsVerdict se niega si no hay conexión o la salida es inesperada", () => {
+  assert.equal(migrationsVerdict("Error: P1001: Can't reach database server").state, "error");
+  assert.equal(migrationsVerdict("").state, "error");
 });
 
 test("productionDbUrl toma DIRECT_URL de .env.production.local, no del .env local", () => {

@@ -27,9 +27,8 @@ export function checksVerdict(runs, required = REQUIRED_CHECKS) {
   return null;
 }
 
-/** true si la salida de `prisma migrate status` lista migraciones sin aplicar. */
-export function migrationsPending(statusOutput) {
-  return /not yet been applied/i.test(statusOutput);
+export function migrationsVerdict() {
+  throw new Error("no implementado");
 }
 
 /**
