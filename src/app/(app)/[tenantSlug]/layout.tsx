@@ -13,6 +13,7 @@ import { getTrialValue } from "@/server/services/billing/trial";
 import { Toaster } from "@/components/ui/sonner";
 import { TRPCProvider } from "@/lib/trpc/react";
 import { OwnerExternalGate } from "@/components/portal/owner-external-gate";
+import { ProfessionalGate } from "@/components/professional/professional-gate";
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -62,6 +63,17 @@ export default async function TenantLayout({
     return (
       <TRPCProvider tenantSlug={tenantSlug}>
         <OwnerExternalGate tenantSlug={tenantSlug} />
+        {children}
+        <Toaster richColors position="top-right" />
+      </TRPCProvider>
+    );
+  }
+
+  // Área del profesional (E1a): mismo patrón que el portal, en /profesional.
+  if (membership?.role === "PROFESSIONAL") {
+    return (
+      <TRPCProvider tenantSlug={tenantSlug}>
+        <ProfessionalGate tenantSlug={tenantSlug} />
         {children}
         <Toaster richColors position="top-right" />
       </TRPCProvider>
