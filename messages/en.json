@@ -1197,8 +1197,66 @@
       "MANAGER": "Manager",
       "GROOM": "Groom",
       "VET_EXTERNAL": "External vet",
-      "OWNER_EXTERNAL": "External owner"
+      "OWNER_EXTERNAL": "External owner",
+      "INSTRUCTOR": "Instructor",
+      "PROFESSIONAL": "Professional",
+      "RIDER": "Rider"
     }
+  },
+  "team": {
+    "roles": {
+      "OWNER": "Owner",
+      "MANAGER": "Manager",
+      "GROOM": "Groom",
+      "VET_EXTERNAL": "External vet",
+      "OWNER_EXTERNAL": "External owner",
+      "INSTRUCTOR": "Instructor",
+      "PROFESSIONAL": "Professional",
+      "RIDER": "Rider"
+    },
+    "specialties": {
+      "VET": "Vet",
+      "VET_SPECIALIST": "Specialist vet",
+      "FARRIER": "Farrier",
+      "PHYSIO": "Physiotherapist",
+      "DENTIST": "Equine dentist",
+      "NUTRITIONIST": "Nutritionist",
+      "TRAINER": "Trainer",
+      "OTHER": "Other"
+    },
+    "email": "Email",
+    "emailPlaceholder": "person@example.com",
+    "role": "Role",
+    "specialty": "Specialty",
+    "specialtyPlaceholder": "Choose a specialty",
+    "specialtyNote": "Detail (optional)",
+    "specialtyNotePlaceholder": "e.g. lameness",
+    "invite": "Invite",
+    "invited": "Invitation sent",
+    "inviteError": "Could not invite",
+    "emailRequired": "Enter an email",
+    "specialtyRequired": "Choose the professional's specialty",
+    "roleUpdated": "Role updated",
+    "roleError": "Could not change the role",
+    "removed": "Member removed",
+    "removeError": "Could not remove",
+    "remove": "Remove member",
+    "grantError": "Could not grant access",
+    "revokeError": "Could not revoke access",
+    "loading": "Loading team…",
+    "horsesWithAccess": "Horses with access",
+    "noHorses": "No horses yet.",
+    "noHorsesAssigned": "No horses assigned: this person will not see any."
+  },
+  "professional": {
+    "metaTitle": "My horses",
+    "area": "Professional area",
+    "myHorses": "My horses",
+    "intro": "The horses the yard has assigned to you.",
+    "empty": "The yard has not assigned you any horses yet.",
+    "box": "Stall {box}",
+    "navigation": "Professional navigation",
+    "signOut": "Sign out"
   },
   "portal": {
     "nav": {

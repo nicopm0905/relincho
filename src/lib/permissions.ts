@@ -5,12 +5,12 @@
  * Solo responde "¿este rol puede hacer esto?". Sobre qué caballos lo puede
  * hacer decide `HorseAccess` (`src/server/trpc/access.ts`), no esta matriz.
  *
- * Módulo puro: sin Prisma ni red. Los roles se declaran aquí y no se importan
- * de `@prisma/client` porque INSTRUCTOR, PROFESSIONAL y RIDER todavía no
- * existen en `enum Role`: llegan con la migración de E1a.
+ * Módulo puro: sin Prisma ni red. Los roles y las especialidades se declaran
+ * aquí, como copia de `enum Role` y `enum ProfessionalSpecialty`, para no
+ * cargar `@prisma/client` desde un motor.
  */
 
-/** Los valores de `enum Role` tras la migración de E1a. */
+/** Los valores de `enum Role` (`prisma/schema.prisma`). */
 export const ROLES = [
   "OWNER",
   "MANAGER",
@@ -185,6 +185,22 @@ export function can(member: Member, capability: Capability): boolean {
 /** ¿Puede este miembro registrar un acto sanitario de este tipo? */
 export function canRecordHealthEvent(member: Member, type: HealthEventType): boolean {
   return can(member, "health.write") && healthTypesOf(member).includes(type);
+}
+
+/**
+ * Qué especialidad se guarda en la membresía al invitar o cambiar de rol. Un
+ * PROFESSIONAL la necesita; cualquier otro rol se queda sin ella, así que
+ * pasar de PROFESSIONAL a GROOM la borra.
+ */
+export function memberSpecialty(
+  role: PermissionRole,
+  input: { specialty?: ProfessionalSpecialty | null; specialtyNote?: string | null },
+):
+  | { specialty: ProfessionalSpecialty | null; specialtyNote: string | null }
+  | { error: "SPECIALTY_REQUIRED" } {
+  if (role !== "PROFESSIONAL") return { specialty: null, specialtyNote: null };
+  if (!input.specialty) return { error: "SPECIALTY_REQUIRED" };
+  return { specialty: input.specialty, specialtyNote: input.specialtyNote?.trim() || null };
 }
 
 /** Los tipos de acto sanitario que este miembro puede registrar (vacío si ninguno). */

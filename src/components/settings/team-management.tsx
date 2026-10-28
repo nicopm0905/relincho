@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { Role } from "@prisma/client";
+import { useTranslations } from "next-intl";
+import type { ProfessionalSpecialty, Role } from "@prisma/client";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,124 +18,178 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CircleNotch, PaperPlaneTilt, Trash, Horse } from "@phosphor-icons/react";
+import { PROFESSIONAL_SPECIALTIES } from "@/lib/permissions";
 
+/**
+ * Roles que se pueden asignar desde aquí. INSTRUCTOR y RIDER esperan al módulo
+ * de clases (E1c). PROFESSIONAL se elige al invitar, porque necesita especialidad.
+ */
 const ROLE_OPTIONS = [
-  { value: "OWNER", label: "Propietario" },
-  { value: "MANAGER", label: "Responsable" },
-  { value: "GROOM", label: "Mozo de cuadra" },
-  { value: "VET_EXTERNAL", label: "Veterinario externo" },
-  { value: "OWNER_EXTERNAL", label: "Propietario externo" },
-] as const;
-
-const ROLE_LABELS: Record<string, string> = Object.fromEntries(
-  ROLE_OPTIONS.map((r) => [r.value, r.label]),
-);
+  "OWNER",
+  "MANAGER",
+  "GROOM",
+  "VET_EXTERNAL",
+  "OWNER_EXTERNAL",
+  "PROFESSIONAL",
+] as const satisfies readonly Role[];
 
 /** Roles cuyo acceso se limita a caballos concretos via HorseAccess. */
-const SCOPED_ROLES = new Set(["VET_EXTERNAL", "OWNER_EXTERNAL"]);
+const SCOPED_ROLES = new Set<Role>(["VET_EXTERNAL", "OWNER_EXTERNAL", "PROFESSIONAL"]);
 
 export function TeamManagement() {
+  const t = useTranslations("team");
   const utils = trpc.useUtils();
   const membersQuery = trpc.members.list.useQuery();
   const horsesQuery = trpc.horses.list.useQuery(undefined);
 
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("GROOM");
+  const [role, setRole] = useState<Role>("GROOM");
+  const [specialty, setSpecialty] = useState<ProfessionalSpecialty | "">("");
+  const [specialtyNote, setSpecialtyNote] = useState("");
 
   const invalidate = () => utils.members.list.invalidate();
 
   const invite = trpc.members.invite.useMutation({
     onSuccess: () => {
-      toast.success("Invitación enviada");
+      toast.success(t("invited"));
       setEmail("");
       setRole("GROOM");
+      setSpecialty("");
+      setSpecialtyNote("");
       invalidate();
     },
-    onError: (err) => toast.error(err.message || "No se pudo invitar"),
+    onError: (err) => toast.error(err.message || t("inviteError")),
   });
 
   const updateRole = trpc.members.updateRole.useMutation({
     onSuccess: () => {
-      toast.success("Rol actualizado");
+      toast.success(t("roleUpdated"));
       invalidate();
     },
-    onError: (err) => toast.error(err.message || "No se pudo cambiar el rol"),
+    onError: (err) => toast.error(err.message || t("roleError")),
   });
 
   const remove = trpc.members.remove.useMutation({
     onSuccess: () => {
-      toast.success("Miembro eliminado");
+      toast.success(t("removed"));
       invalidate();
     },
-    onError: (err) => toast.error(err.message || "No se pudo eliminar"),
+    onError: (err) => toast.error(err.message || t("removeError")),
   });
 
   const grant = trpc.members.grantHorseAccess.useMutation({
     onSuccess: () => invalidate(),
-    onError: (err) => toast.error(err.message || "No se pudo dar acceso"),
+    onError: (err) => toast.error(err.message || t("grantError")),
   });
 
   const revoke = trpc.members.revokeHorseAccess.useMutation({
     onSuccess: () => invalidate(),
-    onError: (err) => toast.error(err.message || "No se pudo revocar el acceso"),
+    onError: (err) => toast.error(err.message || t("revokeError")),
   });
 
   const horses = horsesQuery.data ?? [];
+  const isProfessional = role === "PROFESSIONAL";
 
   return (
     <div className="space-y-6">
       {/* Formulario de invitación */}
       <form
-        className="flex flex-col gap-3 sm:flex-row sm:items-end"
+        className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
           if (!email.trim()) {
-            toast.error("Escribe un email");
+            toast.error(t("emailRequired"));
             return;
           }
-          invite.mutate({ email: email.trim(), role: role as Role });
+          if (isProfessional && !specialty) {
+            toast.error(t("specialtyRequired"));
+            return;
+          }
+          invite.mutate({
+            email: email.trim(),
+            role,
+            ...(isProfessional && specialty ? { specialty, specialtyNote } : {}),
+          });
         }}
       >
-        <div className="flex-1 space-y-1.5">
-          <Label htmlFor="invite-email">Email</Label>
-          <Input
-            id="invite-email"
-            type="email"
-            placeholder="persona@ejemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-1.5">
+            <Label htmlFor="invite-email">{t("email")}</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              placeholder={t("emailPlaceholder")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5 sm:w-48">
+            <Label>{t("role")}</Label>
+            <Select value={role} onValueChange={(v) => setRole((v as Role) || "GROOM")}>
+              <SelectTrigger aria-label={t("role")}>
+                <SelectValue>{t(`roles.${role}`)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {t(`roles.${r}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="space-y-1.5 sm:w-48">
-          <Label>Rol</Label>
-          <Select value={role} onValueChange={(v) => setRole(v || "GROOM")}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROLE_OPTIONS.map((r) => (
-                <SelectItem key={r.value} value={r.value}>
-                  {r.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {isProfessional && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="space-y-1.5 sm:w-56">
+              <Label>{t("specialty")}</Label>
+              <Select
+                value={specialty}
+                onValueChange={(v) => setSpecialty((v as ProfessionalSpecialty) || "")}
+              >
+                <SelectTrigger aria-label={t("specialty")}>
+                  <SelectValue placeholder={t("specialtyPlaceholder")}>
+                    {specialty ? t(`specialties.${specialty}`) : t("specialtyPlaceholder")}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFESSIONAL_SPECIALTIES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {t(`specialties.${s}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="invite-specialty-note">{t("specialtyNote")}</Label>
+              <Input
+                id="invite-specialty-note"
+                maxLength={100}
+                placeholder={t("specialtyNotePlaceholder")}
+                value={specialtyNote}
+                onChange={(e) => setSpecialtyNote(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
+        <div className="flex justify-end">
+          <Button type="submit" disabled={invite.isPending} className="w-full sm:w-auto">
+            {invite.isPending ? (
+              <CircleNotch weight="bold" className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <PaperPlaneTilt weight="bold" className="mr-2 h-4 w-4" />
+            )}
+            {t("invite")}
+          </Button>
         </div>
-        <Button type="submit" disabled={invite.isPending}>
-          {invite.isPending ? (
-            <CircleNotch weight="bold" className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <PaperPlaneTilt weight="bold" className="mr-2 h-4 w-4" />
-          )}
-          Invitar
-        </Button>
       </form>
 
       <Separator />
 
       {/* Lista de miembros */}
       {membersQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando equipo…</p>
+        <p className="text-sm text-muted-foreground">{t("loading")}</p>
       ) : (
         <ul className="space-y-4">
           {(membersQuery.data ?? []).map((m) => (
@@ -147,6 +202,12 @@ export function TeamManagement() {
                   {m.name && (
                     <p className="truncate text-xs text-muted-foreground">
                       {m.email}
+                    </p>
+                  )}
+                  {m.specialty && (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {t(`specialties.${m.specialty}`)}
+                      {m.specialtyNote ? ` · ${m.specialtyNote}` : ""}
                     </p>
                   )}
                 </div>
@@ -162,13 +223,16 @@ export function TeamManagement() {
                       })
                     }
                   >
-                    <SelectTrigger className="h-8 w-44 text-xs">
-                      <SelectValue>{ROLE_LABELS[m.role] ?? m.role}</SelectValue>
+                    <SelectTrigger className="h-8 w-44 text-xs" aria-label={t("role")}>
+                      <SelectValue>{t(`roles.${m.role}`)}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {ROLE_OPTIONS.map((r) => (
-                        <SelectItem key={r.value} value={r.value}>
-                          {r.label}
+                      {/* Para pasar a PROFESSIONAL hace falta especialidad: se invita. */}
+                      {ROLE_OPTIONS.filter(
+                        (r) => r !== "PROFESSIONAL" || m.role === "PROFESSIONAL",
+                      ).map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {t(`roles.${r}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -181,7 +245,7 @@ export function TeamManagement() {
                       remove.mutate({ membershipId: m.membershipId })
                     }
                     disabled={remove.isPending}
-                    aria-label="Eliminar miembro"
+                    aria-label={t("remove")}
                   >
                     <Trash weight="bold" className="h-4 w-4" />
                   </Button>
@@ -193,11 +257,11 @@ export function TeamManagement() {
                 <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
                   <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                     <Horse weight="bold" className="h-3.5 w-3.5" />
-                    Caballos con acceso
+                    {t("horsesWithAccess")}
                   </p>
                   {horses.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      No hay caballos.
+                      {t("noHorses")}
                     </p>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
@@ -232,7 +296,7 @@ export function TeamManagement() {
                   )}
                   {m.horseIds.length === 0 && horses.length > 0 && (
                     <p className="mt-2 text-xs text-amber-600">
-                      Sin caballos asignados: esta persona no verá ninguno.
+                      {t("noHorsesAssigned")}
                     </p>
                   )}
                 </div>
