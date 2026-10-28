@@ -31,3 +31,7 @@ export function checksVerdict(runs, required = REQUIRED_CHECKS) {
 export function migrationsPending(statusOutput) {
   return /not yet been applied/i.test(statusOutput);
 }
+
+export function productionDbUrl() {
+  throw new Error("no implementado");
+}

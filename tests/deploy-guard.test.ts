@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { REQUIRED_CHECKS, checksVerdict, migrationsPending } from "../scripts/lib/deploy-checks.mjs";
+import {
+  REQUIRED_CHECKS,
+  checksVerdict,
+  migrationsPending,
+  productionDbUrl,
+} from "../scripts/lib/deploy-checks.mjs";
 
 const ok = (name: string) => ({ name, status: "completed", conclusion: "success" });
 
@@ -35,4 +40,16 @@ test("migrationsPending detecta la salida de prisma migrate status con migracion
     migrationsPending("Following migration have not yet been applied:\n20261105000000_base"),
     true,
   );
+});
+
+test("productionDbUrl toma DIRECT_URL de .env.production.local, no del .env local", () => {
+  const prod = "postgresql://u:p@aws-1-eu-west-1.pooler.supabase.com:5432/postgres";
+  assert.deepEqual(productionDbUrl({ DIRECT_URL: prod }), { url: prod });
+});
+
+test("productionDbUrl se niega si falta el fichero o si apunta a una BD local", () => {
+  assert.match(productionDbUrl(null).error ?? "", /\.env\.production\.local/);
+  assert.match(productionDbUrl({}).error ?? "", /DIRECT_URL/);
+  const local = productionDbUrl({ DIRECT_URL: "postgresql://postgres:postgres@localhost:54329/relincho_dev" });
+  assert.match(local.error ?? "", /local/);
 });
