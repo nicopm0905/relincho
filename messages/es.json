@@ -1211,13 +1211,16 @@
     },
     "home": {
       "metaTitle": "Portal",
-      "ownerTitle": "{count, plural, one {Mi caballo} other {Mis caballos}}",
+      "ownerTitle": "Inicio",
       "ownerSubtitle": "Lo que te pide atención y lo último de tus caballos.",
       "horsesSection": "Fichas de tus caballos",
       "activity": "Actividad reciente",
       "today": "Hoy",
       "yesterday": "Ayer",
-      "noActivity": "Sin actividad registrada",
+      "emptyToday": "Sin actividad registrada hoy",
+      "emptyYesterday": "Sin actividad ayer",
+      "emptyDay": "Sin actividad el {date}",
+      "emptyRange": "Sin actividad del {from} al {to}",
       "activityKinds": {
         "PADDOCK": "Paddock",
         "RIDDEN": "Montado",

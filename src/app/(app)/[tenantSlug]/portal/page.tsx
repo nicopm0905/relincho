@@ -3,7 +3,7 @@ import Image from "next/image";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { createServerCaller } from "@/lib/trpc/server";
 import { calendarDayOffset } from "@/lib/day-window";
-import { relativeDue } from "@/lib/portal-view";
+import { emptyRunLabel, groupEmptyDays, healthDueDetail, relativeDue } from "@/lib/portal-view";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -116,9 +116,27 @@ export default async function PortalHomePage({ params }: PageProps) {
   const day = (d: Date) => format.dateTime(d, { dateStyle: "medium", timeZone: TZ });
   const shortDay = (d: Date) =>
     format.dateTime(d, { weekday: "short", day: "numeric", month: "short", timeZone: TZ });
-  /** `YYYY-MM-DD` de Madrid → "lunes, 7 de diciembre" (a mediodía UTC no cambia de día). */
+  /** `YYYY-MM-DD` de Madrid a fecha, a mediodía UTC para no cambiar de día. */
+  const isoDate = (isoDay: string) => new Date(`${isoDay}T12:00:00Z`);
+  const dayMonth = (isoDay: string) => format.dateTime(isoDate(isoDay), { day: "numeric", month: "long", timeZone: TZ });
+  // `feedByDay` da los días de hoy hacia atrás: el primero es hoy y el segundo, ayer.
+  const today = home.activity[0]?.day ?? "";
+  const yesterday = home.activity[1]?.day ?? "";
+  const emptyRun = (run: { from: string; to: string }) => {
+    const label = emptyRunLabel(run, today);
+    if (label.key === "today") return t("emptyToday");
+    if (label.key === "yesterday") return t("emptyYesterday");
+    if (label.key === "day") return t("emptyDay", { date: dayMonth(label.date) });
+    return t("emptyRange", {
+      from: label.sameMonth
+        ? format.dateTime(isoDate(label.from), { day: "numeric", timeZone: TZ })
+        : dayMonth(label.from),
+      to: dayMonth(label.to),
+    });
+  };
+  /** `YYYY-MM-DD` de Madrid → "lunes, 7 de diciembre". */
   const weekday = (isoDay: string) =>
-    format.dateTime(new Date(`${isoDay}T12:00:00Z`), { weekday: "long", day: "numeric", month: "long", timeZone: TZ });
+    format.dateTime(isoDate(isoDay), { weekday: "long", day: "numeric", month: "long", timeZone: TZ });
   const euros = (n: number) => format.number(n, { style: "currency", currency: "EUR" });
   const dueLabel = (d: Date) => {
     const { key, days } = relativeDue(calendarDayOffset(d, now));
@@ -139,7 +157,7 @@ export default async function PortalHomePage({ params }: PageProps) {
     <div className="animate-in fade-in-0 space-y-8 duration-300">
       <div className="flex flex-col gap-1">
         <h1 className="font-serif text-title tracking-tight text-foreground">
-          {isOwner ? t("ownerTitle", { count: horses.length }) : t("studentTitle")}
+          {isOwner ? t("ownerTitle") : t("studentTitle")}
         </h1>
         <p className="text-body text-muted-foreground">
           {isOwner ? t("ownerSubtitle") : t("studentSubtitle")}
@@ -193,7 +211,7 @@ export default async function PortalHomePage({ params }: PageProps) {
                   icon={<Heartbeat />}
                   tone={item.offset < 0 ? "alert" : "neutral"}
                   title={item.name}
-                  detail={`${item.horseName} · ${typeLabel(item.type)} · ${day(item.due)}`}
+                  detail={healthDueDetail(item.horseName, item.name, typeLabel(item.type), day(item.due))}
                   aside={dueLabel(item.due)}
                 />
               ) : null,
@@ -256,18 +274,18 @@ export default async function PortalHomePage({ params }: PageProps) {
       {home.activity.length > 0 && (
         <Section id="portal-activity" title={t("activity")}>
           <ol className="space-y-4">
-            {home.activity.map((d, index) => (
-              <li key={d.day} className="space-y-1.5">
-                <h3 className="text-label font-semibold text-muted-foreground">
-                  {index === 0 ? t("today") : index === 1 ? t("yesterday") : weekday(d.day)}
-                </h3>
-                {d.emptyLabel !== null ? (
-                  <p className="rounded-2xl border border-dashed border-border px-4 py-3 text-label text-muted-foreground">
-                    {t("noActivity")}
-                  </p>
-                ) : (
+            {groupEmptyDays(home.activity).map((block) =>
+              block.kind === "empty" ? (
+                <li key={`vacio-${block.to}`}>
+                  <p className="px-1 text-label text-muted-foreground">{emptyRun(block)}</p>
+                </li>
+              ) : (
+                <li key={block.day} className="space-y-1.5">
+                  <h3 className="text-label font-semibold text-muted-foreground">
+                    {block.day === today ? t("today") : block.day === yesterday ? t("yesterday") : weekday(block.day)}
+                  </h3>
                   <ul className={LIST}>
-                    {d.items.map((a) => (
+                    {block.items.map((a) => (
                       <Row
                         key={`${a.source}-${a.id}`}
                         href={`${base}/caballos/${a.horseId}`}
@@ -278,9 +296,9 @@ export default async function PortalHomePage({ params }: PageProps) {
                       />
                     ))}
                   </ul>
-                )}
-              </li>
-            ))}
+                </li>
+              ),
+            )}
           </ol>
         </Section>
       )}

@@ -1211,13 +1211,16 @@
     },
     "home": {
       "metaTitle": "Portal",
-      "ownerTitle": "{count, plural, one {My horse} other {My horses}}",
+      "ownerTitle": "Home",
       "ownerSubtitle": "What needs your attention and the latest on your horses.",
       "horsesSection": "Your horses' records",
       "activity": "Recent activity",
       "today": "Today",
       "yesterday": "Yesterday",
-      "noActivity": "No activity recorded",
+      "emptyToday": "No activity recorded today",
+      "emptyYesterday": "No activity yesterday",
+      "emptyDay": "No activity on {date}",
+      "emptyRange": "No activity from {from} to {to}",
       "activityKinds": {
         "PADDOCK": "Paddock",
         "RIDDEN": "Ridden",
