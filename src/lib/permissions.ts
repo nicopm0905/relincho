@@ -186,3 +186,8 @@ export function can(member: Member, capability: Capability): boolean {
 export function canRecordHealthEvent(member: Member, type: HealthEventType): boolean {
   return can(member, "health.write") && healthTypesOf(member).includes(type);
 }
+
+/** Los tipos de acto sanitario que este miembro puede registrar (vacío si ninguno). */
+export function healthTypesFor(member: Member): readonly HealthEventType[] {
+  return can(member, "health.write") ? healthTypesOf(member) : [];
+}
