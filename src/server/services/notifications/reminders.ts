@@ -13,6 +13,9 @@ import {
 import { prisma } from "@/server/db/prisma";
 import { sendHealthReminder, type SendResult } from "@/server/services/notifications/email";
 
+/** Estados de caballo que ya no generan avisos de vencimiento. */
+export const INACTIVE_HORSE_STATUSES = ["SOLD", "DEAD"] as const;
+
 /**
  * Avisos de vencimientos sanitarios (roadmap §4 E3). El motor puro
  * (`src/lib/reminder-recipients.ts`) decide qué actos avisan hoy y a quién;
@@ -95,8 +98,11 @@ async function remindTenant({
     const { start, end } = dayWindowUtc(offset, now);
     return { nextDueDate: { gte: new Date(start.getTime() - DAY_MS), lt: new Date(end.getTime() + DAY_MS) } };
   });
+  // Un caballo vendido o muerto ya no es de nadie del centro: sus vencimientos
+  // no avisan (antes solo llegaban al centro; con E3 llegarían a su antiguo
+  // dueño). Uno retirado sigue siendo de su propietario y sí avisa.
   const candidates = await db.healthEvent.findMany({
-    where: { tenantId: tenant.id, OR: windows },
+    where: { tenantId: tenant.id, OR: windows, horse: { status: { notIn: [...INACTIVE_HORSE_STATUSES] } } },
     select: { horseId: true, type: true },
   });
   if (candidates.length === 0) return;
