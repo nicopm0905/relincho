@@ -8,6 +8,7 @@ import {
   ROLES,
   can,
   canRecordHealthEvent,
+  memberSpecialty,
   type Member,
 } from "@/lib/permissions";
 
@@ -75,4 +76,30 @@ test("toda combinación rol × capacidad está declarada: la matriz no tiene hue
     CAPABILITIES.filter((c) => typeof PERMISSION_MATRIX[role]?.[c] !== "boolean").map((c) => `${role} × ${c}`),
   );
   assert.deepEqual(gaps, []);
+});
+
+test("un PROFESSIONAL sin especialidad no se puede guardar", () => {
+  assert.deepEqual(memberSpecialty("PROFESSIONAL", {}), { error: "SPECIALTY_REQUIRED" });
+  assert.deepEqual(memberSpecialty("PROFESSIONAL", { specialty: null }), { error: "SPECIALTY_REQUIRED" });
+});
+
+test("un PROFESSIONAL guarda su especialidad y la nota recortada", () => {
+  assert.deepEqual(memberSpecialty("PROFESSIONAL", { specialty: "FARRIER", specialtyNote: "  cojeras " }), {
+    specialty: "FARRIER",
+    specialtyNote: "cojeras",
+  });
+  assert.deepEqual(memberSpecialty("PROFESSIONAL", { specialty: "VET", specialtyNote: "   " }), {
+    specialty: "VET",
+    specialtyNote: null,
+  });
+});
+
+test("cualquier otro rol se queda sin especialidad ni nota", () => {
+  for (const role of ROLES.filter((r) => r !== "PROFESSIONAL")) {
+    assert.deepEqual(
+      memberSpecialty(role, { specialty: "FARRIER", specialtyNote: "cojeras" }),
+      { specialty: null, specialtyNote: null },
+      role,
+    );
+  }
 });
