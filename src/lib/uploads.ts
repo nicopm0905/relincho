@@ -88,3 +88,13 @@ export function humanSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+export function incidentPhotoKey(_o: {
+  tenantId: string;
+  horseId: string;
+  incidentId: string;
+  photoId: string;
+  ext: string;
+}): string {
+  throw new Error("no implementado");
+}
