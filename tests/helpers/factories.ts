@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { ProfessionalSpecialty, Role } from "@prisma/client";
+import type { HealthEventType, ProfessionalSpecialty, Role } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import type { FakeMember } from "./trpc";
 
@@ -31,13 +31,13 @@ export async function makeTenant(): Promise<TestTenant> {
 export async function makeMember(
   tenant: TestTenant,
   role: Role,
-  extra: { specialty?: ProfessionalSpecialty } = {},
-): Promise<TestMember> {
+  data: { specialty?: ProfessionalSpecialty } = {},
+): Promise<TestMember & { email: string }> {
   const user = await prisma.user.create({ data: { email: `${uid()}@test.local`, name: "Test" } });
   const m = await prisma.membership.create({
-    data: { userId: user.id, tenantId: tenant.id, role, specialty: extra.specialty },
+    data: { userId: user.id, tenantId: tenant.id, role, specialty: data.specialty ?? null },
   });
-  return { userId: user.id, tenantId: tenant.id, membershipId: m.id, role };
+  return { userId: user.id, tenantId: tenant.id, membershipId: m.id, role, email: user.email };
 }
 
 export async function makeHorse(
@@ -52,6 +52,24 @@ export async function makeHorse(
 
 export async function grantAccess(member: TestMember, horse: { id: string }): Promise<void> {
   await prisma.horseAccess.create({ data: { membershipId: member.membershipId, horseId: horse.id } });
+}
+
+export async function makeHealthEvent(
+  tenant: TestTenant,
+  horse: { id: string },
+  data: { type: HealthEventType; nextDueDate: Date; date?: Date; name?: string },
+): Promise<{ id: string }> {
+  return prisma.healthEvent.create({
+    data: {
+      tenantId: tenant.id,
+      horseId: horse.id,
+      type: data.type,
+      name: data.name ?? data.type,
+      date: data.date ?? new Date(data.nextDueDate.getTime() - 42 * 86_400_000),
+      nextDueDate: data.nextDueDate,
+    },
+    select: { id: true },
+  });
 }
 
 /** Cierra la conexión para que el proceso de test pueda terminar. */

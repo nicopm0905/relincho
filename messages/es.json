@@ -1257,5 +1257,85 @@
     "box": "Box {box}",
     "navigation": "Navegación del profesional",
     "signOut": "Cerrar sesión"
+  },
+  "portal": {
+    "nav": {
+      "navigation": "Navegación del portal",
+      "portalName": "Portal del cliente",
+      "home": "Inicio",
+      "invoices": "Facturas",
+      "documents": "Documentos",
+      "signOut": "Cerrar sesión"
+    },
+    "home": {
+      "metaTitle": "Portal",
+      "ownerTitle": "Inicio",
+      "ownerSubtitle": "Lo que te pide atención y lo último de tus caballos.",
+      "horsesSection": "Fichas de tus caballos",
+      "activity": "Actividad reciente",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "emptyToday": "Sin actividad registrada hoy",
+      "emptyYesterday": "Sin actividad ayer",
+      "emptyDay": "Sin actividad el {date}",
+      "emptyRange": "Sin actividad del {from} al {to}",
+      "activityKinds": {
+        "PADDOCK": "Paddock",
+        "RIDDEN": "Montado",
+        "LUNGED": "Trabajo a la cuerda",
+        "WALKER": "Caminador",
+        "GROOMED": "Aseo",
+        "FARRIER": "Herrador",
+        "VET": "Veterinario",
+        "PHYSIO": "Fisioterapia",
+        "NOTE": "Nota"
+      },
+      "minutes": "{minutes} min",
+      "scheduled": "Entrenamientos programados",
+      "noScheduled": "No hay entrenamientos programados en los próximos 7 días.",
+      "training": "Entrenamiento",
+      "studentTitle": "Mi portal",
+      "studentSubtitle": "Tus facturas y los documentos que te comparta el centro.",
+      "attention": "Requiere tu atención",
+      "incident": "Incidencia en {horse}",
+      "severity": {
+        "HIGH": "Grave",
+        "MEDIUM": "Moderada",
+        "LOW": "Leve"
+      },
+      "overdueInvoice": "Factura {number} vencida",
+      "overdueInvoiceNoNumber": "Factura vencida",
+      "amountPending": "{amount} pendientes",
+      "upcoming": "Próximos vencimientos",
+      "due": {
+        "overdue": "{days, plural, one {Venció ayer} other {Venció hace # días}}",
+        "today": "Vence hoy",
+        "tomorrow": "Vence mañana",
+        "inDays": "Vence en {days} días"
+      },
+      "dueOn": "Vence el {date}",
+      "noDueDate": "Sin fecha de vencimiento",
+      "lastFarrier": "Último herraje",
+      "farrierAgo": "{days, plural, =0 {Hoy} one {Ayer} other {Hace # días}}",
+      "farrierNever": "Sin herrajes registrados",
+      "pendingInvoices": "Facturas pendientes",
+      "invoice": "Factura {number}",
+      "invoiceNoNumber": "Factura sin número",
+      "balance": "Saldo pendiente: {amount}",
+      "allInvoices": "Ver todas las facturas",
+      "noBreed": "Sin raza",
+      "age": "{years, plural, one {# año} other {# años}}",
+      "ageUnknown": "Edad desconocida",
+      "box": "Box: {box}",
+      "noBox": "sin asignar",
+      "empty": {
+        "ownerTitle": "Todo al día",
+        "ownerBody": "No tienes avisos, vencimientos próximos ni facturas por pagar.",
+        "studentTitle": "Te damos la bienvenida a tu portal",
+        "studentBody": "Aquí verás tus facturas y los documentos que te comparta el centro.",
+        "goInvoices": "Ver mis facturas",
+        "goDocuments": "Ver documentos"
+      }
+    }
   }
 }
