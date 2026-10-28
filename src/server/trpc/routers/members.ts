@@ -39,6 +39,8 @@ export const membersRouter = createTRPCRouter({
       select: {
         id: true,
         role: true,
+        specialty: true,
+        specialtyNote: true,
         user: { select: { id: true, email: true, name: true } },
         horseAccess: { select: { horseId: true } },
       },
@@ -48,6 +50,8 @@ export const membersRouter = createTRPCRouter({
     return memberships.map((m) => ({
       membershipId: m.id,
       role: m.role,
+      specialty: m.specialty,
+      specialtyNote: m.specialtyNote,
       userId: m.user.id,
       email: m.user.email,
       name: m.user.name,
