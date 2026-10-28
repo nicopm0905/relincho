@@ -118,11 +118,14 @@ export function HorseChat({
     await sendMessage({ text: textToSend })
   }
 
-  const getMessageText = (m: any) => {
+  const getMessageText = (m: {
+    content?: unknown
+    parts?: ReadonlyArray<{ type: string; text?: string }>
+  }) => {
     if (typeof m.content === "string" && m.content) return m.content
     if (Array.isArray(m.parts)) {
       return m.parts
-        .map((p: any) => (p.type === "text" ? p.text : ""))
+        .map((p) => (p.type === "text" ? (p.text ?? "") : ""))
         .join("")
     }
     return ""
