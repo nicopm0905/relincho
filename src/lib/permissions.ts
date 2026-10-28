@@ -202,3 +202,8 @@ export function memberSpecialty(
   if (!input.specialty) return { error: "SPECIALTY_REQUIRED" };
   return { specialty: input.specialty, specialtyNote: input.specialtyNote?.trim() || null };
 }
+
+/** Los tipos de acto sanitario que este miembro puede registrar (vacío si ninguno). */
+export function healthTypesFor(member: Member): readonly HealthEventType[] {
+  return can(member, "health.write") ? healthTypesOf(member) : [];
+}
