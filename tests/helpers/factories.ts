@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Role } from "@prisma/client";
+import type { ProfessionalSpecialty, Role } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import type { FakeMember } from "./trpc";
 
@@ -28,9 +28,15 @@ export async function makeTenant(): Promise<TestTenant> {
   return prisma.tenant.create({ data: { slug, name: `Centro ${slug}` }, select: { id: true, slug: true } });
 }
 
-export async function makeMember(tenant: TestTenant, role: Role): Promise<TestMember> {
+export async function makeMember(
+  tenant: TestTenant,
+  role: Role,
+  extra: { specialty?: ProfessionalSpecialty } = {},
+): Promise<TestMember> {
   const user = await prisma.user.create({ data: { email: `${uid()}@test.local`, name: "Test" } });
-  const m = await prisma.membership.create({ data: { userId: user.id, tenantId: tenant.id, role } });
+  const m = await prisma.membership.create({
+    data: { userId: user.id, tenantId: tenant.id, role, specialty: extra.specialty },
+  });
   return { userId: user.id, tenantId: tenant.id, membershipId: m.id, role };
 }
 
