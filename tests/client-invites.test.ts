@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { planClientInvites, type InviteContact, type ExistingMember } from "@/lib/client-invites";
 
 const contact = (o: Partial<InviteContact> & { id: string }): InviteContact => ({
+  kind: "CLIENT",
   name: `Contacto ${o.id}`,
   email: `${o.id}@test.local`,
   horseIds: [],
@@ -74,4 +75,47 @@ test("un miembro del personal no recibe HorseAccess: ya ve toda la cuadra", () =
   assert.deepEqual(plan.invitations, []);
   assert.deepEqual(plan.grants, []);
   assert.deepEqual(plan.skipped, [{ contactId: "dueno", name: "Dueño", reason: "STAFF" }]);
+});
+
+test("un contacto cliente sin caballos se salta con NO_HORSES", () => {
+  const plan = planClientInvites([contact({ id: "sin-caballos", name: "Sin Caballos" })], []);
+
+  assert.deepEqual(plan.invitations, []);
+  assert.deepEqual(plan.skipped, [{ contactId: "sin-caballos", name: "Sin Caballos", reason: "NO_HORSES" }]);
+});
+
+test("un contacto veterinario o herrador se invita como PROFESSIONAL con su especialidad", () => {
+  const plan = planClientInvites(
+    [
+      contact({ id: "vet", kind: "VET" }),
+      contact({ id: "herrador", kind: "FARRIER", email: "Herrador@Test.local" }),
+    ],
+    [],
+  );
+
+  assert.deepEqual(plan.invitations, []);
+  assert.deepEqual(plan.professionalInvitations, [
+    { email: "vet@test.local", contactIds: ["vet"], specialty: "VET" },
+    { email: "herrador@test.local", contactIds: ["herrador"], specialty: "FARRIER" },
+  ]);
+  assert.deepEqual(plan.skipped, []);
+});
+
+test("un proveedor no se invita a la app (NOT_INVITABLE)", () => {
+  const plan = planClientInvites([contact({ id: "pienso", name: "Piensos SL", kind: "SUPPLIER", horseIds: ["lucero"] })], []);
+
+  assert.deepEqual(plan.invitations, []);
+  assert.deepEqual(plan.professionalInvitations, []);
+  assert.deepEqual(plan.skipped, [{ contactId: "pienso", name: "Piensos SL", reason: "NOT_INVITABLE" }]);
+});
+
+test("un profesional que ya es miembro no recibe otra invitación", () => {
+  const members: ExistingMember[] = [
+    { membershipId: "m-vet", email: "vet@test.local", role: "PROFESSIONAL", horseIds: [] },
+  ];
+  const plan = planClientInvites([contact({ id: "vet", kind: "VET" })], members);
+
+  assert.deepEqual(plan.professionalInvitations, []);
+  assert.deepEqual(plan.grants, []);
+  assert.deepEqual(plan.skipped, [{ contactId: "vet", name: "Contacto vet", reason: "ALREADY_MEMBER" }]);
 });
