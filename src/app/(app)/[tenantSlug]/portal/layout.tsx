@@ -3,12 +3,9 @@ import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/server/auth";
 import { getTenantAccess } from "@/server/tenant-access";
 import { loginUrlForCurrentPage } from "@/lib/auth-redirect";
-import {
-  Horse,
-  Receipt,
-  Files,
-  SignOut,
-} from "@phosphor-icons/react/dist/ssr";
+import { getTranslations } from "next-intl/server";
+import { Horse, SignOut } from "@phosphor-icons/react/dist/ssr";
+import { PortalNav } from "@/components/portal/portal-nav";
 
 interface PortalLayoutProps {
   children: React.ReactNode;
@@ -37,56 +34,37 @@ export default async function PortalLayout({
     redirect(`/${tenantSlug}/inicio`);
   }
 
-  const nav = [
-    { href: `/${tenantSlug}/portal`, label: "Mi caballo", icon: Horse },
-    {
-      href: `/${tenantSlug}/portal/facturas`,
-      label: "Facturas",
-      icon: Receipt,
-    },
-    {
-      href: `/${tenantSlug}/portal/documentos`,
-      label: "Documentos",
-      icon: Files,
-    },
-  ];
+  const t = await getTranslations("portal.nav");
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-20 border-b border-border bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3 md:px-8">
-          <div className="flex items-center gap-2">
-            <Horse className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold text-foreground">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-x-6 px-4 py-1.5 md:px-8">
+          <div className="flex min-w-0 items-center gap-2">
+            <Horse className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+            <span className="truncate text-sm font-semibold text-foreground">
               {tenant.name}
             </span>
-            <span className="text-xs text-muted-foreground">· Portal del propietario</span>
+            <span className="hidden text-xs text-muted-foreground sm:inline">· {t("portalName")}</span>
           </div>
-          <nav aria-label="Navegación del portal" className="flex items-center gap-1 text-sm">
-            {nav.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <Icon weight="bold" className="h-4 w-4" />
-                {label}
-              </Link>
-            ))}
+          <div className="flex items-center gap-1">
+            <PortalNav tenantSlug={tenantSlug} variant="top" />
             <Link
               href="/api/auth/signout"
-              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <SignOut weight="bold" className="h-4 w-4" />
-              Cerrar sesión
+              <SignOut weight="bold" className="h-4 w-4" aria-hidden />
+              {t("signOut")}
             </Link>
-          </nav>
+          </div>
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10">
+      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-28 md:px-8 md:pt-10 md:pb-16">
         {children}
       </main>
+
+      <PortalNav tenantSlug={tenantSlug} variant="bottom" />
     </div>
   );
 }
