@@ -290,7 +290,12 @@ export default async function PortalHomePage({ params }: PageProps) {
                         key={`${a.source}-${a.id}`}
                         href={`${base}/caballos/${a.horseId}`}
                         icon={a.source === "training" ? <Barbell /> : a.kind === "FARRIER" ? <Hammer /> : a.source === "health" ? <Heartbeat /> : <Horse />}
-                        title={[t(`activityKinds.${a.kind}`), a.title].filter(Boolean).join(" · ")}
+                        title={[
+                          a.kind === "HEALTH" ? typeLabel(a.healthType ?? "OTHER") : t(`activityKinds.${a.kind}`),
+                          a.title,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                         detail={a.horseName}
                         aside={a.durationMin ? t("minutes", { minutes: a.durationMin }) : undefined}
                       />

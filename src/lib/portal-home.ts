@@ -1,6 +1,6 @@
 import { pendingHealthDue } from "@/lib/health-due";
 import { calendarDayOffset } from "@/lib/day-window";
-import { buildFeed, feedByDay, type ActivityKind, type TrainingInput } from "@/lib/horse-feed";
+import { buildFeed, feedByDay, type FeedKind, type TrainingInput } from "@/lib/horse-feed";
 
 /**
  * Portada de la app del cliente (roadmap §4 E8, v1). Motor puro: decide qué ve
@@ -67,7 +67,7 @@ export interface PortalHome {
   pendingInvoices: { id: string; number: string | null; pending: number; dueDate: Date | null }[];
   lastFarrier: { horseId: string; horseName: string; date: Date | null }[];
   /** Últimos `ACTIVITY_DAYS` días, de hoy hacia atrás. Vacío para el alumno. */
-  activity: { day: string; items: PortalActivityItem[]; emptyLabel: string | null }[];
+  activity: { day: string; items: PortalActivityItem[]; empty: boolean }[];
   scheduledTrainings: { id: string; horseId: string; horseName: string; date: Date; minutes: number; type: string | null }[];
 }
 
@@ -76,7 +76,9 @@ export interface PortalActivityItem {
   horseId: string;
   horseName: string;
   source: "activity" | "training" | "health";
-  kind: ActivityKind;
+  kind: FeedKind;
+  /** Tipo de `HealthEvent` en las entradas sanitarias, para su etiqueta. */
+  healthType: string | null;
   at: Date;
   durationMin: number | null;
   title: string | null;
@@ -161,9 +163,9 @@ export function portalHome(input: PortalHomeInput): PortalHome {
   const activity =
     audience === "STUDENT"
       ? []
-      : feedByDay(feed, { now, days: ACTIVITY_DAYS }).map(({ day, items: dayItems, emptyLabel }) => ({
+      : feedByDay(feed, { now, days: ACTIVITY_DAYS }).map(({ day, items: dayItems, empty }) => ({
           day,
-          emptyLabel,
+          empty,
           items: dayItems.map((f): PortalActivityItem => {
             const horseId = horseOf.get(f.id) ?? "";
             return {
@@ -172,6 +174,7 @@ export function portalHome(input: PortalHomeInput): PortalHome {
               horseName: nameOf.get(horseId) ?? "",
               source: f.source,
               kind: f.kind,
+              healthType: f.healthType,
               at: f.at,
               durationMin: f.durationMin,
               title: f.title,
