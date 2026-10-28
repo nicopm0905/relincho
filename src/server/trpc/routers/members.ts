@@ -1,14 +1,36 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { Role } from "@prisma/client";
+import { ProfessionalSpecialty, Role } from "@prisma/client";
 import { createTRPCRouter, roleProcedure } from "../init";
 import { prisma, withTenant } from "@/server/db/prisma";
 import { sendTeamInvite } from "@/server/services/notifications/email";
 import { getBaseUrl } from "@/lib/utils";
 import { reportError } from "@/lib/observability";
+import { memberSpecialty } from "@/lib/permissions";
 
 /** Toda la gestion de equipo esta restringida al propietario. */
 const ownerProcedure = roleProcedure("OWNER");
+
+/** Especialidad del profesional (E1a). Solo cuenta si el rol es PROFESSIONAL. */
+const specialtyInput = {
+  specialty: z.nativeEnum(ProfessionalSpecialty).nullish(),
+  specialtyNote: z.string().max(100).nullish(),
+};
+
+/** La especialidad que se guarda para ese rol, o BAD_REQUEST si falta. */
+function specialtyFor(
+  role: Role,
+  input: { specialty?: ProfessionalSpecialty | null; specialtyNote?: string | null },
+) {
+  const result = memberSpecialty(role, input);
+  if ("error" in result) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Elige la especialidad del profesional.",
+    });
+  }
+  return result;
+}
 
 export const membersRouter = createTRPCRouter({
   list: ownerProcedure.query(async ({ ctx }) => {
@@ -38,10 +60,12 @@ export const membersRouter = createTRPCRouter({
       z.object({
         email: z.string().email(),
         role: z.nativeEnum(Role),
+        ...specialtyInput,
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const email = input.email.trim().toLowerCase();
+      const specialty = specialtyFor(input.role, input);
 
       let user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
@@ -59,7 +83,7 @@ export const membersRouter = createTRPCRouter({
       }
 
       const membership = await prisma.membership.create({
-        data: { userId: user.id, tenantId: ctx.tenantId, role: input.role },
+        data: { userId: user.id, tenantId: ctx.tenantId, role: input.role, ...specialty },
       });
 
       const tenant = await prisma.tenant.findUnique({
@@ -93,9 +117,11 @@ export const membersRouter = createTRPCRouter({
       z.object({
         membershipId: z.string().uuid(),
         role: z.nativeEnum(Role),
+        ...specialtyInput,
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const specialty = specialtyFor(input.role, input);
       const target = await prisma.membership.findFirst({
         where: { id: input.membershipId, tenantId: ctx.tenantId },
       });
@@ -115,7 +141,7 @@ export const membersRouter = createTRPCRouter({
 
       return prisma.membership.update({
         where: { id: input.membershipId },
-        data: { role: input.role },
+        data: { role: input.role, ...specialty },
       });
     }),
 
