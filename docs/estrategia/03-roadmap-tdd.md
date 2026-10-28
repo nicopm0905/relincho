@@ -378,6 +378,11 @@ Sin una migración base no hay BD efímera fiel ni CI que valide migraciones. Ad
 4. Comprobación: `migrate reset` en una BD vacía + `prisma migrate diff --from-migrations … --to-schema prisma/schema.prisma` vacío.
 5. **Proyecto Supabase aparte para desarrollo** (o Postgres local), con las credenciales de producción solo en Vercel. En el plan gratuito caben 2 proyectos.
 
+> **Hecho el 28 oct 2026 (#20).** La BD de desarrollo es un **Postgres local en Docker** (#21), no un segundo proyecto de Supabase: el plan gratuito ya tenía dos proyectos ocupados.
+> - Copia de seguridad: `node scripts/db/prod-snapshot.mjs`, en solo lectura y con salida fuera del repo (`~/relincho-backups`). Restaurada en local con éxito: 15 migraciones, 124 caballos, 4 tenants.
+> - Migración base `20261028120000_base`: un `pg_dump` de `public` limpiado (sin órdenes de psql, `SET`, `search_path` ni permisos por defecto de la plataforma). Aplicada a una BD vacía, `prisma migrate diff` contra `schema.prisma` sale **vacío**.
+> - Ensayo sobre la copia restaurada: tras `migrate resolve --applied`, `deploy` funciona con la carpeta nueva **y** con la vieja de `master`. Sin el `resolve`, el `deploy` nuevo falla (`type "CoveringMethod" already exists`). **Orden obligatorio: `resolve` en producción antes de desplegar este cambio.**
+
 Ventana: **4–6 nov**, lejos de SICAB. Si no se aprueba, la alternativa peor es `db push --force-reset` en la BD de tests. Funciona para los routers, pero no prueba las migraciones ni los triggers.
 
 ### 1.8 Tareas y tests del Sprint 0
@@ -456,11 +461,11 @@ Ventana: **4–6 nov**, lejos de SICAB. Si no se aprueba, la alternativa peor es
 
 | ID | Decisión (ver `01` §8) | La necesita | **Fecha límite** | Recomendación |
 |---|---|---|---|---|
-| **S0-a** | Migración base y BD de desarrollo separada (§1.7) | Sprint 0 | **3 nov 2026** | Sí. Ventana del 4 al 6 nov |
-| **S0-b** | PR obligatoria, ruleset sin bypass y despliegue solo con gate (Actions o guardián) | Sprint 0 | **3 nov 2026** | Sí |
+| **S0-a** | Migración base y BD de desarrollo separada (§1.7) | Sprint 0 | **3 nov 2026** | ✅ **Decidido y hecho (28 oct):** base desde producción (#31); dev y tests en Docker local (#32) |
+| **S0-b** | PR obligatoria, ruleset sin bypass y despliegue solo con gate (Actions o guardián) | Sprint 0 | **3 nov 2026** | ✅ **Decidido (27 oct):** ruleset en master y develop; guardián `npm run deploy` (#30); previews de Vercel desactivadas |
 | **D1** | Identidad multi-centro | E1a (roles), S1 | **10 nov 2026** | (b) `User` global + `Membership` por centro + vista agregada |
 | D2 | Propiedad del historial | Confirmar (a) ya; E15 (bajo la línea) | 10 nov (provisional) / jul 2027 | (a) ahora, sin migrar el modelo |
-| **D4** | Canales de notificación | E3 (avisos), S2 | **24 nov 2026** | Email ya; Web Push en S7; WhatsApp cuando haya ingresos |
+| **D4** | Canales de notificación | E3 (avisos), S2 | **24 nov 2026** | ✅ **Decidido (28 oct):** email ya; Web Push en S7; WhatsApp cuando haya ingresos |
 | D3 | Offline | E7 y E5 (llevan `clientMutationId` desde el principio) | **8 dic 2026** | (b) cola de escrituras para mozo y profesional |
 | D7 | Datos agregados | Traza de uso (E8a) y contrato de encargado del tratamiento del piloto | **8 dic 2026** | No vender datos jamás; métricas de uso solo internas |
 | D5 | Clases: construir o integrar | E10, S11 | **2 mar 2027 (G2)** | Construir, **si H1/H2 lo validan** |

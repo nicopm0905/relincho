@@ -7,6 +7,7 @@ import {
   isAllowedUpload,
   maxBytesFor,
   safeKeySegment,
+  incidentPhotoKey,
 } from "@/lib/uploads";
 
 test("la extensión sale del MIME, nunca del nombre del fichero", () => {
@@ -56,4 +57,15 @@ test("humanSize es legible para un dueño de yeguada", () => {
   assert.equal(humanSize(512), "512 B");
   assert.equal(humanSize(2048), "2 KB");
   assert.equal(humanSize(5 * 1024 * 1024), "5.0 MB");
+});
+
+test("la foto de una incidencia va a la ruta privada del tenant y del caballo", () => {
+  const key = incidentPhotoKey({ tenantId: "t-1", horseId: "h-9", incidentId: "i-3", photoId: "p-7", ext: "jpg" });
+  assert.equal(key, "t-1/incidents/h-9/i-3/p-7.jpg");
+  // Los fragmentos se limpian: nada de subir de carpeta con "../".
+  assert.equal(
+    incidentPhotoKey({ tenantId: "t-1", horseId: "../t-2", incidentId: "i-3", photoId: "p-7", ext: "jpg" }).split("/").length,
+    5,
+  );
+  assert.ok(!incidentPhotoKey({ tenantId: "t-1", horseId: "../t-2", incidentId: "i-3", photoId: "p", ext: "jpg" }).includes(".."));
 });
