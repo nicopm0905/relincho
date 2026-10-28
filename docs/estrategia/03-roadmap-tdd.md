@@ -378,6 +378,11 @@ Sin una migración base no hay BD efímera fiel ni CI que valide migraciones. Ad
 4. Comprobación: `migrate reset` en una BD vacía + `prisma migrate diff --from-migrations … --to-schema prisma/schema.prisma` vacío.
 5. **Proyecto Supabase aparte para desarrollo** (o Postgres local), con las credenciales de producción solo en Vercel. En el plan gratuito caben 2 proyectos.
 
+> **Hecho el 28 oct 2026 (#20).** La BD de desarrollo es un **Postgres local en Docker** (#21), no un segundo proyecto de Supabase: el plan gratuito ya tenía dos proyectos ocupados.
+> - Copia de seguridad: `node scripts/db/prod-snapshot.mjs`, en solo lectura y con salida fuera del repo (`~/relincho-backups`). Restaurada en local con éxito: 15 migraciones, 124 caballos, 4 tenants.
+> - Migración base `20261028120000_base`: un `pg_dump` de `public` limpiado (sin órdenes de psql, `SET`, `search_path` ni permisos por defecto de la plataforma). Aplicada a una BD vacía, `prisma migrate diff` contra `schema.prisma` sale **vacío**.
+> - Ensayo sobre la copia restaurada: tras `migrate resolve --applied`, `deploy` funciona con la carpeta nueva **y** con la vieja de `master`. Sin el `resolve`, el `deploy` nuevo falla (`type "CoveringMethod" already exists`). **Orden obligatorio: `resolve` en producción antes de desplegar este cambio.**
+
 Ventana: **4–6 nov**, lejos de SICAB. Si no se aprueba, la alternativa peor es `db push --force-reset` en la BD de tests. Funciona para los routers, pero no prueba las migraciones ni los triggers.
 
 ### 1.8 Tareas y tests del Sprint 0
