@@ -4,6 +4,8 @@ import { createTRPCRouter, roleProcedure } from "../init";
 import { inSequence, withTenant } from "@/server/db/prisma";
 import { withDownloadUrls } from "@/server/services/documents";
 import { invoiceBalance } from "@/lib/invoice-balance";
+import { portalHome } from "@/lib/portal-home";
+import { invoiceLabel } from "@/lib/invoice-label";
 import type { PrismaClient } from "@prisma/client";
 
 /**
@@ -203,6 +205,62 @@ export const portalRouter = createTRPCRouter({
         balance += Math.max(pending, 0);
       }
       return Math.round(balance * 100) / 100;
+    });
+  }),
+
+  /**
+   * Portada de la app del cliente (E8a): lo que le pide acción y lo que le
+   * interesa de sus caballos, ya ordenado por `portalHome`. Solo sus caballos
+   * (`HorseAccess`) y sus facturas. Las incidencias llegan con E5-2.
+   */
+  home: portalProcedure.query(async ({ ctx }) => {
+    const data = await withTenant(ctx.tenantId, async (tx) => {
+      const horses = await tx.horse.findMany({
+        where: { tenantId: ctx.tenantId, horseAccess: { some: { membershipId: ctx.membershipId } } },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      });
+      const horseIds = horses.map((h) => h.id);
+      const [health, invoices] = await inSequence([
+        () =>
+          horseIds.length
+            ? tx.healthEvent.findMany({
+                where: { tenantId: ctx.tenantId, horseId: { in: horseIds } },
+                select: {
+                  id: true,
+                  type: true,
+                  name: true,
+                  date: true,
+                  nextDueDate: true,
+                  horse: { select: { id: true, name: true } },
+                },
+              })
+            : Promise.resolve([]),
+        () =>
+          myInvoices(tx, {
+            tenantId: ctx.tenantId,
+            membershipId: ctx.membershipId,
+            userEmail: ctx.userEmail,
+          }),
+      ]);
+      return { horses, health, invoices };
+    });
+
+    return portalHome({
+      now: new Date(),
+      horses: data.horses,
+      incidents: [],
+      health: data.health,
+      invoices: data.invoices
+        .filter((inv) => !inv.rectifiesId)
+        .map((inv) => ({
+          id: inv.id,
+          // Borrador sin numerar: no tiene etiqueta todavía.
+          number: inv.number === null ? null : invoiceLabel(inv),
+          status: inv.status,
+          dueDate: inv.dueDate,
+          pending: invoiceBalance({ total: inv.total, payments: inv.payments, rectifiers: inv.rectifiedBy }).pending,
+        })),
     });
   }),
 
