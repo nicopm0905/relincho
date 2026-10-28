@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Role } from "@prisma/client";
 import { prisma, withTenant } from "@/server/db/prisma";
 import { syncGestationTasks } from "@/server/services/reproduction/overview";
-import { dayWindowUtc } from "@/lib/day-window";
 import { invoiceBalance } from "@/lib/invoice-balance";
 import {
   sendHealthReminder,
   isEmailConfigured,
 } from "@/server/services/notifications/email";
+import { runReminders } from "@/server/services/notifications/reminders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,8 +20,10 @@ export const maxDuration = 300;
  * de vercel.json son las 10:00 de Espana en horario de verano.
  */
 export async function GET(req: NextRequest) {
+  // Sin CRON_SECRET no se abre a nadie: si no, "Bearer undefined" pasaría.
+  const secret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -66,102 +67,27 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Dos avisos por vencimiento: una semana antes y el mismo dia. Cada ventana
-  // es un dia natural completo (ver `dayWindowUtc`); antes mezclaba la hora de
-  // ejecucion con una medianoche y cubria solo unas horas.
-  const includeRecipients = {
-    horse: {
-      include: {
-        tenant: {
-          include: {
-            memberships: {
-              where: { role: { in: ["OWNER", "MANAGER"] as Role[] } },
-              include: { user: true },
-            },
-          },
-        },
-      },
-    },
-  } as const;
-  const reminderDays = [7, 0];
-  const batches = await Promise.all(
-    reminderDays.map(async (daysUntil) => {
-      const { start, end } = dayWindowUtc(daysUntil);
-      const found = await prisma.healthEvent.findMany({
-        where: { nextDueDate: { gte: start, lt: end } },
-        include: includeRecipients,
-      });
-      return found.map((event) => ({ event, daysUntil }));
-    }),
-  );
-
-  // Si ya se repitio el tratamiento (hay otro del mismo tipo, mas reciente, en
-  // ese caballo), el vencimiento antiguo esta cubierto: no se avisa.
-  const candidates = batches.flat();
-  const superseded = await Promise.all(
-    candidates.map(({ event }) =>
-      prisma.healthEvent.count({
-        where: {
-          horseId: event.horseId,
-          type: event.type,
-          date: { gt: event.date },
-          id: { not: event.id },
-        },
-      }),
-    ),
-  );
-  const events = candidates.filter((_, index) => superseded[index] === 0);
-
-  // Sin remitente verificado no se puede enviar nada: se dice en la respuesta
-  // en vez de devolver un "ok" con cero envios sin explicar.
-  if (!isEmailConfigured()) {
-    return NextResponse.json({
-      ok: true,
-      emailConfigured: false,
-      note: "Falta RESEND_API_KEY o EMAIL_FROM: no se ha enviado ningún recordatorio.",
-      events: events.length,
-      invoicesMarkedOverdue: overdue.count,
-      gestationTasks,
-      sent: 0,
-      failed: 0,
-      skipped: 0,
-    });
-  }
-
-  let sent = 0;
-  let skipped = 0;
-  let failed = 0;
-
-  for (const { event, daysUntil } of events) {
-    const { horse } = event;
-    const { tenant } = horse;
-
-    for (const membership of tenant.memberships) {
-      if (!membership.user.email) continue;
-      const result = await sendHealthReminder({
-        to: membership.user.email,
-        ownerName: membership.user.name ?? membership.user.email,
-        horseName: horse.name,
-        eventName: event.name,
-        eventType: event.type,
-        dueDate: event.nextDueDate!,
-        tenantName: tenant.name,
-        tenantSlug: tenant.slug,
-        daysUntil,
-      });
-      if (result.ok) sent++;
-      else if (result.skipped) skipped++;
-      else failed++;
-    }
-  }
+  // Avisos de vencimientos sanitarios a centro, propietario y profesional
+  // (E3), idempotentes: ver `runReminders`. Sin remitente verificado los
+  // avisos quedan en la bandeja y el envío se anota como omitido.
+  const emailConfigured = isEmailConfigured();
+  const reminders = await runReminders({ now: new Date(), db: prisma, send: sendHealthReminder });
 
   return NextResponse.json({
-    ok: failed === 0,
-    emailConfigured: true,
-    sent,
-    skipped,
-    failed,
-    events: events.length,
+    ok: reminders.failed === 0 && reminders.tenantErrors === 0,
+    emailConfigured,
+    ...(emailConfigured
+      ? {}
+      : { note: "Falta RESEND_API_KEY o EMAIL_FROM: no se ha enviado ningún recordatorio." }),
+    sent: reminders.sent,
+    skipped: reminders.skipped,
+    failed: reminders.failed,
+    events: reminders.events,
+    notifications: {
+      created: reminders.created,
+      duplicates: reminders.duplicates,
+      tenantErrors: reminders.tenantErrors,
+    },
     invoicesMarkedOverdue: overdue.count,
     gestationTasks,
   });
