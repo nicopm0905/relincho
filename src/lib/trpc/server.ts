@@ -1,5 +1,6 @@
 import "server-only";
-import { createCallerFactory, createTRPCContext } from "@/server/trpc/init";
+import { createCallerFactory } from "@/server/trpc/init";
+import { createTRPCContext } from "@/server/trpc/context";
 import { appRouter } from "@/server/trpc/router";
 import { headers } from "next/headers";
 import { cache } from "react";

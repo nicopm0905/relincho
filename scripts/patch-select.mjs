@@ -1,5 +1,10 @@
-const fs = require('fs');
-const path = require('path');
+// Codemod de un solo uso (commit 5810b04): traduce los <SelectValue> de varios
+// formularios. Se conserva como referencia; ejecutar desde la raíz del repo.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const files = [
   "src/components/sanidad/mass-health-dialog.tsx",
@@ -21,7 +26,7 @@ const SELECT_TRANSLATIONS: Record<string, string> = {
 `;
 
 files.forEach(file => {
-  const fullPath = path.join(__dirname, file);
+  const fullPath = path.join(repoRoot, file);
   if (!fs.existsSync(fullPath)) return;
   
   let content = fs.readFileSync(fullPath, 'utf8');
