@@ -137,3 +137,24 @@ test("un fallo de envío a un destinatario no impide los demás y queda registra
   assert.match(byUser.get(broken.userId)?.error ?? "", /buzón inexistente/);
   for (const m of rest) assert.equal(byUser.get(m.userId)?.status, "SENT");
 });
+
+test("un caballo vendido o muerto no genera avisos; uno retirado sí, porque sigue siendo de su dueño", async () => {
+  const tenant = await makeTenant();
+  const owner = await makeMember(tenant, "OWNER");
+  const statuses = ["SOLD", "DEAD", "RETIRED"] as const;
+  const events: Record<string, string> = {};
+  for (const status of statuses) {
+    const horse = await makeHorse(tenant, { name: `Caballo ${status}` });
+    await prisma.horse.update({ where: { id: horse.id }, data: { status } });
+    const ev = await makeHealthEvent(tenant, horse, { type: "VACCINE", name: "Gripe", nextDueDate: IN_7_DAYS });
+    events[status] = ev.id;
+  }
+  const fake = fakeSend();
+
+  await runReminders({ now: NOW, db: prisma, send: fake.send });
+
+  const notifications = await prisma.notification.findMany({ where: { tenantId: tenant.id, userId: owner.userId } });
+  const keys = notifications.map((n) => n.dedupeKey).join(" ");
+  assert.equal(notifications.length, 1, "solo el caballo retirado");
+  assert.ok(keys.includes(events.RETIRED!), keys);
+});
