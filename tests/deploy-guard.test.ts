@@ -48,8 +48,9 @@ test("productionDbUrl toma DIRECT_URL de .env.production.local, no del .env loca
 });
 
 test("productionDbUrl se niega si falta el fichero o si apunta a una BD local", () => {
-  assert.match(productionDbUrl(null).error ?? "", /\.env\.production\.local/);
-  assert.match(productionDbUrl({}).error ?? "", /DIRECT_URL/);
+  const errorOf = (r: ReturnType<typeof productionDbUrl>) => ("error" in r ? r.error : "");
+  assert.match(errorOf(productionDbUrl(null)), /\.env\.production\.local/);
+  assert.match(errorOf(productionDbUrl({})), /DIRECT_URL/);
   const local = productionDbUrl({ DIRECT_URL: "postgresql://postgres:postgres@localhost:54329/relincho_dev" });
-  assert.match(local.error ?? "", /local/);
+  assert.match(errorOf(local), /local/);
 });
