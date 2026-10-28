@@ -3,6 +3,7 @@ import { createServerCaller } from "@/lib/trpc/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Horse } from "@phosphor-icons/react/dist/ssr";
+import { RecordVisitForm } from "@/components/professional/record-visit-form";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -25,6 +26,10 @@ export default async function ProfessionalHomePage({ params }: PageProps) {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("myHorses")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("intro")}</p>
       </div>
+
+      {horses.length > 0 && (
+        <RecordVisitForm horses={horses.map((h) => ({ id: h.id, name: h.name }))} />
+      )}
 
       {horses.length === 0 ? (
         <EmptyState icon={<Horse />} title={t("empty")} />

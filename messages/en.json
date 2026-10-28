@@ -1256,7 +1256,35 @@
     "empty": "The yard has not assigned you any horses yet.",
     "box": "Stall {box}",
     "navigation": "Professional navigation",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "visit": {
+      "title": "Record a visit",
+      "horses": "Horses",
+      "all": "All",
+      "none": "None",
+      "type": "Procedure",
+      "name": "Description",
+      "date": "Visit date",
+      "next": "Next appointment (optional)",
+      "nextHint": "Leave it empty and a shoeing works it out: 6 weeks or the horse's own interval.",
+      "notes": "Notes (optional)",
+      "submit": "Record visit",
+      "saving": "Saving…",
+      "saved": "{count, plural, one {Visit recorded for # horse} other {Visit recorded for # horses}}",
+      "error": "Could not record the visit",
+      "pickHorses": "Choose at least one horse",
+      "noTypes": "Your specialty does not record health procedures.",
+      "types": {
+        "VACCINE": "Vaccine",
+        "DEWORMING": "Deworming",
+        "DENTAL": "Dental",
+        "FARRIER": "Shoeing",
+        "VET_CHECKUP": "Check-up",
+        "TREATMENT": "Treatment",
+        "INJURY": "Injury",
+        "OTHER": "Other"
+      }
+    }
   },
   "portal": {
     "nav": {
