@@ -1197,7 +1197,65 @@
       "MANAGER": "Gestor",
       "GROOM": "Mozo de cuadra",
       "VET_EXTERNAL": "Veterinario externo",
-      "OWNER_EXTERNAL": "Propietario externo"
+      "OWNER_EXTERNAL": "Propietario externo",
+      "INSTRUCTOR": "Profesor",
+      "PROFESSIONAL": "Profesional",
+      "RIDER": "Alumno"
     }
+  },
+  "team": {
+    "roles": {
+      "OWNER": "Propietario",
+      "MANAGER": "Responsable",
+      "GROOM": "Mozo de cuadra",
+      "VET_EXTERNAL": "Veterinario externo",
+      "OWNER_EXTERNAL": "Propietario externo",
+      "INSTRUCTOR": "Profesor",
+      "PROFESSIONAL": "Profesional",
+      "RIDER": "Alumno"
+    },
+    "specialties": {
+      "VET": "Veterinario",
+      "VET_SPECIALIST": "Veterinario especialista",
+      "FARRIER": "Herrador",
+      "PHYSIO": "Fisioterapeuta",
+      "DENTIST": "Dentista equino",
+      "NUTRITIONIST": "Nutricionista",
+      "TRAINER": "Entrenador",
+      "OTHER": "Otra"
+    },
+    "email": "Email",
+    "emailPlaceholder": "persona@ejemplo.com",
+    "role": "Rol",
+    "specialty": "Especialidad",
+    "specialtyPlaceholder": "Elige especialidad",
+    "specialtyNote": "Detalle (opcional)",
+    "specialtyNotePlaceholder": "p. ej. cojeras",
+    "invite": "Invitar",
+    "invited": "Invitación enviada",
+    "inviteError": "No se pudo invitar",
+    "emailRequired": "Escribe un email",
+    "specialtyRequired": "Elige la especialidad del profesional",
+    "roleUpdated": "Rol actualizado",
+    "roleError": "No se pudo cambiar el rol",
+    "removed": "Miembro eliminado",
+    "removeError": "No se pudo eliminar",
+    "remove": "Eliminar miembro",
+    "grantError": "No se pudo dar acceso",
+    "revokeError": "No se pudo revocar el acceso",
+    "loading": "Cargando equipo…",
+    "horsesWithAccess": "Caballos con acceso",
+    "noHorses": "No hay caballos.",
+    "noHorsesAssigned": "Sin caballos asignados: esta persona no verá ninguno."
+  },
+  "professional": {
+    "metaTitle": "Mis caballos",
+    "area": "Área del profesional",
+    "myHorses": "Mis caballos",
+    "intro": "Los caballos que te ha asignado el centro.",
+    "empty": "El centro todavía no te ha asignado ningún caballo.",
+    "box": "Box {box}",
+    "navigation": "Navegación del profesional",
+    "signOut": "Cerrar sesión"
   }
 }
