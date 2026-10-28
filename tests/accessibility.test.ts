@@ -102,9 +102,12 @@ test("las pantallas nuevas del portal tienen destino del skip link y objetivos t
     assert.deepEqual(messageKeys(en.portal?.[ns]).sort(), messageKeys(es.portal?.[ns]).sort(), `portal.${ns} difiere entre es y en`);
   }
   // La pestaña de la portada es "Inicio": el alumno no tiene caballo (decisión de Nico, #44).
-  type NavMessages = { portal: { nav: { home: string } } };
+  // El título de la portada del propietario es el mismo que la pestaña.
+  type NavMessages = { portal: { nav: { home: string }; home: { ownerTitle: string } } };
   assert.equal((es as NavMessages).portal.nav.home, "Inicio");
   assert.equal((en as NavMessages).portal.nav.home, "Home");
+  assert.equal((es as NavMessages).portal.home.ownerTitle, "Inicio");
+  assert.equal((en as NavMessages).portal.home.ownerTitle, "Home");
   for (const key of ["navigation", "home", "invoices", "documents"]) {
     assert.ok(nav.includes(`t("${key}")`), `portal-nav no usa t("${key}")`);
   }
