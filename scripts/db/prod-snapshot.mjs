@@ -1,6 +1,7 @@
 // Copia de producción en SOLO LECTURA (roadmap §1.7, pasos 1 y 2).
 //
 //   node scripts/db/prod-snapshot.mjs [carpeta]     (por defecto ~/relincho-backups)
+//   Lee DIRECT_URL de .env.production.local.
 //
 // Usa Docker (imagen postgres:17) para no depender de psql/pg_dump locales y
 // genera, fuera del repo (contiene datos personales):
@@ -8,15 +9,22 @@
 //   prod-schema-<fecha>.sql        solo esquema de public, sin _prisma_migrations
 //   prod-meta-<fecha>.txt          versión, roles de Supabase y migraciones aplicadas
 // No escribe nada en la base de datos. Nunca imprime la URL de conexión.
-import "dotenv/config";
+import { config } from "dotenv";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
+// Producción vive en .env.production.local (sin versionar); el .env normal
+// apunta a la BD local de desarrollo (AGENTS.md §7).
+config({ path: ".env.production.local", quiet: true });
 const url = process.env.DIRECT_URL;
 if (!url) {
-  console.error("prod-snapshot: falta DIRECT_URL en .env");
+  console.error("prod-snapshot: falta DIRECT_URL en .env.production.local");
+  process.exit(1);
+}
+if (/@(localhost|127\.0\.0\.1):/.test(url)) {
+  console.error("prod-snapshot: DIRECT_URL apunta a una BD local, no a producción.");
   process.exit(1);
 }
 

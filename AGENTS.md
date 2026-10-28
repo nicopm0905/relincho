@@ -92,7 +92,11 @@ Para cada comportamiento nuevo:
 
 ## 7. Base de datos y datos
 
-- **Hasta que exista la BD de desarrollo separada (Sprint 0, tarea 0.5), la base de datos de `.env` ES PRODUCCIÓN.** Contra ella están **prohibidos** `prisma migrate dev`, `prisma db push`, `prisma migrate reset`, los seeds y cualquier escritura de prueba. Mientras tanto, solo tests de motores puros y de procedures sin BD.
+- **Desarrollo y tests van contra Postgres local en Docker, nunca contra Supabase.** `npm run db:local` arranca el contenedor `relincho-db` (Postgres 17, puerto 54329) con dos BD: `relincho_dev` (ya migrada) y `relincho_test`.
+  - En tu `.env`: `DATABASE_URL` y `DIRECT_URL` = `postgresql://postgres:postgres@localhost:54329/relincho_dev`. Las credenciales de producción solo viven en Vercel (y en `.env.production.local` de quien despliega, sin versionar).
+  - Integración: `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:54329/relincho_test`, luego `npm run db:test:reset` y `npm run check:int`. El script **se niega** a usar un host que no sea local.
+- **Si tu `.env` todavía apunta a Supabase, es PRODUCCIÓN.** Contra ella están **prohibidos** `prisma migrate dev`, `prisma db push`, `prisma migrate reset`, los seeds y cualquier escritura de prueba. Con la migración base, `migrate dev` contra producción propondría **resetearla**.
+- Las migraciones de producción tienen historia propia: la base `20261028120000_base` está marcada como aplicada (`resolve`) y las 15 anteriores viven en `prisma/migrations-archivo/`, solo como referencia. No se tocan.
 - Las pruebas de escritura se hacen en la BD efímera de tests. Nunca en la demo pública (está en solo lectura) ni en los datos de un piloto.
 - Nada de secretos ni datos personales en el repo, en tests ni en seeds. Los fixtures llevan datos inventados.
 
