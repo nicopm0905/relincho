@@ -18,6 +18,7 @@ import { accessState, describeTrialValue, TRIAL_DAYS } from "@/lib/trial";
 import { getTrialValue } from "@/server/services/billing/trial";
 
 import { TenantSettingsForm } from "@/components/settings/tenant-settings-form";
+import { tenantSettingsFor } from "@/lib/tenant-settings";
 import dynamic from "next/dynamic";
 
 const TeamManagement = dynamic(
@@ -50,6 +51,8 @@ export default async function AjustesPage({ params }: PageProps) {
   if (!membership) notFound();
 
   const isOwner = membership.role === "OWNER";
+  // IBAN, NIF y demás datos fiscales: solo para quien puede editarlos.
+  const settings = tenantSettingsFor(membership.role, tenant);
   const horseLimit = planHorseLimit(tenant.plan, tenant.extraHorseBlocks);
   const isFreePlan =
     normalizePlanKey(tenant.plan) === FREE_PLAN;
@@ -76,19 +79,7 @@ export default async function AjustesPage({ params }: PageProps) {
         description="Configuración de tu ganadería, equipo y plan de suscripción"
       />
 
-      <TenantSettingsForm tenant={{
-        id: tenant.id,
-        name: tenant.name,
-        fiscalName: tenant.fiscalName,
-        nif: tenant.nif,
-        address: tenant.address,
-        postalCode: tenant.postalCode,
-        city: tenant.city,
-        province: tenant.province,
-        iban: tenant.iban,
-        paymentTerms: tenant.paymentTerms,
-        regaCode: tenant.regaCode,
-      }} />
+      {settings && <TenantSettingsForm tenant={settings} />}
 
       {isOwner && (
         <Card>
