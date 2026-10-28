@@ -42,6 +42,11 @@ test("enumValuesUsedInSameMigration detecta un valor añadido y usado en la mism
   assert.deepEqual(enumValuesUsedInSameMigration(`ALTER TYPE "Role" ADD VALUE 'RIDER';`), []);
 });
 
+test("enumValuesUsedInSameMigration no confunde un valor añadido con el mismo nombre en un CREATE TYPE nuevo", () => {
+  const sql = `CREATE TYPE "HorseRelation" AS ENUM ('OWNER', 'RIDER', 'PROFESSIONAL');\nALTER TYPE "Role" ADD VALUE 'PROFESSIONAL';\nALTER TYPE "Role" ADD VALUE 'RIDER';`;
+  assert.deepEqual(enumValuesUsedInSameMigration(sql), []);
+});
+
 test("ninguna migración usa un valor de enum en la misma migración que lo añade", () => {
   for (const m of migrations) {
     assert.deepEqual(enumValuesUsedInSameMigration(m.sql), [], m.name);

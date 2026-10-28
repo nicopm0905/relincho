@@ -7,6 +7,7 @@ import {
   reminderDedupeKey,
   type ReminderMember,
 } from "@/lib/reminder-recipients";
+import { HEALTH_EVENT_TYPES, PROFESSIONAL_SPECIALTIES, canRecordHealthEvent } from "@/lib/permissions";
 
 const now = new Date("2026-11-02T08:00:00Z");
 const inDays = (n: number) => new Date(now.getTime() + n * 86_400_000);
@@ -90,4 +91,27 @@ test("un acto superado por otro posterior del mismo tipo no genera aviso", () =>
     { id: "herraje", horseId: HORSE, type: "FARRIER", date: inDays(-35), nextDueDate: inDays(7) },
   ];
   assert.deepEqual(dueReminders(events, { now }).map((d) => d.event.id), ["herraje"]);
+});
+
+// --- Regla única con permissions.ts (#50): quien puede registrar el acto recibe su aviso ---
+
+test("un veterinario especialista recibe el aviso de vacuna como el veterinario general", () => {
+  const especialista = member({ userId: "vet-cojeras", role: "PROFESSIONAL", specialty: "VET_SPECIALIST", horseIds: [HORSE] });
+  assert.deepEqual(ids(recipientsFor({ horseId: HORSE, type: "VACCINE" }, [especialista])), ["vet-cojeras"]);
+});
+
+test("un acto dental avisa al dentista y al veterinario, no al herrador", () => {
+  const dentista = member({ userId: "dentista", role: "PROFESSIONAL", specialty: "DENTIST", horseIds: [HORSE] });
+  const rs = recipientsFor({ horseId: HORSE, type: "DENTAL" }, [dentista, veterinario, herrador]);
+  assert.deepEqual(ids(rs), ["dentista", "vet"]);
+});
+
+test("para todo acto y especialidad, recibe el aviso quien puede registrar ese acto según permissions.ts", () => {
+  for (const specialty of PROFESSIONAL_SPECIALTIES) {
+    for (const type of HEALTH_EVENT_TYPES) {
+      const pro = member({ userId: `p-${specialty}`, role: "PROFESSIONAL", specialty, horseIds: [HORSE] });
+      const notified = recipientsFor({ horseId: HORSE, type }, [pro]).length === 1;
+      assert.equal(notified, canRecordHealthEvent({ role: "PROFESSIONAL", specialty }, type), `${specialty} × ${type}`);
+    }
+  }
 });
