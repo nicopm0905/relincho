@@ -18,6 +18,28 @@ enum Role {
   RIDER
 }
 
+/// Especialidad de un miembro PROFESSIONAL (E1a). Decide qué actos sanitarios
+/// registra: la tabla está en `src/lib/permissions.ts`.
+enum ProfessionalSpecialty {
+  VET
+  VET_SPECIALIST
+  FARRIER
+  PHYSIO
+  DENTIST
+  NUTRITIONIST
+  TRAINER
+  OTHER
+}
+
+/// Relación de una persona con un caballo al que tiene acceso (E1a).
+enum HorseRelation {
+  OWNER
+  CO_OWNER
+  HALF_LEASE
+  RIDER
+  PROFESSIONAL
+}
+
 enum Sex {
   MALE
   FEMALE
@@ -175,6 +197,10 @@ model Membership {
   userId      String
   tenantId    String
   role        Role
+  /// Solo para PROFESSIONAL.
+  specialty     ProfessionalSpecialty?
+  /// Detalle libre de la especialidad, p. ej. "cojeras".
+  specialtyNote String?
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   horseAccess HorseAccess[]
@@ -254,6 +280,8 @@ model HorseAccess {
   id           String     @id @default(uuid())
   horseId      String
   membershipId String
+  /// Nula hasta la migración de datos de E1a, que la deduce del rol.
+  relation     HorseRelation?
   horse        Horse      @relation(fields: [horseId], references: [id], onDelete: Cascade)
   membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
 
