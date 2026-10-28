@@ -21,3 +21,25 @@ test("professional.myHorses rechaza a GROOM, OWNER_EXTERNAL, RIDER e INSTRUCTOR"
     });
   }
 });
+
+test("professional.recordVisit y allowedTypes rechazan a GROOM, OWNER_EXTERNAL, RIDER e INSTRUCTOR", async () => {
+  for (const role of ["GROOM", "OWNER_EXTERNAL", "RIDER", "INSTRUCTOR"] as const) {
+    const caller = callerAs(createCaller, { role }).professional;
+    for (const call of [
+      () => caller.allowedTypes(),
+      () =>
+        caller.recordVisit({
+          horseIds: ["00000000-0000-4000-8000-000000000000"],
+          type: "FARRIER",
+          name: "Herraje",
+          date: new Date(),
+        }),
+    ]) {
+      await assert.rejects(call(), (err: unknown) => {
+        assert.ok(err instanceof TRPCError, `${role}: esperaba TRPCError, llegó ${String(err)}`);
+        assert.equal(err.code, "FORBIDDEN", role);
+        return true;
+      });
+    }
+  }
+});
