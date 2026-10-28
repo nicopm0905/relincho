@@ -83,3 +83,11 @@ export function planVisit(input: {
     authorMembershipId: input.authorMembershipId,
   }));
 }
+
+const madridDay = (d: Date) =>
+  new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Madrid" }).format(d);
+
+/** ¿La visita cae en un día posterior a hoy en Madrid? Un acto hecho no puede ser futuro. */
+export function isFutureVisit(date: Date, now: Date): boolean {
+  return madridDay(date) > madridDay(now);
+}
