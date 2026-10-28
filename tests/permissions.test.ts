@@ -30,6 +30,16 @@ test("un veterinario registra vacunas, desparasitaciones, revisiones y tratamien
   assert.equal(canRecordHealthEvent(vet, "FARRIER"), false);
 });
 
+// Decisión de #26: el veterinario también registra lesiones y odontología.
+test("un veterinario registra también lesiones y actos dentales", () => {
+  for (const specialty of ["VET", "VET_SPECIALIST"] as const) {
+    const vet: Member = { role: "PROFESSIONAL", specialty };
+    assert.equal(canRecordHealthEvent(vet, "INJURY"), true, specialty);
+    assert.equal(canRecordHealthEvent(vet, "DENTAL"), true, specialty);
+  }
+  assert.equal(canRecordHealthEvent({ role: "VET_EXTERNAL" }, "INJURY"), true);
+});
+
 test("un dentista solo registra DENTAL", () => {
   const dentist: Member = { role: "PROFESSIONAL", specialty: "DENTIST" };
   assert.deepEqual(writableHealthTypes(dentist), ["DENTAL"]);
