@@ -161,6 +161,19 @@ async function remindTenant({
     for (const recipient of recipientsFor(event, members)) {
       try {
         let notificationId: string;
+        const dedupeKey = reminderDedupeKey({ eventId: event.id, daysUntil });
+        // Se mira antes de crear: relanzar el cron es normal y, si se dejara
+        // todo al P2002, Prisma registraría cada repetición como `prisma:error`
+        // y llenaría los logs de falsos errores. El P2002 queda para dos
+        // ejecuciones simultáneas.
+        const existing = await db.notification.findUnique({
+          where: { userId_dedupeKey: { userId: recipient.userId, dedupeKey } },
+          select: { id: true },
+        });
+        if (existing) {
+          summary.duplicates++;
+          continue;
+        }
         try {
           const created = await db.notification.create({
             data: {
@@ -170,7 +183,7 @@ async function remindTenant({
               title: `${event.name} de ${event.horse.name} ${when}`,
               body: `Fecha prevista: ${formattedDate}`,
               url: `/${tenant.slug}/sanidad`,
-              dedupeKey: reminderDedupeKey({ eventId: event.id, daysUntil }),
+              dedupeKey,
             },
             select: { id: true },
           });
