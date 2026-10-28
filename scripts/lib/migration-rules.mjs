@@ -34,7 +34,11 @@ export function enumValuesUsedInSameMigration(sql) {
   const added = [
     ...sql.matchAll(/ALTER TYPE\s+(?:"?public"?\.)?"?(\w+)"?\s+ADD VALUE\s+(?:IF NOT EXISTS\s+)?'(\w+)'/gi),
   ];
-  const withoutAdds = sql.replace(/ALTER TYPE[^;]*ADD VALUE[^;]*;/gi, "");
+  // Fuera los propios ADD VALUE y los CREATE TYPE: un enum nuevo puede tener
+  // valores con el mismo nombre ('PROFESSIONAL' en Role y en HorseRelation).
+  const withoutAdds = sql
+    .replace(/ALTER TYPE[^;]*ADD VALUE[^;]*;/gi, "")
+    .replace(/CREATE TYPE[^;]*AS ENUM[^;]*;/gi, "");
   return added
     .filter(([, , value]) => withoutAdds.includes(`'${value}'`))
     .map(([, type, value]) => `${type}.${value}`);
