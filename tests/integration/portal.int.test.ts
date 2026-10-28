@@ -1,5 +1,6 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
+import { TRPCError } from "@trpc/server";
 
 import { createCallerFactory } from "@/server/trpc/init";
 import { appRouter } from "@/server/trpc/router";
@@ -40,4 +41,40 @@ test("portal.home de un cliente sin caballos devuelve la portada de alumno", asy
   const home = await callerAs(createCaller, alumno).portal.home();
   assert.equal(home.audience, "STUDENT");
   assert.deepEqual(home.items, []);
+});
+
+test("portal.home solo devuelve entrenamientos de los caballos del propietario", async () => {
+  const t = await makeTenant();
+  const propietaria = await makeMember(t, "OWNER_EXTERNAL");
+  const suyo = await makeHorse(t, { name: "Suyo" });
+  const ajeno = await makeHorse(t, { name: "De otro cliente" });
+  await grantAccess(propietaria, suyo);
+
+  for (const horse of [suyo, ajeno]) {
+    for (const date of [inDays(-1), inDays(2)]) {
+      await prisma.trainingSession.create({
+        data: { tenantId: t.id, horseId: horse.id, date, minutes: 40, type: "Doma", notes: "Nota interna del entrenador" },
+      });
+    }
+  }
+
+  const home = await callerAs(createCaller, propietaria).portal.home();
+  const done = home.activity.flatMap((d) => d.items);
+  assert.deepEqual(done.map((i) => i.horseId), [suyo.id]);
+  assert.deepEqual(home.scheduledTrainings.map((s) => s.horseId), [suyo.id]);
+  assert.doesNotMatch(JSON.stringify(home), /nota interna/i);
+});
+
+test("portal.home responde FORBIDDEN a quien no es cliente: OWNER, GROOM o PROFESSIONAL", async () => {
+  const t = await makeTenant();
+  const horse = await makeHorse(t, { name: "Del centro" });
+  for (const role of ["OWNER", "GROOM", "PROFESSIONAL"] as const) {
+    const member = await makeMember(t, role);
+    await grantAccess(member, horse);
+    await assert.rejects(
+      callerAs(createCaller, member).portal.home(),
+      (err: unknown) => err instanceof TRPCError && err.code === "FORBIDDEN",
+      `${role} no debe ver la portada del cliente`,
+    );
+  }
 });

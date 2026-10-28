@@ -2,7 +2,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  NO_ACTIVITY_LABEL,
   batchActivities,
   buildFeed,
   feedByDay,
@@ -35,7 +34,7 @@ test("el feed mezcla actividades, entrenamientos y actos sanitarios del más rec
     [
       ["training", "t1", "RIDDEN"],
       ["activity", "a1", "PADDOCK"],
-      ["health", "h1", "VET"],
+      ["health", "h1", "HEALTH"],
     ],
   );
   assert.equal(feed[0]?.durationMin, 40);
@@ -107,7 +106,41 @@ test("un día sin registros dice 'sin actividad registrada' y no inventa nada", 
   assert.deepEqual(days.map((d) => d.day), ["2026-11-03", "2026-11-02", "2026-11-01"]);
   for (const d of days) {
     assert.deepEqual(d.items, []);
-    assert.equal(d.emptyLabel, NO_ACTIVITY_LABEL);
+    // El motor marca el día vacío; el texto lo pone la UI desde messages.
+    assert.equal(d.empty, true);
+    assert.ok(!("emptyLabel" in d), "el motor no lleva textos en castellano");
   }
-  assert.equal(NO_ACTIVITY_LABEL, "Sin actividad registrada");
+  const conAlgo = feedByDay(
+    buildFeed({ activities: [activity({ id: "a1", kind: "PADDOCK", at: at("2026-11-03T08:00:00Z") })], trainings: [], health: [] }, { viewer: "OWNER" }),
+    { now: at("2026-11-03T10:00:00Z"), days: 1 },
+  );
+  assert.equal(conAlgo[0]?.empty, false);
+});
+
+test("un acto sanitario lleva su tipo real y no sale como veterinario si lo hizo el dentista o el fisio", () => {
+  const feed = buildFeed(
+    {
+      activities: [],
+      trainings: [],
+      health: [
+        { id: "dental", horseId: H, type: "DENTAL", name: "Limado de dientes", date: at("2026-11-02T12:00:00Z") },
+        { id: "trat", horseId: H, type: "TREATMENT", name: "Antiinflamatorio", date: at("2026-11-02T11:00:00Z") },
+        { id: "vacuna", horseId: H, type: "VACCINE", name: "Gripe", date: at("2026-11-02T10:00:00Z") },
+        { id: "herraje", horseId: H, type: "FARRIER", name: "Herraje", date: at("2026-11-02T09:00:00Z") },
+      ],
+    },
+    { viewer: "OWNER" },
+  );
+  assert.deepEqual(
+    feed.map((f) => [f.id, f.kind, f.healthType]),
+    [
+      ["dental", "HEALTH", "DENTAL"],
+      ["trat", "HEALTH", "TREATMENT"],
+      ["vacuna", "HEALTH", "VACCINE"],
+      ["herraje", "FARRIER", "FARRIER"],
+    ],
+  );
+  assert.ok(feed.every((f) => f.kind !== "VET"), "VET queda para las actividades que registre un veterinario");
+  const training = buildFeed({ activities: [], trainings: [{ id: "t1", horseId: H, date: at("2026-11-02T10:00:00Z"), minutes: 30, type: null, notes: null }], health: [] }, { viewer: "OWNER" });
+  assert.equal(training[0]?.healthType, null);
 });

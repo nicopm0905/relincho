@@ -1,4 +1,6 @@
 import { pendingHealthDue } from "@/lib/health-due";
+import { calendarDayOffset } from "@/lib/day-window";
+import { buildFeed, feedByDay, type FeedKind, type TrainingInput } from "@/lib/horse-feed";
 
 /**
  * Portada de la app del cliente (roadmap §4 E8, v1). Motor puro: decide qué ve
@@ -7,12 +9,17 @@ import { pendingHealthDue } from "@/lib/health-due";
  *  1. incidencias sin confirmar (las graves primero);
  *  2. facturas vencidas (la más antigua primero);
  *  3. vencimientos sanitarios de los próximos 30 días (los ya pasados primero).
- * Aparte: facturas pendientes que aún no han vencido y el último herraje de
- * cada caballo, que es lo que más preguntan los propietarios.
+ * Aparte: facturas pendientes que aún no han vencido, el último herraje de
+ * cada caballo, la actividad de la última semana (feed de E6, vista de
+ * propietario) y los entrenamientos programados de la semana que viene. Es lo
+ * que más preguntan los propietarios: si han sacado y entrenado a su caballo.
  */
 
 /** Ventana de vencimientos que se enseñan en portada. */
 export const UPCOMING_DAYS = 30;
+/** Días de actividad hacia atrás (hoy incluido) y de entrenamientos hacia delante. */
+export const ACTIVITY_DAYS = 7;
+export const SCHEDULED_DAYS = 7;
 
 export interface PortalHomeInput {
   now: Date;
@@ -42,6 +49,8 @@ export interface PortalHomeInput {
     nextDueDate: Date | null;
     horse: { id: string; name: string };
   }[];
+  /** Entrenamientos de sus caballos, hechos y programados. Las notas no se enseñan. */
+  trainings: TrainingInput[];
 }
 
 export type PortalHomeItem =
@@ -57,6 +66,22 @@ export interface PortalHome {
   items: PortalHomeItem[];
   pendingInvoices: { id: string; number: string | null; pending: number; dueDate: Date | null }[];
   lastFarrier: { horseId: string; horseName: string; date: Date | null }[];
+  /** Últimos `ACTIVITY_DAYS` días, de hoy hacia atrás. Vacío para el alumno. */
+  activity: { day: string; items: PortalActivityItem[]; empty: boolean }[];
+  scheduledTrainings: { id: string; horseId: string; horseName: string; date: Date; minutes: number; type: string | null }[];
+}
+
+export interface PortalActivityItem {
+  id: string;
+  horseId: string;
+  horseName: string;
+  source: "activity" | "training" | "health";
+  kind: FeedKind;
+  /** Tipo de `HealthEvent` en las entradas sanitarias, para su etiqueta. */
+  healthType: string | null;
+  at: Date;
+  durationMin: number | null;
+  title: string | null;
 }
 
 const SEVERITY_RANK = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
@@ -119,5 +144,55 @@ export function portalHome(input: PortalHomeInput): PortalHome {
         ? "OWNER_ALL_CLEAR"
         : null;
 
-  return { audience, emptyState, items, pendingInvoices, lastFarrier };
+  // Feed de la semana: `HorseActivity` llega con E6-2; hasta entonces, solo
+  // entrenamientos hechos y actos sanitarios ya ocurridos.
+  const nameOf = new Map(input.horses.map((h) => [h.id, h.name]));
+  const horseOf = new Map<string, string>();
+  const past = input.trainings.filter((t) => t.date <= now);
+  const pastHealth = input.health.filter((e) => e.date <= now);
+  for (const t of past) horseOf.set(t.id, t.horseId);
+  for (const e of pastHealth) horseOf.set(e.id, e.horse.id);
+  const feed = buildFeed(
+    {
+      activities: [],
+      trainings: past,
+      health: pastHealth.map((e) => ({ id: e.id, horseId: e.horse.id, type: e.type, name: e.name, date: e.date })),
+    },
+    { viewer: "OWNER" },
+  );
+  const activity =
+    audience === "STUDENT"
+      ? []
+      : feedByDay(feed, { now, days: ACTIVITY_DAYS }).map(({ day, items: dayItems, empty }) => ({
+          day,
+          empty,
+          items: dayItems.map((f): PortalActivityItem => {
+            const horseId = horseOf.get(f.id) ?? "";
+            return {
+              id: f.id,
+              horseId,
+              horseName: nameOf.get(horseId) ?? "",
+              source: f.source,
+              kind: f.kind,
+              healthType: f.healthType,
+              at: f.at,
+              durationMin: f.durationMin,
+              title: f.title,
+            };
+          }),
+        }));
+
+  const scheduledTrainings = input.trainings
+    .filter((t) => t.date > now && calendarDayOffset(t.date, now) <= SCHEDULED_DAYS)
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .map((t) => ({
+      id: t.id,
+      horseId: t.horseId,
+      horseName: nameOf.get(t.horseId) ?? "",
+      date: t.date,
+      minutes: t.minutes,
+      type: t.type,
+    }));
+
+  return { audience, emptyState, items, pendingInvoices, lastFarrier, activity, scheduledTrainings };
 }

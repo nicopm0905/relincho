@@ -1199,5 +1199,85 @@
       "VET_EXTERNAL": "External vet",
       "OWNER_EXTERNAL": "External owner"
     }
+  },
+  "portal": {
+    "nav": {
+      "navigation": "Portal navigation",
+      "portalName": "Client portal",
+      "home": "Home",
+      "invoices": "Invoices",
+      "documents": "Documents",
+      "signOut": "Sign out"
+    },
+    "home": {
+      "metaTitle": "Portal",
+      "ownerTitle": "Home",
+      "ownerSubtitle": "What needs your attention and the latest on your horses.",
+      "horsesSection": "Your horses' records",
+      "activity": "Recent activity",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "emptyToday": "No activity recorded today",
+      "emptyYesterday": "No activity yesterday",
+      "emptyDay": "No activity on {date}",
+      "emptyRange": "No activity from {from} to {to}",
+      "activityKinds": {
+        "PADDOCK": "Paddock",
+        "RIDDEN": "Ridden",
+        "LUNGED": "Lunged",
+        "WALKER": "Horse walker",
+        "GROOMED": "Groomed",
+        "FARRIER": "Farrier",
+        "VET": "Vet",
+        "PHYSIO": "Physio",
+        "NOTE": "Note"
+      },
+      "minutes": "{minutes} min",
+      "scheduled": "Scheduled training",
+      "noScheduled": "No training scheduled for the next 7 days.",
+      "training": "Training",
+      "studentTitle": "My portal",
+      "studentSubtitle": "Your invoices and the documents the centre shares with you.",
+      "attention": "Needs your attention",
+      "incident": "Incident with {horse}",
+      "severity": {
+        "HIGH": "Serious",
+        "MEDIUM": "Moderate",
+        "LOW": "Minor"
+      },
+      "overdueInvoice": "Invoice {number} overdue",
+      "overdueInvoiceNoNumber": "Overdue invoice",
+      "amountPending": "{amount} outstanding",
+      "upcoming": "Coming up",
+      "due": {
+        "overdue": "{days, plural, one {Was due yesterday} other {Was due # days ago}}",
+        "today": "Due today",
+        "tomorrow": "Due tomorrow",
+        "inDays": "Due in {days} days"
+      },
+      "dueOn": "Due on {date}",
+      "noDueDate": "No due date",
+      "lastFarrier": "Last farrier visit",
+      "farrierAgo": "{days, plural, =0 {Today} one {Yesterday} other {# days ago}}",
+      "farrierNever": "No farrier visits recorded",
+      "pendingInvoices": "Outstanding invoices",
+      "invoice": "Invoice {number}",
+      "invoiceNoNumber": "Unnumbered invoice",
+      "balance": "Outstanding balance: {amount}",
+      "allInvoices": "See all invoices",
+      "noBreed": "Breed unknown",
+      "age": "{years, plural, one {# year} other {# years}}",
+      "ageUnknown": "Age unknown",
+      "box": "Stall: {box}",
+      "noBox": "not assigned",
+      "empty": {
+        "ownerTitle": "All up to date",
+        "ownerBody": "You have no alerts, upcoming due dates or invoices to pay.",
+        "studentTitle": "Welcome to your portal",
+        "studentBody": "Here you will see your invoices and the documents the centre shares with you.",
+        "goInvoices": "See my invoices",
+        "goDocuments": "See documents"
+      }
+    }
   }
 }

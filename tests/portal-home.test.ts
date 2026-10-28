@@ -13,6 +13,7 @@ const base = (over: Partial<PortalHomeInput> = {}): PortalHomeInput => ({
   incidents: [],
   invoices: [],
   health: [],
+  trainings: [],
   ...over,
 });
 
@@ -72,4 +73,65 @@ test("un vencimiento ya pasado aparece primero entre los vencimientos y uno leja
     }),
   );
   assert.deepEqual(home.items.map((i) => i.id), ["vencido", "pronto"]);
+});
+
+test("la portada incluye la actividad de los últimos 7 días y los entrenamientos programados de los próximos 7", () => {
+  const home = portalHome(
+    base({
+      trainings: [
+        { id: "t-ayer", horseId: lucero.id, date: day(-1), minutes: 45, type: "Doma", notes: "Nota interna del entrenador" },
+        { id: "t-viejo", horseId: lucero.id, date: day(-9), minutes: 30, type: "Doma", notes: null },
+        { id: "t-lejano", horseId: lucero.id, date: day(10), minutes: 40, type: "Salto", notes: null },
+        { id: "t-pasado-manana", horseId: lucero.id, date: day(2), minutes: 50, type: "Salto", notes: null },
+        { id: "t-manana", horseId: lucero.id, date: day(1), minutes: 30, type: "Cuerda", notes: "Otra nota interna" },
+      ],
+      health: [
+        { id: "herraje", type: "FARRIER", name: "Herraje", date: day(-2), nextDueDate: day(40), horse: lucero },
+        { id: "vacuna-futura", type: "VACCINE", name: "Gripe", date: day(3), nextDueDate: null, horse: lucero },
+      ],
+    }),
+  );
+
+  // Siete días, de hoy hacia atrás en hora de Madrid.
+  assert.equal(home.activity.length, 7);
+  assert.equal(home.activity[0]?.day, "2026-12-10");
+  assert.equal(home.activity[6]?.day, "2026-12-04");
+  const done = home.activity.flatMap((d) => d.items);
+  assert.deepEqual(done.map((i) => i.id), ["t-ayer", "herraje"]);
+  assert.deepEqual(
+    { horseName: done[0]?.horseName, kind: done[0]?.kind, durationMin: done[0]?.durationMin },
+    { horseName: "Lucero", kind: "RIDDEN", durationMin: 45 },
+  );
+
+  // Programados: los de los próximos 7 días, del más próximo al más lejano.
+  assert.deepEqual(home.scheduledTrainings.map((t) => t.id), ["t-manana", "t-pasado-manana"]);
+  assert.deepEqual(
+    { horseName: home.scheduledTrainings[0]?.horseName, minutes: home.scheduledTrainings[0]?.minutes },
+    { horseName: "Lucero", minutes: 30 },
+  );
+
+  // Vista de propietario: las notas del entrenador no salen en ninguna parte.
+  assert.doesNotMatch(JSON.stringify(home), /nota interna/i);
+});
+
+test("un día sin registros dice \"Sin actividad registrada\" y no inventa nada", () => {
+  const vacia = portalHome(base());
+  assert.equal(vacia.activity.length, 7);
+  for (const d of vacia.activity) {
+    assert.deepEqual(d.items, []);
+    // El motor solo marca el día vacío: "Sin actividad registrada" sale de messages (portal.home).
+    assert.equal(d.empty, true);
+  }
+  assert.deepEqual(vacia.scheduledTrainings, []);
+
+  const conAyer = portalHome(
+    base({ trainings: [{ id: "t-ayer", horseId: lucero.id, date: day(-1), minutes: 45, type: "Doma", notes: null }] }),
+  );
+  assert.equal(conAyer.activity[0]?.empty, true);
+  assert.equal(conAyer.activity[1]?.empty, false);
+  assert.ok(conAyer.activity.every((d) => !("emptyLabel" in d)), "el motor no lleva textos en castellano");
+  assert.deepEqual(conAyer.activity.flatMap((d) => d.items).map((i) => i.id), ["t-ayer"]);
+
+  // El alumno no tiene caballo: ni siete días vacíos de "su caballo".
+  assert.deepEqual(portalHome(base({ horses: [] })).activity, []);
 });

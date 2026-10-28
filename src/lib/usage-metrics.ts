@@ -6,9 +6,11 @@
  * impresiones.
  */
 
+import type { PermissionRole } from "@/lib/permissions";
+
 export interface InvitedMember {
   membershipId: string;
-  role: string;
+  role: PermissionRole;
   invitedAt: Date;
 }
 
@@ -25,8 +27,11 @@ export interface Rate {
   rate: number | null;
 }
 
-/** Roles del centro: no son clientes y no cuentan en H3. */
-const STAFF_ROLES = new Set(["OWNER", "MANAGER", "GROOM", "INSTRUCTOR"]);
+/**
+ * Solo los clientes cuentan en H3: propietarios y alumnos. El personal del
+ * centro y los profesionales (herrador, veterinario…) no.
+ */
+const CLIENT_ROLES: ReadonlySet<PermissionRole> = new Set<PermissionRole>(["OWNER_EXTERNAL", "RIDER"]);
 
 const madridDay = (d: Date) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Madrid" }).format(d);
 
@@ -53,7 +58,7 @@ export function usageDays(opens: { membershipId: string; at: Date }[]): UsageDay
 
 /** Proporción de clientes con algún día de uso cuyo desfase respecto a la invitación cae en [from, to). */
 function rateInWindow(members: InvitedMember[], days: UsageDay[], from: number, to: number): Rate {
-  const eligible = members.filter((m) => !STAFF_ROLES.has(m.role));
+  const eligible = members.filter((m) => CLIENT_ROLES.has(m.role));
   const active = eligible.filter((m) => {
     const invited = madridDay(m.invitedAt);
     return days.some((d) => {

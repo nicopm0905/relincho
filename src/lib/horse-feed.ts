@@ -50,10 +50,19 @@ export interface HealthInput {
   authorMembershipId?: string | null;
 }
 
+/**
+ * Tipo de una entrada del feed. `HEALTH` es un acto sanitario que no es un
+ * herraje: su tipo real va en `healthType` (dentista, vacuna, tratamiento…).
+ * `ActivityKind` no cambia: será el enum de `HorseActivity` (E6-2).
+ */
+export type FeedKind = ActivityKind | "HEALTH";
+
 export interface FeedItem {
   id: string;
   source: "activity" | "training" | "health";
-  kind: ActivityKind;
+  kind: FeedKind;
+  /** Tipo de `HealthEvent` si la entrada es sanitaria; `null` en el resto. */
+  healthType: string | null;
   at: Date;
   durationMin: number | null;
   title: string | null;
@@ -62,8 +71,6 @@ export interface FeedItem {
 }
 
 export type FeedViewer = "STAFF" | "OWNER";
-
-export const NO_ACTIVITY_LABEL = "Sin actividad registrada";
 
 const TIME_ZONE = "Europe/Madrid";
 
@@ -74,9 +81,13 @@ function trainingKind(type: string | null): ActivityKind {
   return "RIDDEN";
 }
 
-/** Acto sanitario → tipo de actividad. Las notas clínicas no van al feed. */
-function healthKind(type: string): ActivityKind {
-  return type === "FARRIER" ? "FARRIER" : "VET";
+/**
+ * Acto sanitario → tipo de entrada. Solo el herraje tiene tipo propio; el
+ * resto es `HEALTH` con su tipo real, para no llamar "veterinario" a lo que
+ * hizo el dentista o el fisio. Las notas clínicas no van al feed.
+ */
+function healthKind(type: string): FeedKind {
+  return type === "FARRIER" ? "FARRIER" : "HEALTH";
 }
 
 /**
@@ -96,6 +107,7 @@ export function buildFeed(
         id: a.id,
         source: "activity",
         kind: a.kind,
+        healthType: null,
         at: a.at,
         durationMin: a.durationMin,
         title: null,
@@ -106,6 +118,7 @@ export function buildFeed(
       id: t.id,
       source: "training",
       kind: trainingKind(t.type),
+      healthType: null,
       at: t.date,
       durationMin: t.minutes,
       title: t.type,
@@ -116,6 +129,7 @@ export function buildFeed(
       id: h.id,
       source: "health",
       kind: healthKind(h.type),
+      healthType: h.type,
       at: h.date,
       durationMin: null,
       title: h.name,
@@ -162,12 +176,13 @@ function shiftDay(day: string, offset: number): string {
 
 /**
  * Los últimos `days` días, de hoy hacia atrás, en hora de Madrid. Un día sin
- * entradas lleva `emptyLabel`: el feed no rellena con nada inventado.
+ * entradas lleva `empty: true`: el feed no rellena con nada inventado, y el
+ * texto ("Sin actividad registrada") lo pone la UI desde `messages`.
  */
 export function feedByDay(
   items: FeedItem[],
   { now, days }: { now: Date; days: number },
-): { day: string; items: FeedItem[]; emptyLabel: string | null }[] {
+): { day: string; items: FeedItem[]; empty: boolean }[] {
   const today = madridDay(now);
   const buckets = new Map<string, FeedItem[]>();
   for (let i = 0; i < days; i++) buckets.set(shiftDay(today, -i), []);
@@ -175,6 +190,6 @@ export function feedByDay(
   return [...buckets.entries()].map(([day, dayItems]) => ({
     day,
     items: dayItems,
-    emptyLabel: dayItems.length ? null : NO_ACTIVITY_LABEL,
+    empty: dayItems.length === 0,
   }));
 }
