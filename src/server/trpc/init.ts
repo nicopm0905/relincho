@@ -87,6 +87,10 @@ const memberProcedure = baseProcedure.use(({ ctx, next }) => {
   });
 });
 
+// Lista cerrada: un rol nuevo no entra al panel hasta que se añada aquí.
+// PROFESSIONAL, INSTRUCTOR y RIDER tienen su propio router (E1a).
+const PANEL_ROLES: readonly Role[] = ["OWNER", "MANAGER", "GROOM", "VET_EXTERNAL"];
+
 /**
  * Base del panel. El propietario externo queda fuera: su unica puerta es el
  * router `portal`, que filtra por sus caballos y sus facturas. Antes la
@@ -94,7 +98,7 @@ const memberProcedure = baseProcedure.use(({ ctx, next }) => {
  * facturas, contactos o movimientos de toda la yeguada.
  */
 export const tenantProcedure = memberProcedure.use(({ ctx, next }) => {
-  if (ctx.role === "OWNER_EXTERNAL") {
+  if (!PANEL_ROLES.includes(ctx.role)) {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
   return next({ ctx });
@@ -124,7 +128,6 @@ export const staffProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
 /**
  * Profesionales externos (veterinario, herrador, dentista…). Su puerta es su
  * propio router: `tenantProcedure` les cierra el panel del centro.
+ * VET_EXTERNAL entra como veterinario hasta que se migren sus datos.
  */
-export const professionalProcedure = memberProcedure.use(() => {
-  throw new Error("no implementado");
-});
+export const professionalProcedure = roleProcedure("PROFESSIONAL", "VET_EXTERNAL");
