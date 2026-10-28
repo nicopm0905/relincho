@@ -4,6 +4,8 @@ import { createTRPCRouter, roleProcedure } from "../init";
 import { inSequence, withTenant } from "@/server/db/prisma";
 import { withDownloadUrls } from "@/server/services/documents";
 import { invoiceBalance } from "@/lib/invoice-balance";
+import { portalHome } from "@/lib/portal-home";
+import { invoiceLabel } from "@/lib/invoice-label";
 import type { PrismaClient } from "@prisma/client";
 
 /**
@@ -16,6 +18,8 @@ import type { PrismaClient } from "@prisma/client";
  * contexto `tenantId`, `role` y `membershipId` no nulos; aquí sólo añadimos el
  * email del usuario para el match factura ↔ propietario.
  */
+const DAY_MS = 86_400_000;
+
 const portalProcedure = roleProcedure("OWNER_EXTERNAL").use(({ ctx, next }) =>
   next({ ctx: { ...ctx, userEmail: ctx.user.email ?? null } }),
 );
@@ -203,6 +207,77 @@ export const portalRouter = createTRPCRouter({
         balance += Math.max(pending, 0);
       }
       return Math.round(balance * 100) / 100;
+    });
+  }),
+
+  /**
+   * Portada de la app del cliente (E8a): lo que le pide acción y lo que le
+   * interesa de sus caballos, ya ordenado por `portalHome`. Solo sus caballos
+   * (`HorseAccess`) y sus facturas. Las incidencias llegan con E5-2.
+   * Entrenamientos de ±8 días para la actividad de la semana y los programados;
+   * las notas del entrenador ni se leen.
+   */
+  home: portalProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const data = await withTenant(ctx.tenantId, async (tx) => {
+      const horses = await tx.horse.findMany({
+        where: { tenantId: ctx.tenantId, horseAccess: { some: { membershipId: ctx.membershipId } } },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      });
+      const horseIds = horses.map((h) => h.id);
+      const [health, invoices, trainings] = await inSequence([
+        () =>
+          horseIds.length
+            ? tx.healthEvent.findMany({
+                where: { tenantId: ctx.tenantId, horseId: { in: horseIds } },
+                select: {
+                  id: true,
+                  type: true,
+                  name: true,
+                  date: true,
+                  nextDueDate: true,
+                  horse: { select: { id: true, name: true } },
+                },
+              })
+            : Promise.resolve([]),
+        () =>
+          myInvoices(tx, {
+            tenantId: ctx.tenantId,
+            membershipId: ctx.membershipId,
+            userEmail: ctx.userEmail,
+          }),
+        () =>
+          horseIds.length
+            ? tx.trainingSession.findMany({
+                where: {
+                  tenantId: ctx.tenantId,
+                  horseId: { in: horseIds },
+                  date: { gte: new Date(now.getTime() - 8 * DAY_MS), lte: new Date(now.getTime() + 8 * DAY_MS) },
+                },
+                select: { id: true, horseId: true, date: true, minutes: true, type: true },
+              })
+            : Promise.resolve([]),
+      ]);
+      return { horses, health, invoices, trainings };
+    });
+
+    return portalHome({
+      now,
+      trainings: data.trainings.map((t) => ({ ...t, notes: null })),
+      horses: data.horses,
+      incidents: [],
+      health: data.health,
+      invoices: data.invoices
+        .filter((inv) => !inv.rectifiesId)
+        .map((inv) => ({
+          id: inv.id,
+          // Borrador sin numerar: no tiene etiqueta todavía.
+          number: inv.number === null ? null : invoiceLabel(inv),
+          status: inv.status,
+          dueDate: inv.dueDate,
+          pending: invoiceBalance({ total: inv.total, payments: inv.payments, rectifiers: inv.rectifiedBy }).pending,
+        })),
     });
   }),
 

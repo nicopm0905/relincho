@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
+const PORTAL_DIR = "src/app/(app)/[tenantSlug]/portal";
+const PORTAL_NAV = "src/components/portal/portal-nav.tsx";
 
 function source(relativePath: string) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -47,10 +49,68 @@ test("las navegaciones compartidas tienen nombre accesible", () => {
     source("src/components/landing-v2/navbar-v2.tsx"),
     /aria-label=\{t\("navigation"\)\}/,
   );
-  assert.match(
-    source("src/app/(app)/[tenantSlug]/portal/layout.tsx"),
-    /<nav aria-label="Navegación del portal"/,
-  );
+  // El portal ya no lleva el nombre fijo en español: sale de next-intl, como
+  // el resto de navegaciones (E8a).
+  assert.match(source(PORTAL_NAV), /<nav aria-label=\{t\("navigation"\)\}/);
+});
+
+/** Claves de un objeto de mensajes, aplanadas (`a.b.c`). */
+function messageKeys(value: unknown, prefix = ""): string[] {
+  if (typeof value !== "object" || value === null) return [prefix];
+  return Object.entries(value).flatMap(([key, v]) => messageKeys(v, prefix ? `${prefix}.${key}` : key));
+}
+
+test("las pantallas nuevas del portal tienen destino del skip link y objetivos táctiles de al menos 44 px", () => {
+  assert.ok(fs.existsSync(path.join(root, PORTAL_NAV)), `falta la navegación del portal (${PORTAL_NAV})`);
+  const layout = source(`${PORTAL_DIR}/layout.tsx`);
+  const home = source(`${PORTAL_DIR}/page.tsx`);
+  const nav = source(PORTAL_NAV);
+
+  // Un único destino del skip link, en el layout; la portada no añade otro.
+  assert.equal((layout.match(/id="main-content"/g) ?? []).length, 1);
+  assert.equal((home.match(/id="main-content"/g) ?? []).length, 0, "la portada no debe repetir main-content");
+  // La barra inferior del móvil no tapa el final del contenido.
+  assert.match(layout, /<main id="main-content"[^>]*\bpb-(2[4-9]|3\d)\b[^>]*\bmd:pb-/, "el main necesita padding inferior en el móvil");
+
+  // Navegación inferior fija solo en el móvil; en escritorio, la superior.
+  assert.match(layout, /<PortalNav[^>]*variant="bottom"/);
+  assert.match(layout, /<PortalNav[^>]*variant="top"/);
+  assert.match(nav, /md:hidden/);
+  assert.match(nav, /fixed inset-x-0 bottom-0/);
+  assert.match(nav, /aria-current=\{[^}]*"page"/);
+  assert.match(nav, /focus-visible:/);
+
+  // Todo enlace o botón de la portada, del layout y de la navegación mide 44 px o más.
+  for (const [file, content] of [
+    [PORTAL_NAV, nav],
+    [`${PORTAL_DIR}/layout.tsx`, layout],
+    [`${PORTAL_DIR}/page.tsx`, home],
+  ] as const) {
+    const targets = content.match(/<(Link|a|button)\b[^>]*>/g) ?? [];
+    assert.ok(targets.length > 0, `${file} no tiene objetivos táctiles`);
+    for (const tag of targets) {
+      assert.match(tag, /\b(min-h-11|size-11|h-11)\b/, `${file}: objetivo táctil de menos de 44 px: ${tag.slice(0, 90)}`);
+    }
+  }
+
+  // Los textos del portal existen en los dos idiomas con las mismas claves.
+  type PortalMessages = { portal?: { nav?: unknown; home?: unknown } };
+  const es = JSON.parse(source("messages/es.json")) as PortalMessages;
+  const en = JSON.parse(source("messages/en.json")) as PortalMessages;
+  for (const ns of ["nav", "home"] as const) {
+    assert.ok(es.portal?.[ns], `es: falta portal.${ns}`);
+    assert.deepEqual(messageKeys(en.portal?.[ns]).sort(), messageKeys(es.portal?.[ns]).sort(), `portal.${ns} difiere entre es y en`);
+  }
+  // La pestaña de la portada es "Inicio": el alumno no tiene caballo (decisión de Nico, #44).
+  // El título de la portada del propietario es el mismo que la pestaña.
+  type NavMessages = { portal: { nav: { home: string }; home: { ownerTitle: string } } };
+  assert.equal((es as NavMessages).portal.nav.home, "Inicio");
+  assert.equal((en as NavMessages).portal.nav.home, "Home");
+  assert.equal((es as NavMessages).portal.home.ownerTitle, "Inicio");
+  assert.equal((en as NavMessages).portal.home.ownerTitle, "Home");
+  for (const key of ["navigation", "home", "invoices", "documents"]) {
+    assert.ok(nav.includes(`t("${key}")`), `portal-nav no usa t("${key}")`);
+  }
 });
 
 test("los idiomas mantienen las etiquetas necesarias para la navegación", () => {
