@@ -1272,6 +1272,7 @@
       "saving": "Guardando…",
       "saved": "{count, plural, one {Visita registrada en # caballo} other {Visita registrada en # caballos}}",
       "error": "No se pudo registrar la visita",
+      "futureDate": "La fecha de la visita no puede ser posterior a hoy.",
       "pickHorses": "Elige al menos un caballo",
       "noTypes": "Tu especialidad no registra actos sanitarios.",
       "types": {

@@ -1272,6 +1272,7 @@
       "saving": "Saving…",
       "saved": "{count, plural, one {Visit recorded for # horse} other {Visit recorded for # horses}}",
       "error": "Could not record the visit",
+      "futureDate": "The visit date cannot be later than today.",
       "pickHorses": "Choose at least one horse",
       "noTypes": "Your specialty does not record health procedures.",
       "types": {
