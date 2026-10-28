@@ -1,5 +1,7 @@
 {
-  "regions": ["dub1"],
+  "regions": [
+    "dub1"
+  ],
   "crons": [
     {
       "path": "/api/cron/reminders",
@@ -9,5 +11,8 @@
       "path": "/api/cron/weekly-digest",
       "schedule": "0 7 * * 1"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
 }
