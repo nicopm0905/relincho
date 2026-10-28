@@ -5,6 +5,7 @@ import { TRPCError } from "@trpc/server";
 import {
   createCallerFactory,
   createTRPCRouter,
+  professionalProcedure,
   protectedProcedure,
   roleProcedure,
   staffProcedure,
@@ -22,6 +23,7 @@ const router = createTRPCRouter({
   panelWrite: tenantProcedure.mutation(() => "ok"),
   staff: staffProcedure.query(() => "ok"),
   owners: roleProcedure("OWNER").mutation(() => "ok"),
+  professional: professionalProcedure.query(() => "ok"),
 });
 const createCaller = createCallerFactory(router);
 const callerAs = (o: FakeMember | null) => callerFor(createCaller, o);
@@ -63,4 +65,17 @@ test("con la prueba terminada, una mutation se corta y una query pasa", async ()
   const expired = callerAs({ role: "OWNER", trialEnded: true });
   await rejectsWith(expired.panelWrite(), "FORBIDDEN");
   assert.equal(await expired.panel(), "ok");
+});
+
+test("tenantProcedure rechaza a PROFESSIONAL, RIDER e INSTRUCTOR: su puerta es su propio router", async () => {
+  for (const role of ["PROFESSIONAL", "RIDER", "INSTRUCTOR"] as const) {
+    await rejectsWith(callerAs({ role }).panel(), "FORBIDDEN");
+  }
+});
+
+test("professionalProcedure rechaza a OWNER_EXTERNAL y a GROOM", async () => {
+  for (const role of ["OWNER_EXTERNAL", "GROOM"] as const) {
+    await rejectsWith(callerAs({ role }).professional(), "FORBIDDEN");
+  }
+  assert.equal(await callerAs({ role: "PROFESSIONAL" }).professional(), "ok");
 });
