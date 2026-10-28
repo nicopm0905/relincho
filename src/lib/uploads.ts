@@ -88,3 +88,19 @@ export function humanSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/**
+ * Clave privada de una foto de incidencia: dentro del prefijo del centro y del
+ * caballo, para que el acceso se pueda filtrar por `HorseAccess`. Cada
+ * fragmento pasa por `safeKeySegment`, así que nadie sube de carpeta con "../".
+ */
+export function incidentPhotoKey(o: {
+  tenantId: string;
+  horseId: string;
+  incidentId: string;
+  photoId: string;
+  ext: string;
+}): string {
+  const seg = (v: string) => safeKeySegment(v) || "x";
+  return `${seg(o.tenantId)}/incidents/${seg(o.horseId)}/${seg(o.incidentId)}/${seg(o.photoId)}.${seg(o.ext)}`;
+}

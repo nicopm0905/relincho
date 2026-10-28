@@ -34,8 +34,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run quality gate
-        run: npm run check:quality
+      # El mismo comando que el hook pre-push (tipos, lint y tests).
+      # No renombrar el job: el ruleset exige el check por su nombre exacto.
+      - name: Gate (el mismo que el pre-push)
+        run: npm run gate
 
   integration:
     # Aislamiento entre tenants y migraciones desde cero contra Postgres real.
