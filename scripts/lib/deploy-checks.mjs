@@ -5,10 +5,10 @@
 
 /**
  * Checks de GitHub que tienen que estar en verde en el commit que se despliega.
- * Son los mismos que exige el ruleset de master y develop. Al añadir el job de
- * integración (S0-0.4) se suma aquí "Integration (Postgres)" y en el ruleset.
+ * Son los mismos que exige el ruleset de master y develop. "Integration
+ * (Postgres)" llega con #32: hasta que esté en master, el guardián se niega.
  */
-export const REQUIRED_CHECKS = ["Types, tests and accessibility"];
+export const REQUIRED_CHECKS = ["Types, tests and accessibility", "Integration (Postgres)"];
 
 /**
  * `null` si todos los checks requeridos han terminado en verde; si no, el
@@ -27,8 +27,26 @@ export function checksVerdict(runs, required = REQUIRED_CHECKS) {
   return null;
 }
 
-export function migrationsVerdict() {
-  throw new Error("no implementado");
+/**
+ * Veredicto sobre la salida de `prisma migrate status` contra producción. Solo
+ * hay dos salidas buenas:
+ *  - "ok": la BD está al día;
+ *  - "pending": hay migraciones sin aplicar y nada más (se despliegan solo con
+ *    el SQL revisado, `DEPLOY_MIGRATIONS_OK=1`).
+ * Cualquier otra cosa (migración fallida P3009, sin conexión P1001, salida
+ * vacía o inesperada) es "error" y el guardián se niega siempre.
+ *
+ * @param {string} statusOutput
+ * @returns {{ state: "ok" | "pending" } | { state: "error", detail: string }}
+ */
+export function migrationsVerdict(statusOutput) {
+  const out = statusOutput ?? "";
+  if (/have failed|P3009|P3018|Error:/i.test(out)) {
+    return { state: "error", detail: "migrate status informa de un error o de una migración fallida" };
+  }
+  if (/Database schema is up to date/i.test(out)) return { state: "ok" };
+  if (/not yet been applied/i.test(out)) return { state: "pending" };
+  return { state: "error", detail: "salida inesperada de migrate status" };
 }
 
 /**

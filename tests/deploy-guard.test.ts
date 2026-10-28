@@ -15,7 +15,7 @@ test("los checks requeridos para desplegar coinciden con los del ruleset", () =>
 });
 
 test("checksVerdict acepta un commit con todos los checks requeridos en verde", () => {
-  assert.equal(checksVerdict([ok("Types, tests and accessibility"), ok("Vercel")]), null);
+  assert.equal(checksVerdict([ok("Types, tests and accessibility"), ok("Integration (Postgres)"), ok("Vercel")]), null);
 });
 
 test("checksVerdict rechaza si falta un check requerido", () => {
@@ -31,7 +31,7 @@ test("checksVerdict rechaza un check en curso o fallido", () => {
 
 test("checksVerdict ignora checks no requeridos aunque fallen (la preview de Vercel)", () => {
   const vercel = { name: "Vercel", status: "completed", conclusion: "failure" };
-  assert.equal(checksVerdict([ok("Types, tests and accessibility"), vercel]), null);
+  assert.equal(checksVerdict([ok("Types, tests and accessibility"), ok("Integration (Postgres)"), vercel]), null);
 });
 
 test("migrationsVerdict solo da por buena la BD si migrate status dice up to date", () => {

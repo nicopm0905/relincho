@@ -5,7 +5,7 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { parse } from "dotenv";
 import { isFrozen } from "./lib/freeze.mjs";
-import { checksVerdict, migrationsPending, productionDbUrl } from "./lib/deploy-checks.mjs";
+import { checksVerdict, migrationsVerdict, productionDbUrl } from "./lib/deploy-checks.mjs";
 
 const sh = (cmd, env = process.env) =>
   execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env }).trim();
@@ -52,7 +52,11 @@ try {
 } catch (e) {
   status = `${e.stdout ?? ""}${e.stderr ?? ""}`;
 }
-if (migrationsPending(status) && process.env.DEPLOY_MIGRATIONS_OK !== "1") {
+const migrations = migrationsVerdict(status);
+if (migrations.state === "error") {
+  fail(`migraciones de producción: ${migrations.detail}. Revisa "npx prisma migrate status".`);
+}
+if (migrations.state === "pending" && process.env.DEPLOY_MIGRATIONS_OK !== "1") {
   fail("hay migraciones pendientes. Revisa el SQL y relanza con DEPLOY_MIGRATIONS_OK=1.");
 }
 
