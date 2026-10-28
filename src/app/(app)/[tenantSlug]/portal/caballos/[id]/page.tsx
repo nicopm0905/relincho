@@ -48,6 +48,18 @@ function ageLabel(birthDate: Date | null) {
   return `${years} ${years === 1 ? "año" : "años"}`;
 }
 
+/** Separa los actos sanitarios en próximos (ordenados por fecha) y pasados. */
+function splitHealthByDue<T extends { date: Date; nextDueDate: Date | null }>(
+  events: T[],
+) {
+  const now = Date.now();
+  const due = (e: T) => new Date(e.nextDueDate ?? e.date).getTime();
+  return {
+    upcoming: events.filter((e) => due(e) >= now).sort((a, b) => due(a) - due(b)),
+    past: events.filter((e) => due(e) < now),
+  };
+}
+
 export default async function PortalHorsePage({ params }: PageProps) {
   const { tenantSlug, id } = await params;
   const caller = await createServerCaller(tenantSlug);
@@ -59,21 +71,9 @@ export default async function PortalHorsePage({ params }: PageProps) {
     notFound();
   }
 
-  const now = Date.now();
-  const upcomingHealth = horse.healthEvents
-    .filter((e) => {
-      const d = new Date(e.nextDueDate ?? e.date).getTime();
-      return d >= now;
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.nextDueDate ?? a.date).getTime() -
-        new Date(b.nextDueDate ?? b.date).getTime(),
-    );
-  const pastHealth = horse.healthEvents.filter((e) => {
-    const d = new Date(e.nextDueDate ?? e.date).getTime();
-    return d < now;
-  });
+  const { upcoming: upcomingHealth, past: pastHealth } = splitHealthByDue(
+    horse.healthEvents,
+  );
 
   const recentTrainings = horse.trainings.slice(0, 12);
   const mediaDocs = horse.documents.filter((d) =>

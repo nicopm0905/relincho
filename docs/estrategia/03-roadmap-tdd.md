@@ -60,24 +60,14 @@
 **Harness de routers (propuesto):**
 
 - Refactor previo (0,5 días): mover `createTRPCContext` de `src/server/trpc/init.ts:12-70` a `src/server/trpc/context.ts`. `init.ts` se queda con `import type { TRPCContext }`. Cambian dos consumidores: `src/app/api/trpc/[trpc]/route.ts` y `src/lib/trpc/server.ts`. Así `init.ts` deja de cargar Auth.js en los tests.
-- `tests/helpers/trpc.ts`:
+- `tests/helpers/trpc.ts` (**hecho en S0-0.3**): `fakeCtx(miembro | null)` y `callerAs(createCaller, miembro | null)`. Recibe el `createCaller` del router, no el router, para conservar los tipos de cada procedure. El patrón de uso está en `tests/procedures.test.ts`:
 
 ```ts
-import type { Role } from "@prisma/client";
-import { createCallerFactory } from "@/server/trpc/init";
-import { appRouter } from "@/server/trpc/router";
-
-/** Caller con un contexto falso: lo que dejaría `createTRPCContext` para ese miembro. */
-export function callerAs(o: {
-  userId: string; tenantId: string; membershipId: string; role: Role; email?: string;
-  isDemo?: boolean; trialEnded?: boolean;
-}) {
-  return createCallerFactory(appRouter)({
-    user: { id: o.userId, email: o.email ?? `${o.userId}@test.local`, name: "Test", image: null },
-    tenantId: o.tenantId, role: o.role, membershipId: o.membershipId,
-    isDemo: o.isDemo ?? false, trialEnded: o.trialEnded ?? false, headers: new Headers(),
-  });
-}
+const router = createTRPCRouter({ staff: staffProcedure.query(() => "ok") });
+const createCaller = createCallerFactory(router);
+await callerAs(createCaller, { role: "GROOM" }).staff();            // "ok"
+await callerAs(createCaller, { role: "OWNER_EXTERNAL" }).staff();   // FORBIDDEN
+// Integración: createCallerFactory(appRouter) (carga Prisma; solo con BD efímera)
 ```
 
 - `tests/helpers/factories.ts`: `makeTenant()` (slug aleatorio), `makeMember(tenant, role, { specialty })`, `makeHorse(tenant)`, `grantAccess(member, horse, relation)`. Cada test crea su propio tenant, así que no hace falta truncar tablas entre tests.

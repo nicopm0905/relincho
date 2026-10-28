@@ -25,7 +25,9 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/react";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export function NewContractDialog({ tenantSlug, horses, clients }: { tenantSlug: string, horses: any[], clients: any[] }) {
+type Option = { id: string; name: string };
+
+export function NewContractDialog({ tenantSlug, horses, clients }: { tenantSlug: string, horses: Option[], clients: Option[] }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   
