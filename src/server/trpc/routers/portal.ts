@@ -18,6 +18,8 @@ import type { PrismaClient } from "@prisma/client";
  * contexto `tenantId`, `role` y `membershipId` no nulos; aquí sólo añadimos el
  * email del usuario para el match factura ↔ propietario.
  */
+const DAY_MS = 86_400_000;
+
 const portalProcedure = roleProcedure("OWNER_EXTERNAL").use(({ ctx, next }) =>
   next({ ctx: { ...ctx, userEmail: ctx.user.email ?? null } }),
 );
@@ -212,8 +214,11 @@ export const portalRouter = createTRPCRouter({
    * Portada de la app del cliente (E8a): lo que le pide acción y lo que le
    * interesa de sus caballos, ya ordenado por `portalHome`. Solo sus caballos
    * (`HorseAccess`) y sus facturas. Las incidencias llegan con E5-2.
+   * Entrenamientos de ±8 días para la actividad de la semana y los programados;
+   * las notas del entrenador ni se leen.
    */
   home: portalProcedure.query(async ({ ctx }) => {
+    const now = new Date();
     const data = await withTenant(ctx.tenantId, async (tx) => {
       const horses = await tx.horse.findMany({
         where: { tenantId: ctx.tenantId, horseAccess: { some: { membershipId: ctx.membershipId } } },
@@ -221,7 +226,7 @@ export const portalRouter = createTRPCRouter({
         orderBy: { name: "asc" },
       });
       const horseIds = horses.map((h) => h.id);
-      const [health, invoices] = await inSequence([
+      const [health, invoices, trainings] = await inSequence([
         () =>
           horseIds.length
             ? tx.healthEvent.findMany({
@@ -242,12 +247,24 @@ export const portalRouter = createTRPCRouter({
             membershipId: ctx.membershipId,
             userEmail: ctx.userEmail,
           }),
+        () =>
+          horseIds.length
+            ? tx.trainingSession.findMany({
+                where: {
+                  tenantId: ctx.tenantId,
+                  horseId: { in: horseIds },
+                  date: { gte: new Date(now.getTime() - 8 * DAY_MS), lte: new Date(now.getTime() + 8 * DAY_MS) },
+                },
+                select: { id: true, horseId: true, date: true, minutes: true, type: true },
+              })
+            : Promise.resolve([]),
       ]);
-      return { horses, health, invoices };
+      return { horses, health, invoices, trainings };
     });
 
     return portalHome({
-      now: new Date(),
+      now,
+      trainings: data.trainings.map((t) => ({ ...t, notes: null })),
       horses: data.horses,
       incidents: [],
       health: data.health,

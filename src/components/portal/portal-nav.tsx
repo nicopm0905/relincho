@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Files, Horse, Receipt, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { Files, House, Receipt, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { portalSection, type PortalSection } from "@/lib/portal-view";
 
 const ITEMS: { key: PortalSection; path: string; icon: PhosphorIcon }[] = [
-  { key: "home", path: "", icon: Horse },
+  { key: "home", path: "", icon: House },
   { key: "invoices", path: "/facturas", icon: Receipt },
   { key: "documents", path: "/documentos", icon: Files },
 ];

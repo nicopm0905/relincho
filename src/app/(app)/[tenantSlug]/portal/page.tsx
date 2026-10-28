@@ -7,6 +7,7 @@ import { relativeDue } from "@/lib/portal-view";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
+  Barbell,
   CaretRight,
   CheckCircle,
   Heartbeat,
@@ -113,6 +114,11 @@ export default async function PortalHomePage({ params }: PageProps) {
   ]);
 
   const day = (d: Date) => format.dateTime(d, { dateStyle: "medium", timeZone: TZ });
+  const shortDay = (d: Date) =>
+    format.dateTime(d, { weekday: "short", day: "numeric", month: "short", timeZone: TZ });
+  /** `YYYY-MM-DD` de Madrid → "lunes, 7 de diciembre" (a mediodía UTC no cambia de día). */
+  const weekday = (isoDay: string) =>
+    format.dateTime(new Date(`${isoDay}T12:00:00Z`), { weekday: "long", day: "numeric", month: "long", timeZone: TZ });
   const euros = (n: number) => format.number(n, { style: "currency", currency: "EUR" });
   const dueLabel = (d: Date) => {
     const { key, days } = relativeDue(calendarDayOffset(d, now));
@@ -246,6 +252,60 @@ export default async function PortalHomePage({ params }: PageProps) {
         </div>
       )}
 
+      {/* 4. Qué se ha hecho con sus caballos esta semana y qué está programado. */}
+      {home.activity.length > 0 && (
+        <Section id="portal-activity" title={t("activity")}>
+          <ol className="space-y-4">
+            {home.activity.map((d, index) => (
+              <li key={d.day} className="space-y-1.5">
+                <h3 className="text-label font-semibold text-muted-foreground">
+                  {index === 0 ? t("today") : index === 1 ? t("yesterday") : weekday(d.day)}
+                </h3>
+                {d.emptyLabel !== null ? (
+                  <p className="rounded-2xl border border-dashed border-border px-4 py-3 text-label text-muted-foreground">
+                    {t("noActivity")}
+                  </p>
+                ) : (
+                  <ul className={LIST}>
+                    {d.items.map((a) => (
+                      <Row
+                        key={`${a.source}-${a.id}`}
+                        href={`${base}/caballos/${a.horseId}`}
+                        icon={a.source === "training" ? <Barbell /> : a.kind === "FARRIER" ? <Hammer /> : a.source === "health" ? <Heartbeat /> : <Horse />}
+                        title={[t(`activityKinds.${a.kind}`), a.title].filter(Boolean).join(" · ")}
+                        detail={a.horseName}
+                        aside={a.durationMin ? t("minutes", { minutes: a.durationMin }) : undefined}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ol>
+        </Section>
+      )}
+
+      {isOwner && (
+        <Section id="portal-scheduled" title={t("scheduled")}>
+          {home.scheduledTrainings.length === 0 ? (
+            <p className="text-label text-muted-foreground">{t("noScheduled")}</p>
+          ) : (
+            <ul className={LIST}>
+              {home.scheduledTrainings.map((s) => (
+                <Row
+                  key={s.id}
+                  href={`${base}/caballos/${s.horseId}`}
+                  icon={<Barbell />}
+                  title={s.type || t("training")}
+                  detail={`${s.horseName} · ${t("minutes", { minutes: s.minutes })}`}
+                  aside={shortDay(s.date)}
+                />
+              ))}
+            </ul>
+          )}
+        </Section>
+      )}
+
       {/* Alumno: sin caballos no se le habla de "tu caballo". */}
       {home.emptyState === "STUDENT_NO_HORSE" && (
         <EmptyState
@@ -271,7 +331,7 @@ export default async function PortalHomePage({ params }: PageProps) {
         />
       )}
 
-      {/* 4. Mis caballos, como la portada anterior. */}
+      {/* 5. Mis caballos, como la portada anterior. */}
       {horses.length > 0 && (
         <Section id="portal-horses" title={t("horsesSection")}>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
