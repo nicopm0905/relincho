@@ -144,7 +144,15 @@ export const PERMISSION_MATRIX: PermissionMatrix = {
   RIDER: none,
 };
 
-const VET_TYPES: readonly HealthEventType[] = ["VACCINE", "DEWORMING", "VET_CHECKUP", "TREATMENT"];
+// Decisión de #26: el veterinario también registra lesiones y odontología.
+const VET_TYPES: readonly HealthEventType[] = [
+  "VACCINE",
+  "DEWORMING",
+  "VET_CHECKUP",
+  "TREATMENT",
+  "INJURY",
+  "DENTAL",
+];
 
 /** Los actos sanitarios que registra cada especialidad. */
 export const SPECIALTY_HEALTH_TYPES: Record<ProfessionalSpecialty, readonly HealthEventType[]> = {
