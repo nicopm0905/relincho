@@ -32,6 +32,20 @@ export function migrationsPending(statusOutput) {
   return /not yet been applied/i.test(statusOutput);
 }
 
-export function productionDbUrl() {
-  throw new Error("no implementado");
+/**
+ * URL de la BD de producción para `prisma migrate status`. Sale de
+ * `.env.production.local` (ya parseado; `null` si no existe), nunca del `.env`,
+ * que apunta a la BD local de desarrollo (AGENTS.md §7).
+ *
+ * @param {Record<string, string> | null} prodEnv
+ * @returns {{ url: string } | { error: string }}
+ */
+export function productionDbUrl(prodEnv) {
+  if (!prodEnv) return { error: "falta .env.production.local con la BD de producción." };
+  const url = prodEnv.DIRECT_URL;
+  if (!url) return { error: "falta DIRECT_URL en .env.production.local." };
+  if (/@(localhost|127\.0\.0\.1):/.test(url)) {
+    return { error: "DIRECT_URL de .env.production.local apunta a una BD local, no a producción." };
+  }
+  return { url };
 }

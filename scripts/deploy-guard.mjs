@@ -2,11 +2,13 @@
 // a producción salvo que todo esté en orden. Las reglas puras viven en
 // scripts/lib/ y tienen tests; aquí solo se recogen los datos.
 import { execSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { parse } from "dotenv";
 import { isFrozen } from "./lib/freeze.mjs";
-import { checksVerdict, migrationsPending } from "./lib/deploy-checks.mjs";
+import { checksVerdict, migrationsPending, productionDbUrl } from "./lib/deploy-checks.mjs";
 
-const sh = (cmd) =>
-  execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const sh = (cmd, env = process.env) =>
+  execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env }).trim();
 const fail = (msg) => {
   console.error(`deploy-guard: ${msg}`);
   process.exit(1);
@@ -38,10 +40,15 @@ const verdict = checksVerdict(runs);
 if (verdict) fail(`${verdict} en ${head.slice(0, 7)}.`);
 
 // 4. El build de Vercel aplica las migraciones pendientes en producción:
-//    hay que haber revisado su SQL antes.
+//    hay que haber revisado su SQL antes. Se consulta la BD de PRODUCCIÓN
+//    (.env.production.local), no la local del .env.
+const prodFile = ".env.production.local";
+const prod = productionDbUrl(existsSync(prodFile) ? parse(readFileSync(prodFile)) : null);
+if ("error" in prod) fail(prod.error);
 let status = "";
 try {
-  status = sh("npx prisma migrate status");
+  // prisma.config.ts lee DIRECT_URL; dotenv no pisa una variable ya definida.
+  status = sh("npx prisma migrate status", { ...process.env, DIRECT_URL: prod.url });
 } catch (e) {
   status = `${e.stdout ?? ""}${e.stderr ?? ""}`;
 }
