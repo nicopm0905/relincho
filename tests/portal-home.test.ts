@@ -119,15 +119,17 @@ test("un día sin registros dice \"Sin actividad registrada\" y no inventa nada"
   assert.equal(vacia.activity.length, 7);
   for (const d of vacia.activity) {
     assert.deepEqual(d.items, []);
-    assert.equal(d.emptyLabel, "Sin actividad registrada");
+    // El motor solo marca el día vacío: "Sin actividad registrada" sale de messages (portal.home).
+    assert.equal(d.empty, true);
   }
   assert.deepEqual(vacia.scheduledTrainings, []);
 
   const conAyer = portalHome(
     base({ trainings: [{ id: "t-ayer", horseId: lucero.id, date: day(-1), minutes: 45, type: "Doma", notes: null }] }),
   );
-  assert.equal(conAyer.activity[0]?.emptyLabel, "Sin actividad registrada");
-  assert.equal(conAyer.activity[1]?.emptyLabel, null);
+  assert.equal(conAyer.activity[0]?.empty, true);
+  assert.equal(conAyer.activity[1]?.empty, false);
+  assert.ok(conAyer.activity.every((d) => !("emptyLabel" in d)), "el motor no lleva textos en castellano");
   assert.deepEqual(conAyer.activity.flatMap((d) => d.items).map((i) => i.id), ["t-ayer"]);
 
   // El alumno no tiene caballo: ni siete días vacíos de "su caballo".

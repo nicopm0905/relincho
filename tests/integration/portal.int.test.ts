@@ -1,5 +1,6 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
+import { TRPCError } from "@trpc/server";
 
 import { createCallerFactory } from "@/server/trpc/init";
 import { appRouter } from "@/server/trpc/router";
@@ -62,4 +63,18 @@ test("portal.home solo devuelve entrenamientos de los caballos del propietario",
   assert.deepEqual(done.map((i) => i.horseId), [suyo.id]);
   assert.deepEqual(home.scheduledTrainings.map((s) => s.horseId), [suyo.id]);
   assert.doesNotMatch(JSON.stringify(home), /nota interna/i);
+});
+
+test("portal.home responde FORBIDDEN a quien no es cliente: OWNER, GROOM o PROFESSIONAL", async () => {
+  const t = await makeTenant();
+  const horse = await makeHorse(t, { name: "Del centro" });
+  for (const role of ["OWNER", "GROOM", "PROFESSIONAL"] as const) {
+    const member = await makeMember(t, role);
+    await grantAccess(member, horse);
+    await assert.rejects(
+      callerAs(createCaller, member).portal.home(),
+      (err: unknown) => err instanceof TRPCError && err.code === "FORBIDDEN",
+      `${role} no debe ver la portada del cliente`,
+    );
+  }
 });
