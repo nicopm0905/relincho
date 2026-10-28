@@ -1,4 +1,12 @@
 import { calendarDayOffset } from "@/lib/day-window";
+import {
+  HEALTH_EVENT_TYPES,
+  ROLES,
+  canRecordHealthEvent,
+  type HealthEventType,
+  type PermissionRole,
+  type ProfessionalSpecialty,
+} from "@/lib/permissions";
 
 /**
  * Avisos multi-destinatario de vencimientos sanitarios (roadmap §4 E3). Motor
@@ -8,20 +16,13 @@ import { calendarDayOffset } from "@/lib/day-window";
  * Un vencimiento avisa a la vez a:
  *  - el centro: OWNER y MANAGER;
  *  - el propietario del caballo: OWNER_EXTERNAL con HorseAccess;
- *  - el profesional de esa especialidad con HorseAccess (el herrador, el herraje).
+ *  - el profesional con HorseAccess que puede registrar ese acto según
+ *    `permissions.ts` (el herrador, el herraje; el veterinario, la vacuna).
  * Mozos, profesores y jinetes no reciben avisos de vencimientos.
  */
 
-/** Especialidades del profesional (E1a). Texto para no depender del enum aún. */
-export type Specialty =
-  | "VET"
-  | "VET_SPECIALIST"
-  | "FARRIER"
-  | "PHYSIO"
-  | "DENTIST"
-  | "NUTRITIONIST"
-  | "TRAINER"
-  | "OTHER";
+/** Especialidades del profesional: las define `permissions.ts` (E1a). */
+export type Specialty = ProfessionalSpecialty;
 
 export interface ReminderMember {
   userId: string;
@@ -49,26 +50,20 @@ export interface DueEventInput {
   nextDueDate: Date | null;
 }
 
-/**
- * Qué especialidad se avisa para cada tipo de acto. Es una regla de AVISO, no
- * de permisos: qué puede REGISTRAR cada especialidad vive en
- * src/lib/permissions.ts (E1a-1). Unificar cuando los dos estén en develop.
- */
-const NOTIFIED_SPECIALTIES: Record<string, readonly Specialty[]> = {
-  FARRIER: ["FARRIER"],
-  VACCINE: ["VET"],
-  DEWORMING: ["VET"],
-  VET_CHECKUP: ["VET"],
-  TREATMENT: ["VET"],
-  DENTAL: ["DENTIST"],
-};
-
 const CENTER_ROLES = new Set(["OWNER", "MANAGER"]);
+const PROFESSIONAL_ROLES = new Set(["PROFESSIONAL", "VET_EXTERNAL"]);
 
-/** Especialidad efectiva: el rol antiguo VET_EXTERNAL cuenta como veterinario. */
-function specialtyOf(m: ReminderMember): Specialty | null {
-  if (m.role === "VET_EXTERNAL") return "VET";
-  return m.role === "PROFESSIONAL" ? m.specialty : null;
+const isRole = (r: string): r is PermissionRole => (ROLES as readonly string[]).includes(r);
+const isHealthType = (t: string): t is HealthEventType => (HEALTH_EVENT_TYPES as readonly string[]).includes(t);
+
+/**
+ * Regla única con los permisos: el profesional recibe el aviso de un acto si
+ * puede registrarlo (`canRecordHealthEvent`). VET_EXTERNAL cuenta como
+ * veterinario, como en `permissions.ts`.
+ */
+function professionalIsNotified(m: ReminderMember, type: string): boolean {
+  if (!PROFESSIONAL_ROLES.has(m.role) || !isRole(m.role) || !isHealthType(type)) return false;
+  return canRecordHealthEvent({ role: m.role, specialty: m.specialty }, type);
 }
 
 /**
@@ -80,17 +75,13 @@ export function recipientsFor(
   event: { horseId: string; type: string },
   members: ReminderMember[],
 ): ReminderRecipient[] {
-  const notified = NOTIFIED_SPECIALTIES[event.type] ?? [];
   const byUser = new Map<string, ReminderRecipient>();
   for (const m of members) {
     const hasHorse = m.horseIds.includes(event.horseId);
     let reason: RecipientReason | null = null;
     if (CENTER_ROLES.has(m.role)) reason = "CENTER";
     else if (m.role === "OWNER_EXTERNAL" && hasHorse) reason = "OWNER";
-    else {
-      const specialty = specialtyOf(m);
-      if (specialty && hasHorse && notified.includes(specialty)) reason = "PROFESSIONAL";
-    }
+    else if (hasHorse && professionalIsNotified(m, event.type)) reason = "PROFESSIONAL";
     if (reason && !byUser.has(m.userId)) {
       byUser.set(m.userId, { userId: m.userId, email: m.email, reason });
     }
