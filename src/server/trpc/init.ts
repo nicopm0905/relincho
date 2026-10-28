@@ -120,3 +120,11 @@ export const roleProcedure = (...allowed: Role[]) =>
  * caballo concreto: facturas, pupilaje, contactos, diario de la cuadra.
  */
 export const staffProcedure = roleProcedure("OWNER", "MANAGER", "GROOM");
+
+/**
+ * Profesionales externos (veterinario, herrador, dentista…). Su puerta es su
+ * propio router: `tenantProcedure` les cierra el panel del centro.
+ */
+export const professionalProcedure = memberProcedure.use(() => {
+  throw new Error("no implementado");
+});

@@ -13,6 +13,9 @@ enum Role {
   GROOM
   VET_EXTERNAL
   OWNER_EXTERNAL
+  INSTRUCTOR
+  PROFESSIONAL
+  RIDER
 }
 
 enum Sex {
