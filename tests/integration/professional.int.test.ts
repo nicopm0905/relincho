@@ -28,7 +28,7 @@ test("un herrador registra un herraje en un caballo con acceso y queda con su au
   const farrier = await makeMember(t, "PROFESSIONAL", { specialty: "FARRIER" });
   const lucero = await makeHorse(t, { name: "Lucero" });
   await grantAccess(farrier, lucero);
-  const date = new Date("2026-12-10T09:00:00Z");
+  const date = new Date(Date.now() - 2 * DAY);
 
   const result = await callerAs(createCaller, farrier).professional.recordVisit({
     horseIds: [lucero.id],
@@ -97,7 +97,7 @@ test("tras el herraje, el siguiente aviso del cron va al propietario, al centro 
   await grantAccess(farrier, lucero);
 
   // Herraje hace 35 días: el siguiente (a 6 semanas) vence en 7, cuando avisa el cron.
-  const now = new Date("2027-01-20T08:00:00Z");
+  const now = new Date();
   await callerAs(createCaller, farrier).professional.recordVisit({
     horseIds: [lucero.id],
     type: "FARRIER",
@@ -135,4 +135,22 @@ test("reintentar la misma visita con el mismo clientMutationId no la duplica", a
 
   assert.deepEqual([first.created, retry.created], [2, 0]);
   assert.equal(await prisma.healthEvent.count({ where: { horseId: { in: [a.id, b.id] } } }), 2);
+});
+
+test("una visita con fecha posterior a hoy se rechaza y no guarda nada", async () => {
+  const t = await makeTenant();
+  const farrier = await makeMember(t, "PROFESSIONAL", { specialty: "FARRIER" });
+  const lucero = await makeHorse(t);
+  await grantAccess(farrier, lucero);
+
+  await rejectsWith(
+    callerAs(createCaller, farrier).professional.recordVisit({
+      horseIds: [lucero.id],
+      type: "FARRIER",
+      name: "Herraje",
+      date: new Date(Date.now() + 7 * DAY),
+    }),
+    "BAD_REQUEST",
+  );
+  assert.equal(await prisma.healthEvent.count({ where: { horseId: lucero.id } }), 0);
 });

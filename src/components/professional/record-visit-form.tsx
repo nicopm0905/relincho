@@ -57,7 +57,8 @@ export function RecordVisitForm({ horses }: { horses: { id: string; name: string
       setNotes("");
       router.refresh();
     },
-    onError: (err) => toast.error(err.message || t("error")),
+    onError: (err) =>
+      toast.error(err.message === "FUTURE_VISIT" ? t("futureDate") : err.message || t("error")),
   });
 
   if (typesQuery.isSuccess && types.length === 0) {
@@ -152,7 +153,14 @@ export function RecordVisitForm({ horses }: { horses: { id: string; name: string
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="visit-date">{t("date")}</Label>
-          <Input id="visit-date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+          <Input
+            id="visit-date"
+            type="date"
+            required
+            max={todayMadrid()}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="visit-next">{t("next")}</Label>

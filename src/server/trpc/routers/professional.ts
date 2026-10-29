@@ -4,7 +4,7 @@ import { HealthEventType } from "@prisma/client";
 import { createTRPCRouter, professionalProcedure } from "../init";
 import { prisma, withTenant } from "@/server/db/prisma";
 import { healthTypesFor } from "@/lib/permissions";
-import { planVisit } from "@/lib/professional-visit";
+import { isFutureVisit, planVisit } from "@/lib/professional-visit";
 
 /**
  * Puerta del profesional externo: veterinario, herrador, dentista… (E1a).
@@ -60,6 +60,10 @@ export const professionalRouter = createTRPCRouter({
       });
       if (!healthTypesFor({ role: ctx.role, specialty: m.specialty }).includes(input.type)) {
         throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      // Lo registrado ya está hecho: la cita futura va en `nextDueDate`.
+      if (isFutureVisit(input.date, new Date())) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "FUTURE_VISIT" });
       }
 
       const wanted = [...new Set(input.horseIds)];
