@@ -1256,7 +1256,36 @@
     "empty": "El centro todavía no te ha asignado ningún caballo.",
     "box": "Box {box}",
     "navigation": "Navegación del profesional",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "visit": {
+      "title": "Registrar visita",
+      "horses": "Caballos",
+      "all": "Todos",
+      "none": "Ninguno",
+      "type": "Acto",
+      "name": "Descripción",
+      "date": "Fecha de la visita",
+      "next": "Próxima cita (opcional)",
+      "nextHint": "Si la dejas vacía, en un herraje se calcula sola: 6 semanas o lo que tenga el caballo.",
+      "notes": "Notas (opcional)",
+      "submit": "Registrar visita",
+      "saving": "Guardando…",
+      "saved": "{count, plural, one {Visita registrada en # caballo} other {Visita registrada en # caballos}}",
+      "error": "No se pudo registrar la visita",
+      "futureDate": "La fecha de la visita no puede ser posterior a hoy.",
+      "pickHorses": "Elige al menos un caballo",
+      "noTypes": "Tu especialidad no registra actos sanitarios.",
+      "types": {
+        "VACCINE": "Vacuna",
+        "DEWORMING": "Desparasitación",
+        "DENTAL": "Dental",
+        "FARRIER": "Herraje",
+        "VET_CHECKUP": "Revisión",
+        "TREATMENT": "Tratamiento",
+        "INJURY": "Lesión",
+        "OTHER": "Otro"
+      }
+    }
   },
   "portal": {
     "nav": {
