@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Horse } from "@phosphor-icons/react/dist/ssr";
 import { RecordVisitForm } from "@/components/professional/record-visit-form";
+import { NotificationSettings } from "@/components/notifications/notification-settings";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -56,6 +57,9 @@ export default async function ProfessionalHomePage({ params }: PageProps) {
           ))}
         </ul>
       )}
+
+      {/* Avisos del profesional (E4): push en su móvil y canales por tipo. */}
+      <NotificationSettings />
     </div>
   );
 }

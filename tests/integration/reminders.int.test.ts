@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 
 import { prisma } from "@/server/db/prisma";
 import { runReminders, type ReminderSend } from "@/server/services/notifications/reminders";
+import type { PushSend } from "@/server/services/notifications/notify";
 import { GET } from "@/app/api/cron/reminders/route";
 import {
   closeDb,
@@ -157,4 +158,29 @@ test("un caballo vendido o muerto no genera avisos; uno retirado sí, porque sig
   const keys = notifications.map((n) => n.dedupeKey).join(" ");
   assert.equal(notifications.length, 1, "solo el caballo retirado");
   assert.ok(keys.includes(events.RETIRED!), keys);
+});
+
+test("quien tiene el push activado recibe el recordatorio en el móvil y no por email; el resto, por email", async () => {
+  const { tenant, expected } = await farrierScenario();
+  const [owner, , horseOwner] = expected;
+  await prisma.pushSubscription.create({
+    data: { userId: horseOwner.userId, endpoint: `https://push.example/${tenant.slug}`, p256dh: "BPinventada", auth: "auth-inventada" },
+  });
+  const fake = fakeSend();
+  const pushed: string[] = [];
+  const push: PushSend = async (target) => {
+    pushed.push(target.endpoint);
+    return { ok: true, statusCode: 201 };
+  };
+
+  await runReminders({ now: NOW, db: prisma, send: fake.send, push });
+
+  assert.deepEqual(pushed, [`https://push.example/${tenant.slug}`]);
+  assert.ok(!fake.to(tenant).includes(horseOwner.email), "la propietaria con push no recibe email");
+  assert.ok(fake.to(tenant).includes(owner.email));
+  const byUser = await prisma.notificationDelivery.findMany({
+    where: { notification: { tenantId: tenant.id, userId: horseOwner.userId } },
+    select: { channel: true, status: true },
+  });
+  assert.deepEqual(byUser, [{ channel: "PUSH", status: "SENT" }]);
 });

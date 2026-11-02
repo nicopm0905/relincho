@@ -12,6 +12,7 @@ import {
 } from "@/lib/reminder-recipients";
 import { prisma } from "@/server/db/prisma";
 import { sendHealthReminder, type SendResult } from "@/server/services/notifications/email";
+import { notify, type PushSend } from "@/server/services/notifications/notify";
 
 /** Estados de caballo que ya no generan avisos de vencimiento. */
 export const INACTIVE_HORSE_STATUSES = ["SOLD", "DEAD"] as const;
@@ -39,6 +40,8 @@ export interface RemindersSummary {
   /** Avisos que ya existían: ni se crean ni se reenvían. */
   duplicates: number;
   sent: number;
+  /** Avisos que llegaron al móvil por push (E4). */
+  pushed: number;
   failed: number;
   /** Envíos omitidos porque el email no está configurado. */
   skipped: number;
@@ -52,12 +55,14 @@ export async function runReminders({
   now = new Date(),
   db = prisma,
   send = sendHealthReminder,
-}: { now?: Date; db?: PrismaClient; send?: ReminderSend } = {}): Promise<RemindersSummary> {
+  push,
+}: { now?: Date; db?: PrismaClient; send?: ReminderSend; push?: PushSend } = {}): Promise<RemindersSummary> {
   const summary: RemindersSummary = {
     events: 0,
     created: 0,
     duplicates: 0,
     sent: 0,
+    pushed: 0,
     failed: 0,
     skipped: 0,
     tenantErrors: 0,
@@ -67,7 +72,7 @@ export async function runReminders({
   });
   for (const tenant of tenants) {
     try {
-      await remindTenant({ tenant, now, db, send, summary });
+      await remindTenant({ tenant, now, db, send, push, summary });
     } catch (error) {
       summary.tenantErrors++;
       await reportError(error, { scope: "cron-reminders", tenantId: tenant.id });
@@ -83,12 +88,14 @@ async function remindTenant({
   now,
   db,
   send,
+  push,
   summary,
 }: {
   tenant: TenantRow;
   now: Date;
   db: PrismaClient;
   send: ReminderSend;
+  push?: PushSend;
   summary: RemindersSummary;
 }) {
   const leadDays = tenant.reminderLeadDays;
@@ -196,31 +203,31 @@ async function remindTenant({
           throw error;
         }
         summary.created++;
-        if (!recipient.email) continue;
-
-        const result = await safeSend(send, {
-          to: recipient.email,
-          ownerName: names.get(recipient.userId) ?? recipient.email,
-          horseName: event.horse.name,
-          eventName: event.name,
-          eventType: event.type,
-          dueDate,
-          tenantName: tenant.name,
-          tenantSlug: tenant.slug,
-          daysUntil,
+        // Push si lo tiene activado; si no, el email del recordatorio de siempre (E4).
+        const result = await notify({
+          notificationId,
+          urgent: false,
+          now,
+          db,
+          ...(push ? { push } : {}),
+          email: (o) =>
+            safeSend(send, {
+              to: o.to,
+              ownerName: names.get(recipient.userId) ?? o.to,
+              horseName: event.horse.name,
+              eventName: event.name,
+              eventType: event.type,
+              dueDate,
+              tenantName: tenant.name,
+              tenantSlug: tenant.slug,
+              daysUntil,
+            }),
         });
-        const status: DeliveryStatus = result.ok ? "SENT" : result.skipped ? "SKIPPED" : "FAILED";
-        if (status === "SENT") summary.sent++;
-        else if (status === "SKIPPED") summary.skipped++;
-        else summary.failed++;
-        await db.notificationDelivery.create({
-          data: {
-            notificationId,
-            channel: "EMAIL",
-            status,
-            error: result.ok ? null : (result.error?.slice(0, 500) ?? null),
-          },
-        });
+        const mail = result.deliveries.find((d) => d.channel === "EMAIL");
+        if (mail?.status === "SENT") summary.sent++;
+        else if (mail?.status === "SKIPPED") summary.skipped++;
+        else if (mail?.status === "FAILED") summary.failed++;
+        if (result.deliveries.some((d) => d.channel === "PUSH" && d.status === "SENT")) summary.pushed++;
       } catch (error) {
         // Un fallo con un destinatario no corta a los demás.
         summary.failed++;

@@ -13,6 +13,15 @@ export type EmailSend = (opts: Parameters<typeof sendNotificationEmail>[0]) => P
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
+export type DeliveryStatus = "SENT" | "FAILED" | "SKIPPED" | "DEFERRED";
+
+export interface NotifyResult {
+  channels: Channel[];
+  deferred: boolean;
+  /** Lo anotado en `NotificationDelivery`, canal a canal. */
+  deliveries: { channel: Channel; status: DeliveryStatus }[];
+}
+
 /**
  * Entrega una `Notification` ya guardada (E4). El motor `notify-channels`
  * decide los canales con la suscripción y la preferencia del usuario; aquí se
@@ -37,7 +46,7 @@ export async function notify({
   db?: Db;
   push?: PushSend;
   email?: EmailSend;
-}): Promise<{ channels: Channel[]; deferred: boolean }> {
+}): Promise<NotifyResult> {
   const n = await db.notification.findUniqueOrThrow({
     where: { id: notificationId },
     select: {
@@ -65,14 +74,17 @@ export async function notify({
     ...(pref ? { preference: { push: pref.push, email: pref.email } } : {}),
   });
 
-  const record = (channel: Channel, status: "SENT" | "FAILED" | "SKIPPED" | "DEFERRED", error?: string | null) =>
-    db.notificationDelivery.create({
+  const deliveries: NotifyResult["deliveries"] = [];
+  const record = async (channel: Channel, status: DeliveryStatus, error?: string | null) => {
+    deliveries.push({ channel, status });
+    await db.notificationDelivery.create({
       data: { notificationId: n.id, channel, status, error: error?.slice(0, 500) ?? null },
     });
+  };
 
   if (deliverAt({ now, urgent }).getTime() > now.getTime()) {
     for (const c of channels) await record(c, "DEFERRED");
-    return { channels, deferred: true };
+    return { channels, deferred: true, deliveries };
   }
 
   const sendEmail = async () => {
@@ -119,5 +131,46 @@ export async function notify({
   if (channels.includes("EMAIL") || (channels.includes("PUSH") && !pushReached && emailAllowed)) {
     await sendEmail();
   }
-  return { channels, deferred: false };
+  return { channels, deferred: false, deliveries };
+}
+
+/**
+ * Envía lo que quedó aplazado de noche (E4). Lo llama el cron diario de la
+ * mañana: si ya no es hora de silencio, borra las entregas DEFERRED de cada
+ * aviso y lo vuelve a pasar por `notify`. Si aún es de noche, no toca nada.
+ * Solo lo no urgente se aplaza, así que se reenvía como no urgente.
+ */
+export async function runDeferredNotifications({
+  now = new Date(),
+  db = prisma,
+  tenantId,
+  push,
+  email,
+}: {
+  now?: Date;
+  db?: PrismaClient;
+  tenantId?: string;
+  push?: PushSend;
+  email?: EmailSend;
+} = {}): Promise<{ released: number; failed: number }> {
+  const summary = { released: 0, failed: 0 };
+  if (deliverAt({ now, urgent: false }).getTime() > now.getTime()) return summary;
+  const pending = await db.notificationDelivery.findMany({
+    where: { status: "DEFERRED", ...(tenantId ? { notification: { tenantId } } : {}) },
+    select: { notificationId: true },
+    distinct: ["notificationId"],
+  });
+  for (const { notificationId } of pending) {
+    try {
+      // Solo quien borra las DEFERRED lo envía: dos crons a la vez no lo duplican.
+      const { count } = await db.notificationDelivery.deleteMany({ where: { notificationId, status: "DEFERRED" } });
+      if (count === 0) continue;
+      await notify({ notificationId, urgent: false, now, db, ...(push ? { push } : {}), ...(email ? { email } : {}) });
+      summary.released++;
+    } catch (error) {
+      summary.failed++;
+      await reportError(error, { scope: "cron-deferred-notifications", notificationId });
+    }
+  }
+  return summary;
 }

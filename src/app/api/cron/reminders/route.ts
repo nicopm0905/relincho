@@ -7,6 +7,7 @@ import {
   isEmailConfigured,
 } from "@/server/services/notifications/email";
 import { runReminders } from "@/server/services/notifications/reminders";
+import { runDeferredNotifications } from "@/server/services/notifications/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +71,10 @@ export async function GET(req: NextRequest) {
   // Avisos de vencimientos sanitarios a centro, propietario y profesional
   // (E3), idempotentes: ver `runReminders`. Sin remitente verificado los
   // avisos quedan en la bandeja y el envío se anota como omitido.
+  // Lo que quedó aplazado de noche (22:00–07:00 de Madrid, E4): el cron corre
+  // a las 08:00 UTC, ya fuera de las horas de silencio.
+  const deferred = await runDeferredNotifications({ now: new Date(), db: prisma });
+
   const emailConfigured = isEmailConfigured();
   const reminders = await runReminders({ now: new Date(), db: prisma, send: sendHealthReminder });
 
@@ -88,6 +93,8 @@ export async function GET(req: NextRequest) {
       duplicates: reminders.duplicates,
       tenantErrors: reminders.tenantErrors,
     },
+    pushed: reminders.pushed,
+    deferredReleased: deferred.released,
     invoicesMarkedOverdue: overdue.count,
     gestationTasks,
   });

@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { createCallerFactory } from "@/server/trpc/init";
 import { appRouter } from "@/server/trpc/router";
 import { prisma } from "@/server/db/prisma";
-import { notify, type EmailSend, type PushSend } from "@/server/services/notifications/notify";
+import { notify, runDeferredNotifications, type EmailSend, type PushSend } from "@/server/services/notifications/notify";
 import { closeDb, makeMember, makeTenant } from "../helpers/factories";
 import { callerAs } from "../helpers/trpc";
 
@@ -135,4 +135,25 @@ test("notifications.setPreference apaga un canal para un tipo y notify lo respet
   await notify({ notificationId: n.id, urgent: false, now: DAY, push: f.push, email: f.email });
   assert.deepEqual(await deliveries(n.id), []);
   assert.equal(f.emailed.length, 0);
+});
+
+test("por la mañana, runDeferredNotifications envía una sola vez lo aplazado de la noche", async () => {
+  const t = await makeTenant();
+  const user = await makeMember(t, "OWNER_EXTERNAL");
+  await callerAs(createCaller, user).notifications.subscribe(sub());
+  const f = fakes();
+  const n = await makeNotification(t.id, user.userId);
+  await notify({ notificationId: n.id, urgent: false, now: NIGHT, push: f.push, email: f.email });
+
+  // Todavía de noche: sigue esperando.
+  await runDeferredNotifications({ now: new Date("2026-12-10T04:00:00Z"), tenantId: t.id, push: f.push, email: f.email });
+  assert.deepEqual(await deliveries(n.id), [{ channel: "PUSH", status: "DEFERRED" }]);
+
+  const morning = new Date("2026-12-10T08:00:00Z");
+  const first = await runDeferredNotifications({ now: morning, tenantId: t.id, push: f.push, email: f.email });
+  const again = await runDeferredNotifications({ now: morning, tenantId: t.id, push: f.push, email: f.email });
+
+  assert.deepEqual([first.released, again.released], [1, 0]);
+  assert.deepEqual(await deliveries(n.id), [{ channel: "PUSH", status: "SENT" }]);
+  assert.equal(f.pushed.length, 1);
 });
