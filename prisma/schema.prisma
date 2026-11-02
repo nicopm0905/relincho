@@ -147,6 +147,7 @@ model Tenant {
   farmInspections  FarmInspection[]
   farmCaretakers   FarmCaretaker[]
   notifications    Notification[]
+  incidents        Incident[]
 }
 
 model User {
@@ -210,6 +211,9 @@ model Membership {
   tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   horseAccess HorseAccess[]
   authoredHealthEvents HealthEvent[]
+  incidentsCreated Incident[]        @relation("IncidentCreatedBy")
+  incidentReceipts IncidentReceipt[]
+  incidentUpdates  IncidentUpdate[]
 
   @@unique([userId, tenantId])
   @@index([tenantId])
@@ -278,6 +282,7 @@ model Horse {
   reproExams       ReproExam[]
   reproProfile     MareReproProfile?
   semenBatches     SemenBatch[]        @relation("SemenStallion")
+  incidents        Incident[]
   createdAt        DateTime            @default(now())
 
   @@index([tenantId])
@@ -1357,4 +1362,92 @@ model NotificationDelivery {
   notification   Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@index([notificationId])
+}
+
+// ─── Incidencias con confirmación de lectura (E5) ───────────────────────────
+
+enum IncidentCategory {
+  INJURY
+  LAMENESS
+  NOT_EATING
+  COLIC_SIGNS
+  EQUIPMENT
+  BEHAVIOR
+  OTHER
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum IncidentStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+/// Incidencia de un caballo (E5): la abre el personal, la confirman sus
+/// propietarios y la resuelve el centro. El ciclo de vida es el motor puro
+/// `src/lib/incidents.ts`.
+model Incident {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  horseId               String
+  createdByMembershipId String?
+  category              IncidentCategory
+  severity              IncidentSeverity
+  /// No se edita tras crearla: las correcciones van en `IncidentUpdate`.
+  description           String
+  /// Claves privadas de R2 (`incidentPhotoKey`), nunca URLs públicas.
+  photoKeys             String[]
+  status                IncidentStatus    @default(OPEN)
+  occurredAt            DateTime
+  escalatedAt           DateTime?
+  resolvedAt            DateTime?
+  resolutionNote        String?
+  /// Incidencia resuelta de la que esta es continuación (no se reabren).
+  followsId             String?
+  /// Idempotencia offline (D3): reenviar la misma no la duplica.
+  clientMutationId      String?           @unique
+  createdAt             DateTime          @default(now())
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  horse                 Horse             @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  createdBy             Membership?       @relation("IncidentCreatedBy", fields: [createdByMembershipId], references: [id], onDelete: SetNull)
+  follows               Incident?         @relation("IncidentFollowUp", fields: [followsId], references: [id], onDelete: SetNull)
+  followUps             Incident[]        @relation("IncidentFollowUp")
+  receipts              IncidentReceipt[]
+  updates               IncidentUpdate[]
+
+  @@index([tenantId, status, occurredAt])
+  @@index([tenantId, horseId])
+}
+
+/// Acuse de un propietario: cuándo se le avisó, la leyó y la confirmó.
+model IncidentReceipt {
+  id             String     @id @default(uuid())
+  incidentId     String
+  membershipId   String
+  notifiedAt     DateTime
+  readAt         DateTime?
+  acknowledgedAt DateTime?
+  incident       Incident   @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  membership     Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([incidentId, membershipId])
+  @@index([membershipId])
+}
+
+/// Corrección o seguimiento con autor y hora (autoría, §9.9).
+model IncidentUpdate {
+  id                 String      @id @default(uuid())
+  incidentId         String
+  authorMembershipId String?
+  text               String
+  createdAt          DateTime    @default(now())
+  incident           Incident    @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  author             Membership? @relation(fields: [authorMembershipId], references: [id], onDelete: SetNull)
+
+  @@index([incidentId, createdAt])
 }
