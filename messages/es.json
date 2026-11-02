@@ -662,6 +662,7 @@
       "invoicing": "Facturación",
       "contacts": "Contactos",
       "documents": "Documentos",
+      "incidents": "Incidencias",
       "settings": "Ajustes",
       "breedingStats": "Estadísticas"
     },
@@ -1365,6 +1366,67 @@
         "goInvoices": "Ver mis facturas",
         "goDocuments": "Ver documentos"
       }
+    }
+  },
+  "incidents": {
+    "metaTitle": "Incidencias",
+    "title": "Incidencias",
+    "intro": "Lo que pasa con un caballo, su propietario lo confirma y el centro lo cierra.",
+    "new": {
+      "title": "Nueva incidencia",
+      "horse": "Caballo",
+      "horsePlaceholder": "Elige el caballo",
+      "category": "Qué pasa",
+      "severity": "Gravedad",
+      "description": "Detalle",
+      "descriptionPlaceholder": "Qué has visto y qué has hecho",
+      "submit": "Avisar al propietario",
+      "saving": "Enviando…",
+      "saved": "Incidencia enviada al propietario",
+      "savedCallOwner": "Incidencia guardada. Este caballo no tiene propietario con cuenta: hay que llamarle.",
+      "error": "No se pudo enviar la incidencia",
+      "noHorses": "No hay caballos en el centro."
+    },
+    "list": {
+      "title": "Abiertas y recientes",
+      "empty": "No hay incidencias.",
+      "confirmedBy": "{done} de {total} propietarios la han confirmado",
+      "noOwners": "Sin propietario con cuenta: llamar",
+      "escalated": "Escalada",
+      "resolve": "Cerrar",
+      "resolveNote": "Cómo se ha resuelto",
+      "resolveSubmit": "Cerrar incidencia",
+      "resolved": "Incidencia cerrada",
+      "resolveError": "No se pudo cerrar"
+    },
+    "detail": {
+      "back": "Volver al inicio",
+      "reported": "Avisada {when}",
+      "updates": "Actualizaciones",
+      "acknowledge": "Confirmo que lo he leído",
+      "acknowledging": "Confirmando…",
+      "acknowledged": "Confirmada {when}",
+      "ackError": "No se pudo confirmar",
+      "resolvedNote": "Cerrada por el centro: {note}"
+    },
+    "status": {
+      "OPEN": "Sin confirmar",
+      "ACKNOWLEDGED": "Confirmada",
+      "RESOLVED": "Cerrada"
+    },
+    "severity": {
+      "LOW": "Leve",
+      "MEDIUM": "Moderada",
+      "HIGH": "Grave"
+    },
+    "category": {
+      "INJURY": "Herida",
+      "LAMENESS": "Cojera",
+      "NOT_EATING": "No ha comido",
+      "COLIC_SIGNS": "Signos de cólico",
+      "EQUIPMENT": "Material roto",
+      "BEHAVIOR": "Comportamiento",
+      "OTHER": "Otra"
     }
   }
 }
