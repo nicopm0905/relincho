@@ -1,6 +1,6 @@
 import { pendingHealthDue } from "@/lib/health-due";
 import { calendarDayOffset } from "@/lib/day-window";
-import { buildFeed, feedByDay, type FeedKind, type TrainingInput } from "@/lib/horse-feed";
+import { buildFeed, feedByDay, type ActivityInput, type FeedKind, type TrainingInput } from "@/lib/horse-feed";
 
 /**
  * Portada de la app del cliente (roadmap §4 E8, v1). Motor puro: decide qué ve
@@ -51,6 +51,8 @@ export interface PortalHomeInput {
   }[];
   /** Entrenamientos de sus caballos, hechos y programados. Las notas no se enseñan. */
   trainings: TrainingInput[];
+  /** Lo que el centro registra de sus caballos (E6): paddock, montado… */
+  activities?: ActivityInput[];
 }
 
 export type PortalHomeItem =
@@ -152,9 +154,11 @@ export function portalHome(input: PortalHomeInput): PortalHome {
   const pastHealth = input.health.filter((e) => e.date <= now);
   for (const t of past) horseOf.set(t.id, t.horseId);
   for (const e of pastHealth) horseOf.set(e.id, e.horse.id);
+  const activities = (input.activities ?? []).filter((a) => a.at <= now);
+  for (const a of activities) horseOf.set(a.id, a.horseId);
   const feed = buildFeed(
     {
-      activities: [],
+      activities,
       trainings: past,
       health: pastHealth.map((e) => ({ id: e.id, horseId: e.horse.id, type: e.type, name: e.name, date: e.date })),
     },
