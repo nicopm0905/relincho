@@ -1294,6 +1294,7 @@
       "home": "Inicio",
       "invoices": "Facturas",
       "documents": "Documentos",
+      "notifications": "Avisos",
       "signOut": "Cerrar sesión"
     },
     "home": {
@@ -1366,5 +1367,41 @@
         "goDocuments": "Ver documentos"
       }
     }
+  },
+  "pushSettings": {
+    "metaTitle": "Avisos",
+    "title": "Avisos",
+    "intro": "Elige cómo quieres enterarte de lo que pasa con tus caballos.",
+    "device": {
+      "title": "Avisos en este dispositivo",
+      "enable": "Activar avisos en este dispositivo",
+      "disable": "Desactivar en este dispositivo",
+      "enabled": "Este dispositivo recibe avisos.",
+      "enabledToast": "Avisos activados en este dispositivo",
+      "disabledToast": "Avisos desactivados en este dispositivo",
+      "error": "No se pudieron activar los avisos",
+      "working": "Un momento…",
+      "iosInstall": "En el iPhone, los avisos solo llegan con Relincho en la pantalla de inicio: toca Compartir y luego «Añadir a pantalla de inicio», y abre la app desde allí.",
+      "denied": "Has bloqueado los avisos en este navegador. Puedes permitirlos en los ajustes del sitio (el candado junto a la dirección).",
+      "unsupported": "Este navegador no admite avisos. Te llegarán por email.",
+      "notConfigured": "Los avisos en el móvil todavía no están activos. Te llegarán por email."
+    },
+    "prefs": {
+      "title": "Qué te avisamos y por dónde",
+      "intro": "Si un aviso no puede llegar al móvil, te llega por email (salvo que lo apagues). Lo urgente llega por los dos.",
+      "push": "Móvil",
+      "email": "Email",
+      "saved": "Preferencia guardada",
+      "error": "No se pudo guardar",
+      "kinds": {
+        "HEALTH_DUE": "Vencimientos sanitarios",
+        "INCIDENT": "Incidencias",
+        "INCIDENT_ESCALATION": "Incidencias sin confirmar",
+        "ANNOUNCEMENT": "Comunicados",
+        "VISIT": "Visitas del profesional",
+        "INVOICE": "Facturas"
+      }
+    },
+    "nav": "Avisos"
   }
 }

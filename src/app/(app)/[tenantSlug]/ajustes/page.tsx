@@ -18,6 +18,7 @@ import { accessState, describeTrialValue, TRIAL_DAYS } from "@/lib/trial";
 import { getTrialValue } from "@/server/services/billing/trial";
 
 import { TenantSettingsForm } from "@/components/settings/tenant-settings-form";
+import { NotificationSettings } from "@/components/notifications/notification-settings";
 import { tenantSettingsFor } from "@/lib/tenant-settings";
 import dynamic from "next/dynamic";
 
@@ -80,6 +81,9 @@ export default async function AjustesPage({ params }: PageProps) {
       />
 
       {settings && <TenantSettingsForm tenant={settings} />}
+
+      {/* Avisos del propio usuario (E4): para cualquier rol del panel. */}
+      <NotificationSettings />
 
       {isOwner && (
         <Card>
