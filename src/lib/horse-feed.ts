@@ -26,7 +26,8 @@ export interface ActivityInput {
   at: Date;
   durationMin: number | null;
   note: string | null;
-  authorMembershipId: string;
+  /** Nulo si la membresía del autor ya no existe (`onDelete: SetNull`). */
+  authorMembershipId: string | null;
   visibleToOwner: boolean;
 }
 
