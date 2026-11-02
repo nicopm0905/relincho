@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { createTRPCRouter, roleProcedure } from "../init";
 import { assertHorseAccess } from "../access";
-import { withTenant } from "@/server/db/prisma";
+import { prisma, withTenant } from "@/server/db/prisma";
 import { TRPCError } from "@trpc/server";
 import { buildFeed } from "@/lib/horse-feed";
 
@@ -39,6 +39,20 @@ export const feedRouter = createTRPCRouter({
         return { activities, trainings, health };
       });
       const items = buildFeed(data, { viewer: ctx.role === "OWNER_EXTERNAL" ? "OWNER" : "STAFF" });
-      return { items };
+      // «Le vio el herrador»: el nombre del autor, solo de membresías de este centro.
+      const authorIds = [...new Set(items.flatMap((i) => (i.authorMembershipId ? [i.authorMembershipId] : [])))];
+      const authors = authorIds.length
+        ? await prisma.membership.findMany({
+            where: { tenantId: ctx.tenantId, id: { in: authorIds } },
+            select: { id: true, user: { select: { name: true } } },
+          })
+        : [];
+      const nameOf = new Map(authors.map((a) => [a.id, a.user.name]));
+      return {
+        items: items.map((i) => ({
+          ...i,
+          authorName: i.authorMembershipId ? (nameOf.get(i.authorMembershipId) ?? null) : null,
+        })),
+      };
     }),
 });
