@@ -1389,5 +1389,26 @@
       "WALKER": "Horse walker",
       "GROOMED": "Groomed"
     }
+  },
+  "horseFeed": {
+    "title": "Activity",
+    "empty": "No activity logged in the last {days} days.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "minutes": "{minutes} min",
+    "by": "by {name}",
+    "internal": "Internal",
+    "kinds": {
+      "PADDOCK": "Paddock",
+      "RIDDEN": "Ridden",
+      "LUNGED": "Lunged",
+      "WALKER": "Horse walker",
+      "GROOMED": "Groomed",
+      "FARRIER": "Farrier",
+      "VET": "Vet",
+      "PHYSIO": "Physio",
+      "NOTE": "Note",
+      "HEALTH": "Health"
+    }
   }
 }

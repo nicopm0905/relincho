@@ -1389,5 +1389,26 @@
       "WALKER": "Caminador",
       "GROOMED": "Aseo"
     }
+  },
+  "horseFeed": {
+    "title": "Actividad",
+    "empty": "Sin actividad registrada en los últimos {days} días.",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "minutes": "{minutes} min",
+    "by": "por {name}",
+    "internal": "Interna",
+    "kinds": {
+      "PADDOCK": "Paddock",
+      "RIDDEN": "Montado",
+      "LUNGED": "Trabajo a la cuerda",
+      "WALKER": "Caminador",
+      "GROOMED": "Aseo",
+      "FARRIER": "Herrador",
+      "VET": "Veterinario",
+      "PHYSIO": "Fisioterapia",
+      "NOTE": "Nota",
+      "HEALTH": "Sanidad"
+    }
   }
 }

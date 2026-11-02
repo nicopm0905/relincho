@@ -180,12 +180,12 @@ function shiftDay(day: string, offset: number): string {
  * entradas lleva `empty: true`: el feed no rellena con nada inventado, y el
  * texto ("Sin actividad registrada") lo pone la UI desde `messages`.
  */
-export function feedByDay(
-  items: FeedItem[],
+export function feedByDay<T extends FeedItem>(
+  items: T[],
   { now, days }: { now: Date; days: number },
-): { day: string; items: FeedItem[]; empty: boolean }[] {
+): { day: string; items: T[]; empty: boolean }[] {
   const today = madridDay(now);
-  const buckets = new Map<string, FeedItem[]>();
+  const buckets = new Map<string, T[]>();
   for (let i = 0; i < days; i++) buckets.set(shiftDay(today, -i), []);
   for (const item of items) buckets.get(madridDay(item.at))?.push(item);
   return [...buckets.entries()].map(([day, dayItems]) => ({
