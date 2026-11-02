@@ -104,3 +104,27 @@ export function incidentPhotoKey(o: {
   const seg = (v: string) => safeKeySegment(v) || "x";
   return `${seg(o.tenantId)}/incidents/${seg(o.horseId)}/${seg(o.incidentId)}/${seg(o.photoId)}.${seg(o.ext)}`;
 }
+
+const INCIDENT_PHOTO_EXT = /^(jpe?g|png|webp|heic)$/i;
+
+/**
+ * ¿Es `key` una foto de incidencia de ese centro y ese caballo? El cliente
+ * sube la foto antes de crear la incidencia y manda la clave: el servidor
+ * solo acepta las que caen en la carpeta privada de ese caballo.
+ */
+export function isIncidentPhotoKeyFor(own: { tenantId: string; horseId: string }, key: string): boolean {
+  const parts = key.split("/");
+  if (parts.length !== 5) return false;
+  const [tenant, folder, horse, incident, file] = parts;
+  const dot = file.lastIndexOf(".");
+  const [photo, ext] = dot > 0 ? [file.slice(0, dot), file.slice(dot + 1)] : ["", ""];
+  const clean = (v: string) => v.length > 0 && safeKeySegment(v) === v;
+  return (
+    tenant === own.tenantId &&
+    folder === "incidents" &&
+    horse === own.horseId &&
+    clean(incident) &&
+    clean(photo) &&
+    INCIDENT_PHOTO_EXT.test(ext)
+  );
+}
