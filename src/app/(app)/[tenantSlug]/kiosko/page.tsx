@@ -20,9 +20,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function KioskoPage() {
   const { tenantSlug } = useParams();
+  const t = useTranslations("activityLog");
   
   // Determinar la comida actual según la hora
   const hour = new Date().getHours();
@@ -109,11 +111,16 @@ export default function KioskoPage() {
           </span>
           <h1 className="text-2xl font-semibold font-heading text-foreground tracking-tight">Modo Kiosko</h1>
         </div>
+        <div className="flex items-center gap-2">
+        <Button asChild variant="outline" className="h-10 rounded-full">
+          <Link href={`/${tenantSlug}/kiosko/actividad`}>{t("openFromKiosk")}</Link>
+        </Button>
         <Button asChild variant="ghost" size="icon" aria-label="Cerrar modo kiosko" className="rounded-full bg-muted/50 hover:bg-muted text-foreground h-10 w-10 shrink-0">
           <Link href={`/${tenantSlug}/inicio`}>
             <X weight="bold" className="h-5 w-5" />
           </Link>
         </Button>
+        </div>
       </div>
       
       {/* Selector de Comida */}
