@@ -15,9 +15,12 @@ import { UPLOAD_RULES } from "@/lib/uploads";
  * publico de ficheros arbitrarios.
  */
 
-/** Clave firmada: <tenantId>/<carpeta>/<uuid>.<ext>. Nada mas entra. */
+/**
+ * Clave firmada: <tenantId>/<carpeta>/<uuid>.<ext>, o la de una foto de
+ * incidencia, <tenantId>/incidents/<caballo>/<borrador>/<uuid>.<ext>. Nada mas entra.
+ */
 const KEY_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(horses|documents)\/[A-Za-z0-9_-]{1,64}\.[A-Za-z0-9]{1,7}$/;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(?:(?:horses|documents)|incidents\/[A-Za-z0-9_-]{1,64}\/[A-Za-z0-9_-]{1,64})\/[A-Za-z0-9_-]{1,64}\.[A-Za-z0-9]{1,7}$/;
 
 export async function PUT(req: NextRequest) {
   if (process.env.NODE_ENV === "production") {
