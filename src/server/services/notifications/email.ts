@@ -350,3 +350,36 @@ export async function sendWeeklyDigest(opts: {
     `,
   });
 }
+
+/**
+ * Email de respaldo de una notificación (E4): repite el título y el texto de
+ * la `Notification`, así la bandeja, el push y el email dicen lo mismo.
+ */
+export async function sendNotificationEmail(opts: {
+  to: string;
+  name: string;
+  title: string;
+  body: string;
+  url: string;
+}): Promise<SendResult> {
+  return sendEmail({
+    to: opts.to,
+    subject: opts.title,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <p>Hola ${esc(opts.name)},</p>
+        <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0;">
+          <strong>${esc(opts.title)}</strong><br>
+          ${esc(opts.body)}
+        </div>
+        <p>
+          <a href="${getBaseUrl()}${encodeURI(opts.url)}"
+             style="background:#171717;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
+            Ver en Relincho
+          </a>
+        </p>
+        <p style="color:#888;font-size:12px;">Relincho · Gestión equina profesional</p>
+      </div>
+    `,
+  });
+}
