@@ -58,7 +58,7 @@ export function IncidentList({ incidents }: { incidents: IncidentListItem[] }) {
                 ? t("list.noOwners")
                 : t("list.confirmedBy", { done, total: i.receipts.length })}
             </p>
-            {i.status !== "RESOLVED" && <ResolveIncident id={i.id} />}
+            {i.status !== "RESOLVED" ? <ResolveIncident id={i.id} /> : <FollowUpIncident id={i.id} />}
           </li>
         );
       })}
@@ -106,6 +106,53 @@ function ResolveIncident({ id }: { id: string }) {
       />
       <Button type="submit" className="h-11" disabled={!note.trim() || resolve.isPending}>
         {t("resolveSubmit")}
+      </Button>
+    </form>
+  );
+}
+
+/** Una cerrada no se reabre: «Ha vuelto a pasar» abre otra enlazada y vuelve a avisar. */
+function FollowUpIncident({ id }: { id: string }) {
+  const t = useTranslations("incidents.list");
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [mutationId] = useState(() => crypto.randomUUID());
+  const followUp = trpc.incidents.followUp.useMutation({
+    onSuccess: () => {
+      toast.success(t("followedUp"));
+      setOpen(false);
+      router.refresh();
+    },
+    onError: (err) => toast.error(err.message || t("followUpError")),
+  });
+
+  if (!open) {
+    return (
+      <Button variant="outline" size="sm" className="h-11" onClick={() => setOpen(true)}>
+        {t("followUp")}
+      </Button>
+    );
+  }
+  return (
+    <form
+      className="flex flex-col gap-2 sm:flex-row"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (text.trim()) followUp.mutate({ id, description: text.trim(), clientMutationId: mutationId });
+      }}
+    >
+      <Input
+        aria-label={t("followUpPlaceholder")}
+        placeholder={t("followUpPlaceholder")}
+        className="h-11"
+        value={text}
+        maxLength={2000}
+        autoFocus
+        onChange={(e) => setText(e.target.value)}
+      />
+      <Button type="submit" className="h-11" disabled={!text.trim() || followUp.isPending}>
+        {t("followUpSubmit")}
       </Button>
     </form>
   );

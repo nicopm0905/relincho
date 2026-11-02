@@ -37,8 +37,14 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Clave inválida" }, { status: 400 });
   }
 
-  const [tenantId] = key.split("/");
-  const access = await requireTenantAccess(session.user.id, tenantId);
+  const [tenantId, folder] = key.split("/");
+  // Las fotos de incidencia las sube el mozo (incidents.photoUploadUrl ya
+  // comprobó el caballo); el resto, quien gestiona el centro.
+  const access = await requireTenantAccess(
+    session.user.id,
+    tenantId,
+    folder === "incidents" ? ["OWNER", "MANAGER", "GROOM"] : undefined,
+  );
   if (!access) {
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }
