@@ -8,6 +8,7 @@ import {
   E2E_CRON_SECRET,
   E2E_DATABASE_URL,
   E2E_PORT,
+  E2E_VAPID_PUBLIC_KEY,
   assertLocalDatabase,
 } from "./tests/e2e/env";
 
@@ -98,6 +99,9 @@ export default defineConfig({
       RESEND_API_KEY: "",
       EMAIL_FROM: "",
       NEXT_TELEMETRY_DISABLED: "1",
+      // Solo la pública: sin privada no se envía ningún push (E4).
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: E2E_VAPID_PUBLIC_KEY,
+      VAPID_PRIVATE_KEY: "",
     },
   },
 });

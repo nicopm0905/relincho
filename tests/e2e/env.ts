@@ -24,3 +24,10 @@ export function assertLocalDatabase(url: string): void {
     throw new Error(`E2E: "${host}" no es una BD local. Me niego a usarla.`);
   }
 }
+
+/**
+ * Clave PÚBLICA VAPID de pruebas para el E2E de avisos (E4). Se incrusta en el
+ * build (NEXT_PUBLIC_*). Su privada no existe en ningún sitio: el E2E no envía
+ * push, solo comprueba que la suscripción se guarda.
+ */
+export const E2E_VAPID_PUBLIC_KEY = "BJoYvlFbarlh6kL9caEqlhGrByPF77P2tzj8G-oEE3TNOmCCcwJW-R1onLdFsZkLxvC4-AOiQw1LvE37KG95Xqw";
