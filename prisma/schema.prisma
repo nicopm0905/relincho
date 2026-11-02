@@ -209,6 +209,7 @@ model Membership {
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   horseAccess HorseAccess[]
+  authoredHealthEvents HealthEvent[]
 
   @@unique([userId, tenantId])
   @@index([tenantId])
@@ -234,6 +235,8 @@ model Horse {
   status           HorseStatus         @default(ACTIVE)
   boxLocation      String?
   photoUrl         String?
+  /// Semanas entre herrajes; null = 6 (E7, `src/lib/professional-visit.ts`).
+  farrierIntervalWeeks Int?
   sireId           String?
   damId            String?
   currentOwnerId   String?
@@ -339,6 +342,11 @@ model HealthEvent {
   purchaseReference  String?
   /// Lote del medicamento (obligatorio en el pasaporte para vacunas).
   batchNumber        String?
+  /// Quién lo registró (E7, §9.9). Null en lo anterior a E7 o si se borró el miembro.
+  authorMembershipId String?
+  /// Idempotencia de escrituras desde el móvil (D3): reintentar no duplica.
+  clientMutationId   String?    @unique
+  author        Membership?     @relation(fields: [authorMembershipId], references: [id], onDelete: SetNull)
   horse         Horse           @relation(fields: [horseId], references: [id], onDelete: Cascade)
   createdAt     DateTime        @default(now())
 

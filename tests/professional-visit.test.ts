@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   DEFAULT_FARRIER_WEEKS,
+  isFutureVisit,
   planVisit,
   proposeNextVisit,
 } from "@/lib/professional-visit";
@@ -92,4 +93,13 @@ test("healthTypesFor da los actos que registra cada especialidad", () => {
   assert.deepEqual(healthTypesFor({ role: "PROFESSIONAL", specialty: null }), []);
   assert.deepEqual(healthTypesFor({ role: "OWNER_EXTERNAL" }), []);
   assert.ok(healthTypesFor({ role: "VET_EXTERNAL" }).includes("VACCINE"));
+});
+
+test("una visita no puede tener fecha posterior a hoy (hora de Madrid)", () => {
+  const now = new Date("2026-12-10T22:30:00Z"); // 23:30 del 10 en Madrid
+  assert.equal(isFutureVisit(new Date("2026-12-10T21:00:00Z"), now), false);
+  assert.equal(isFutureVisit(new Date("2026-12-09T09:00:00Z"), now), false);
+  // 00:30 del 11 en Madrid: ya es mañana.
+  assert.equal(isFutureVisit(new Date("2026-12-10T23:30:00Z"), now), true);
+  assert.equal(isFutureVisit(new Date("2026-12-17T09:00:00Z"), now), true);
 });
