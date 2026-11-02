@@ -6,6 +6,8 @@
 //   node scripts/test-db.mjs reset   vacía la BD de TEST_DATABASE_URL y aplica las
 //                                    migraciones reales desde cero
 //   node scripts/test-db.mjs test    ejecuta tests/integration/*.int.test.ts
+//   node scripts/test-db.mjs e2e-reset  crea si falta la BD de E2E_DATABASE_URL
+//                                    (por defecto relincho_e2e) y la migra desde cero
 //
 // Se niega a tocar cualquier BD que no sea local: producción vive en Supabase.
 import { spawnSync } from "node:child_process";
@@ -94,7 +96,7 @@ async function up() {
   }
   const client = new pg.Client({ connectionString: LOCAL("postgres") });
   await client.connect();
-  for (const db of ["relincho_test", "relincho_dev"]) {
+  for (const db of ["relincho_test", "relincho_dev", "relincho_e2e"]) {
     const { rowCount } = await client.query("SELECT 1 FROM pg_database WHERE datname = $1", [db]);
     if (!rowCount) await client.query(`CREATE DATABASE ${db}`);
   }
@@ -110,9 +112,32 @@ async function up() {
   Desarrollo:  DATABASE_URL y DIRECT_URL=${LOCAL("relincho_dev")}  (en tu .env; ver AGENTS.md §7)`);
 }
 
+/**
+ * BD del E2E (Playwright): la crea en el mismo servidor si no existe y la deja
+ * migrada desde cero. Es aparte de relincho_test para que los dos no se pisen.
+ */
+async function resetE2e(url) {
+  assertLocal(url);
+  const target = new URL(url);
+  const db = target.pathname.slice(1);
+  if (!/^[a-z0-9_]+$/.test(db)) fail(`nombre de BD no válido: "${db}".`);
+  target.pathname = "/postgres";
+  const client = new pg.Client({ connectionString: target.toString() });
+  await client.connect();
+  try {
+    const { rowCount } = await client.query("SELECT 1 FROM pg_database WHERE datname = $1", [db]);
+    if (!rowCount) await client.query(`CREATE DATABASE ${db}`);
+  } finally {
+    await client.end();
+  }
+  await reset(url);
+}
+
 const mode = process.argv[2];
 if (mode === "up") {
   await up();
+} else if (mode === "e2e-reset") {
+  await resetE2e(process.env.E2E_DATABASE_URL || LOCAL("relincho_e2e"));
 } else if (mode === "reset" || mode === "test") {
   const url = process.env.TEST_DATABASE_URL;
   if (!url) fail(`define TEST_DATABASE_URL (local: ${LOCAL("relincho_test")}). Arráncala con "npm run db:local".`);
@@ -130,5 +155,5 @@ if (mode === "up") {
     });
   }
 } else {
-  fail("uso: node scripts/test-db.mjs up|reset|test");
+  fail("uso: node scripts/test-db.mjs up|reset|test|e2e-reset");
 }
