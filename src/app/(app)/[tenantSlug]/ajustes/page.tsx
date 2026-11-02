@@ -18,6 +18,7 @@ import { accessState, describeTrialValue, TRIAL_DAYS } from "@/lib/trial";
 import { getTrialValue } from "@/server/services/billing/trial";
 
 import { TenantSettingsForm } from "@/components/settings/tenant-settings-form";
+import { ReminderSettingsCard } from "@/components/settings/reminder-settings-card";
 import { tenantSettingsFor } from "@/lib/tenant-settings";
 import dynamic from "next/dynamic";
 
@@ -80,6 +81,8 @@ export default async function AjustesPage({ params }: PageProps) {
       />
 
       {settings && <TenantSettingsForm tenant={settings} />}
+
+      {settings && <ReminderSettingsCard leadDays={settings.reminderLeadDays} />}
 
       {isOwner && (
         <Card>
