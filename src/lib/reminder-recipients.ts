@@ -89,6 +89,16 @@ export function recipientsFor(
   return [...byUser.values()];
 }
 
+/**
+ * Antelación de los avisos que el centro elige en Ajustes (`Tenant.reminderLeadDays`).
+ * 0 avisa solo el mismo día; más de un mes deja de ser un recordatorio útil.
+ */
+export const REMINDER_LEAD_DAYS = { min: 0, max: 30, default: 7 } as const;
+
+export function isValidLeadDays(days: number): boolean {
+  return Number.isInteger(days) && days >= REMINDER_LEAD_DAYS.min && days <= REMINDER_LEAD_DAYS.max;
+}
+
 /** Días antes del vencimiento en que se avisa: la antelación del centro y el mismo día. */
 export function reminderOffsets(leadDays = 7): number[] {
   return leadDays > 0 ? [leadDays, 0] : [0];
