@@ -1377,5 +1377,28 @@
         "goDocuments": "See documents"
       }
     }
+  },
+  "activityLog": {
+    "metaTitle": "Log activity",
+    "title": "Log activity",
+    "intro": "Choose the horses and what they did. It is saved with the current time.",
+    "back": "Back to kiosk",
+    "openFromKiosk": "Activity",
+    "horses": "Horses",
+    "all": "All",
+    "none": "None",
+    "kind": "What they did",
+    "submit": "{count, plural, =0 {Choose horses} one {Log for # horse} other {Log for # horses}}",
+    "saving": "Saving…",
+    "saved": "{kind}: logged for {count, plural, one {# horse} other {# horses}}",
+    "error": "Could not log it",
+    "noHorses": "There are no active horses in the yard.",
+    "kinds": {
+      "PADDOCK": "Paddock",
+      "RIDDEN": "Ridden",
+      "LUNGED": "Lunged",
+      "WALKER": "Horse walker",
+      "GROOMED": "Groomed"
+    }
   }
 }

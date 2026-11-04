@@ -78,3 +78,19 @@ test("portal.home responde FORBIDDEN a quien no es cliente: OWNER, GROOM o PROFE
     );
   }
 });
+
+test("portal.home enseña la salida al paddock que registra el centro y no la nota interna", async () => {
+  const t = await makeTenant();
+  const mozo = await makeMember(t, "GROOM");
+  const propietaria = await makeMember(t, "OWNER_EXTERNAL");
+  const suyo = await makeHorse(t, { name: "Suyo" });
+  const ajeno = await makeHorse(t, { name: "Ajeno" });
+  await grantAccess(propietaria, suyo);
+  const staff = callerAs(createCaller, mozo);
+  await staff.activity.logBatch({ horseIds: [suyo.id, ajeno.id], kind: "PADDOCK" });
+  await staff.activity.logBatch({ horseIds: [suyo.id], kind: "NOTE", note: "Mirar la mano", visibleToOwner: false });
+
+  const home = await callerAs(createCaller, propietaria).portal.home();
+  const items = home.activity.flatMap((d) => d.items);
+  assert.deepEqual(items.map((i) => [i.kind, i.horseName]), [["PADDOCK", "Suyo"]]);
+});
