@@ -570,6 +570,17 @@
       "annual": "Annual (pay 10, use 12)",
       "founderNote": "Founder price applied: 40% off for life while you stay subscribed.",
       "seePlans": "See all plans"
+    },
+    "reminders": {
+      "title": "Due-date reminders",
+      "description": "Shoeing, vaccines, deworming and dentist send an email to the yard, the horse's owner and their professional.",
+      "label": "Days in advance",
+      "help": "{days, plural, =0 {Reminders go out on the due date only.} one {Reminders go out # day before and on the due date.} other {Reminders go out # days before and on the due date.}}",
+      "invalid": "Enter a whole number from {min} to {max} days.",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Reminder lead time updated",
+      "error": "Could not save the lead time"
     }
   },
   "auth": {
@@ -1427,6 +1438,29 @@
       "EQUIPMENT": "Broken equipment",
       "BEHAVIOR": "Behaviour",
       "OTHER": "Other"
+    }
+  },
+  "activityLog": {
+    "metaTitle": "Log activity",
+    "title": "Log activity",
+    "intro": "Choose the horses and what they did. It is saved with the current time.",
+    "back": "Back to kiosk",
+    "openFromKiosk": "Activity",
+    "horses": "Horses",
+    "all": "All",
+    "none": "None",
+    "kind": "What they did",
+    "submit": "{count, plural, =0 {Choose horses} one {Log for # horse} other {Log for # horses}}",
+    "saving": "Saving…",
+    "saved": "{kind}: logged for {count, plural, one {# horse} other {# horses}}",
+    "error": "Could not log it",
+    "noHorses": "There are no active horses in the yard.",
+    "kinds": {
+      "PADDOCK": "Paddock",
+      "RIDDEN": "Ridden",
+      "LUNGED": "Lunged",
+      "WALKER": "Horse walker",
+      "GROOMED": "Groomed"
     }
   }
 }

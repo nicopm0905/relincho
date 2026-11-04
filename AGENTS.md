@@ -69,6 +69,7 @@ Para cada comportamiento nuevo:
 - Un bug se arregla escribiendo antes el test que lo reproduce.
 - **Nunca** cambies un test existente para que pase sin explicar en la PR por qué estaba mal. No borres tests ni los marques como `skip` para pasar el gate.
 - Dónde va cada test (pirámide, roadmap §1.3): los motores puros en `tests/<motor>.test.ts`; los permisos de las procedures, sin BD, en `tests/procedures.test.ts`; lo que toca la BD en `tests/integration/*.int.test.ts` contra la **BD efímera**, nunca contra Supabase; el E2E con Playwright solo para el bucle crítico.
+- E2E en local: con `relincho-db` arrancado (`npm run db:local`), `npm run test:e2e` migra desde cero `relincho_e2e`, compila y arranca la app en el puerto 3100 con secretos de test y sin Resend, y pasa `tests/e2e/*.spec.ts` en Chromium móvil. Es lento: corre en el CI de la PR, no en el pre-push.
 
 ## 5. El gate: nada se sube en rojo
 

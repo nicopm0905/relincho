@@ -1,6 +1,6 @@
 import { pendingHealthDue } from "@/lib/health-due";
 import { calendarDayOffset } from "@/lib/day-window";
-import { buildFeed, feedByDay, type FeedKind, type TrainingInput } from "@/lib/horse-feed";
+import { buildFeed, feedByDay, type ActivityInput, type FeedKind, type TrainingInput } from "@/lib/horse-feed";
 
 /**
  * Portada de la app del cliente (roadmap §4 E8, v1). Motor puro: decide qué ve
@@ -51,6 +51,8 @@ export interface PortalHomeInput {
   }[];
   /** Entrenamientos de sus caballos, hechos y programados. Las notas no se enseñan. */
   trainings: TrainingInput[];
+  /** Lo que el centro registra de sus caballos (E6): paddock, montado… */
+  activities?: ActivityInput[];
 }
 
 export type PortalHomeItem =
@@ -129,9 +131,14 @@ export function portalHome(input: PortalHomeInput): PortalHome {
     .sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity))
     .map(({ id, number, pending, dueDate }) => ({ id, number, pending, dueDate }));
 
+  // Un acto sanitario es de un día de calendario (el formulario lo guarda a
+  // mediodía): está hecho si su día en Madrid es hoy o anterior, no si su
+  // hora ya pasó. Si no, la visita de las 9:00 no se veía hasta las 12:00.
+  const isDone = (e: { date: Date }) => calendarDayOffset(e.date, now) <= 0;
+
   const lastFarrier = input.horses.map((h) => {
     const dates = input.health
-      .filter((e) => e.horse.id === h.id && e.type === "FARRIER" && e.date <= now)
+      .filter((e) => e.horse.id === h.id && e.type === "FARRIER" && isDone(e))
       .map((e) => e.date.getTime());
     return { horseId: h.id, horseName: h.name, date: dates.length ? new Date(Math.max(...dates)) : null };
   });
@@ -149,12 +156,14 @@ export function portalHome(input: PortalHomeInput): PortalHome {
   const nameOf = new Map(input.horses.map((h) => [h.id, h.name]));
   const horseOf = new Map<string, string>();
   const past = input.trainings.filter((t) => t.date <= now);
-  const pastHealth = input.health.filter((e) => e.date <= now);
+  const pastHealth = input.health.filter(isDone);
   for (const t of past) horseOf.set(t.id, t.horseId);
   for (const e of pastHealth) horseOf.set(e.id, e.horse.id);
+  const activities = (input.activities ?? []).filter((a) => a.at <= now);
+  for (const a of activities) horseOf.set(a.id, a.horseId);
   const feed = buildFeed(
     {
-      activities: [],
+      activities,
       trainings: past,
       health: pastHealth.map((e) => ({ id: e.id, horseId: e.horse.id, type: e.type, name: e.name, date: e.date })),
     },
