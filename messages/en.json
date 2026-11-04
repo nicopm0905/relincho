@@ -1306,6 +1306,7 @@
       "home": "Home",
       "invoices": "Invoices",
       "documents": "Documents",
+      "notifications": "Notifications",
       "signOut": "Sign out"
     },
     "home": {
@@ -1378,6 +1379,42 @@
         "goDocuments": "See documents"
       }
     }
+  },
+  "pushSettings": {
+    "metaTitle": "Notifications",
+    "title": "Notifications",
+    "intro": "Choose how you want to hear about your horses.",
+    "device": {
+      "title": "Notifications on this device",
+      "enable": "Turn on notifications on this device",
+      "disable": "Turn off on this device",
+      "enabled": "This device receives notifications.",
+      "enabledToast": "Notifications turned on for this device",
+      "disabledToast": "Notifications turned off for this device",
+      "error": "Could not turn on notifications",
+      "working": "One moment…",
+      "iosInstall": "On iPhone, notifications only arrive with Relincho on the home screen: tap Share, then “Add to Home Screen”, and open the app from there.",
+      "denied": "You have blocked notifications in this browser. You can allow them in the site settings (the padlock next to the address).",
+      "unsupported": "This browser does not support notifications. You will get them by email.",
+      "notConfigured": "Phone notifications are not active yet. You will get them by email."
+    },
+    "prefs": {
+      "title": "What we notify you about and how",
+      "intro": "If a notification cannot reach your phone, it goes by email (unless you turn it off). Urgent ones go both ways.",
+      "push": "Phone",
+      "email": "Email",
+      "saved": "Preference saved",
+      "error": "Could not save",
+      "kinds": {
+        "HEALTH_DUE": "Health due dates",
+        "INCIDENT": "Incidents",
+        "INCIDENT_ESCALATION": "Unconfirmed incidents",
+        "ANNOUNCEMENT": "Announcements",
+        "VISIT": "Professional visits",
+        "INVOICE": "Invoices"
+      }
+    },
+    "nav": "Notifications"
   },
   "incidents": {
     "metaTitle": "Incidents",
