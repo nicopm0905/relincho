@@ -1414,5 +1414,28 @@
       }
     },
     "nav": "Avisos"
+  },
+  "activityLog": {
+    "metaTitle": "Registrar actividad",
+    "title": "Registrar actividad",
+    "intro": "Elige los caballos y lo que han hecho. Se guarda con la hora de ahora.",
+    "back": "Volver al kiosko",
+    "openFromKiosk": "Actividad",
+    "horses": "Caballos",
+    "all": "Todos",
+    "none": "Ninguno",
+    "kind": "Qué han hecho",
+    "submit": "{count, plural, =0 {Elige caballos} one {Registrar en # caballo} other {Registrar en # caballos}}",
+    "saving": "Guardando…",
+    "saved": "{kind}: registrado en {count, plural, one {# caballo} other {# caballos}}",
+    "error": "No se pudo registrar",
+    "noHorses": "No hay caballos activos en el centro.",
+    "kinds": {
+      "PADDOCK": "Paddock",
+      "RIDDEN": "Montado",
+      "LUNGED": "Trabajo a la cuerda",
+      "WALKER": "Caminador",
+      "GROOMED": "Aseo"
+    }
   }
 }

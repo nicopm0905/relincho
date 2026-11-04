@@ -136,6 +136,22 @@ test("un día sin registros dice \"Sin actividad registrada\" y no inventa nada"
   assert.deepEqual(portalHome(base({ horses: [] })).activity, []);
 });
 
+test("la actividad reciente incluye lo que registra el centro, con su caballo, y no las entradas internas", () => {
+  const home = portalHome(
+    base({
+      activities: [
+        { id: "a-paddock", horseId: lucero.id, kind: "PADDOCK", at: day(0), durationMin: 60, note: null, authorMembershipId: "m-mozo", visibleToOwner: true },
+        { id: "a-interna", horseId: lucero.id, kind: "NOTE", at: day(0), durationMin: null, note: "Mirar la mano", authorMembershipId: "m-mozo", visibleToOwner: false },
+      ],
+    }),
+  );
+  const items = home.activity.flatMap((d) => d.items);
+  assert.deepEqual(
+    items.map((i) => [i.source, i.kind, i.horseName, i.durationMin]),
+    [["activity", "PADDOCK", "Lucero", 60]],
+  );
+});
+
 test("un herraje registrado hoy cuenta en el último herraje y en la actividad de hoy aunque aún no sea mediodía", () => {
   // El formulario del profesional guarda la visita a mediodía (un día de
   // calendario). A las 10:00 de Madrid, la visita de esta mañana ya está hecha.
