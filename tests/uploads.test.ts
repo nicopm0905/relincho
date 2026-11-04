@@ -8,6 +8,7 @@ import {
   maxBytesFor,
   safeKeySegment,
   incidentPhotoKey,
+  isIncidentPhotoKeyFor,
 } from "@/lib/uploads";
 
 test("la extensión sale del MIME, nunca del nombre del fichero", () => {
@@ -68,4 +69,14 @@ test("la foto de una incidencia va a la ruta privada del tenant y del caballo", 
     5,
   );
   assert.ok(!incidentPhotoKey({ tenantId: "t-1", horseId: "../t-2", incidentId: "i-3", photoId: "p", ext: "jpg" }).includes(".."));
+});
+
+test("solo se aceptan fotos de incidencia guardadas bajo la ruta de ese centro y ese caballo", () => {
+  const own = { tenantId: "t-1", horseId: "h-9" };
+  assert.equal(isIncidentPhotoKeyFor(own, "t-1/incidents/h-9/i-3/p-7.jpg"), true);
+  assert.equal(isIncidentPhotoKeyFor(own, "t-2/incidents/h-9/i-3/p-7.jpg"), false, "otro centro");
+  assert.equal(isIncidentPhotoKeyFor(own, "t-1/incidents/h-8/i-3/p-7.jpg"), false, "otro caballo");
+  assert.equal(isIncidentPhotoKeyFor(own, "t-1/documents/h-9/i-3/p-7.jpg"), false, "otra carpeta");
+  assert.equal(isIncidentPhotoKeyFor(own, "t-1/incidents/h-9/../../t-2/p.jpg"), false, "subir de carpeta");
+  assert.equal(isIncidentPhotoKeyFor(own, "t-1/incidents/h-9/i-3/p-7.exe"), false, "no es una imagen");
 });
