@@ -95,8 +95,8 @@ test("un contacto veterinario o herrador se invita como PROFESSIONAL con su espe
 
   assert.deepEqual(plan.invitations, []);
   assert.deepEqual(plan.professionalInvitations, [
-    { email: "vet@test.local", contactIds: ["vet"], specialty: "VET" },
-    { email: "herrador@test.local", contactIds: ["herrador"], specialty: "FARRIER" },
+    { email: "vet@test.local", contactIds: ["vet"], specialty: "VET", horseIds: [] },
+    { email: "herrador@test.local", contactIds: ["herrador"], specialty: "FARRIER", horseIds: [] },
   ]);
   assert.deepEqual(plan.skipped, []);
 });
@@ -118,4 +118,41 @@ test("un profesional que ya es miembro no recibe otra invitación", () => {
   assert.deepEqual(plan.professionalInvitations, []);
   assert.deepEqual(plan.grants, []);
   assert.deepEqual(plan.skipped, [{ contactId: "vet", name: "Contacto vet", reason: "ALREADY_MEMBER" }]);
+});
+
+// Arreglos pendientes de la #55: se decide por email, con todas sus fichas a la vez.
+const bothOrders = <T,>(a: T, b: T) => [
+  [a, b],
+  [b, a],
+];
+const sorted = (ids: string[]) => [...ids].sort();
+
+test("un mismo email en una ficha de veterinario y otra de cliente con caballos se invita una sola vez, como PROFESSIONAL y propietario de sus caballos", () => {
+  const vet = contact({ id: "vet", kind: "VET", email: "marta@test.local" });
+  const cliente = contact({ id: "cliente", kind: "CLIENT", email: "Marta@Test.local", horseIds: ["lucero"] });
+
+  for (const contacts of bothOrders(vet, cliente)) {
+    const plan = planClientInvites(contacts, []);
+    assert.deepEqual(plan.invitations, [], "no se invita además como cliente");
+    assert.equal(plan.professionalInvitations.length, 1);
+    const [invitation] = plan.professionalInvitations;
+    assert.equal(invitation.email, "marta@test.local");
+    assert.equal(invitation.specialty, "VET");
+    assert.deepEqual(sorted(invitation.contactIds), ["cliente", "vet"]);
+    assert.deepEqual(invitation.horseIds, ["lucero"]);
+    assert.deepEqual(plan.skipped, []);
+  }
+});
+
+test("NO_HORSES no depende del orden: si otra ficha con el mismo email tiene caballos, se invita con las dos", () => {
+  const sinCaballos = contact({ id: "ana-1", email: "ana@test.local" });
+  const conCaballos = contact({ id: "ana-2", email: "ANA@test.local", horseIds: ["tormenta"] });
+
+  for (const contacts of bothOrders(sinCaballos, conCaballos)) {
+    const plan = planClientInvites(contacts, []);
+    assert.equal(plan.invitations.length, 1);
+    assert.deepEqual(sorted(plan.invitations[0].contactIds), ["ana-1", "ana-2"]);
+    assert.deepEqual(plan.invitations[0].horseIds, ["tormenta"]);
+    assert.deepEqual(plan.skipped, [], "ninguna ficha sale como NO_HORSES");
+  }
 });
