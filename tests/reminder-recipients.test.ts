@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 
 import {
   dueReminders,
+  isValidLeadDays,
   recipientsFor,
+  REMINDER_LEAD_DAYS,
   reminderDedupeKey,
   type ReminderMember,
 } from "@/lib/reminder-recipients";
@@ -114,4 +116,10 @@ test("para todo acto y especialidad, recibe el aviso quien puede registrar ese a
       assert.equal(notified, canRecordHealthEvent({ role: "PROFESSIONAL", specialty }, type), `${specialty} × ${type}`);
     }
   }
+});
+
+test("la antelación de los avisos va de 0 a 30 días enteros y 7 por defecto", () => {
+  assert.deepEqual(REMINDER_LEAD_DAYS, { min: 0, max: 30, default: 7 });
+  for (const ok of [0, 3, 7, 30]) assert.equal(isValidLeadDays(ok), true, String(ok));
+  for (const bad of [-1, 31, 2.5, Number.NaN]) assert.equal(isValidLeadDays(bad), false, String(bad));
 });
