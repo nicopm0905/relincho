@@ -52,3 +52,11 @@ test("incidents.list y addUpdate rechazan a PROFESSIONAL, VET_EXTERNAL, RIDER e 
 test("incidents.get rechaza a PROFESSIONAL, VET_EXTERNAL, RIDER e INSTRUCTOR", async () => {
   await forbidden(["PROFESSIONAL", "VET_EXTERNAL", "RIDER", "INSTRUCTOR"], (c) => c.incidents.get({ id: ID }));
 });
+
+test("incidents.photoUploadUrl y followUp solo los usa el personal", async () => {
+  const outsiders: Role[] = ["OWNER_EXTERNAL", "PROFESSIONAL", "VET_EXTERNAL", "RIDER", "INSTRUCTOR"];
+  await forbidden(outsiders, (c) =>
+    c.incidents.photoUploadUrl({ horseId: ID, draftId: ID, contentType: "image/jpeg", sizeBytes: 1 }),
+  );
+  await forbidden(outsiders, (c) => c.incidents.followUp({ id: ID, description: "Vuelve" }));
+});

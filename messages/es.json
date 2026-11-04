@@ -1433,7 +1433,13 @@
       "saved": "Incidencia enviada al propietario",
       "savedCallOwner": "Incidencia guardada. Este caballo no tiene propietario con cuenta: hay que llamarle.",
       "error": "No se pudo enviar la incidencia",
-      "noHorses": "No hay caballos en el centro."
+      "noHorses": "No hay caballos en el centro.",
+      "addPhoto": "Añadir foto",
+      "photoError": "No se pudo subir la foto",
+      "photosCount": "{count, plural, one {# foto} other {# fotos}}",
+      "removePhoto": "Quitar foto {n}",
+      "uploading": "Subiendo foto…",
+      "photoNeedsHorse": "Elige primero el caballo para añadir fotos"
     },
     "list": {
       "title": "Abiertas y recientes",
@@ -1445,7 +1451,12 @@
       "resolveNote": "Cómo se ha resuelto",
       "resolveSubmit": "Cerrar incidencia",
       "resolved": "Incidencia cerrada",
-      "resolveError": "No se pudo cerrar"
+      "resolveError": "No se pudo cerrar",
+      "followUp": "Ha vuelto a pasar",
+      "followUpPlaceholder": "Qué ha vuelto a pasar",
+      "followUpSubmit": "Abrir de nuevo",
+      "followedUp": "Incidencia abierta de nuevo y propietario avisado",
+      "followUpError": "No se pudo abrir"
     },
     "detail": {
       "back": "Volver al inicio",
@@ -1455,7 +1466,9 @@
       "acknowledging": "Confirmando…",
       "acknowledged": "Confirmada {when}",
       "ackError": "No se pudo confirmar",
-      "resolvedNote": "Cerrada por el centro: {note}"
+      "resolvedNote": "Cerrada por el centro: {note}",
+      "photos": "Fotos",
+      "photoAlt": "Foto {n} de la incidencia"
     },
     "status": {
       "OPEN": "Sin confirmar",

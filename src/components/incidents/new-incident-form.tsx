@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { CircleNotch } from "@phosphor-icons/react";
+import { Camera, CircleNotch, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/compress-image";
 
 export const INCIDENT_CATEGORIES = [
   "LAMENESS",
@@ -23,6 +24,7 @@ export const INCIDENT_CATEGORIES = [
   "OTHER",
 ] as const;
 const SEVERITIES = ["LOW", "MEDIUM", "HIGH"] as const;
+const MAX_PHOTOS = 6;
 type Category = (typeof INCIDENT_CATEGORIES)[number];
 type Severity = (typeof SEVERITIES)[number];
 
@@ -40,7 +42,8 @@ const DEFAULT_SEVERITY: Record<Category, Severity> = {
 /**
  * Nueva incidencia (E5) en pocos toques: caballo, qué pasa y enviar. La
  * gravedad se propone según el tipo. El `clientMutationId` se mantiene
- * mientras se reintenta, así un doble toque o una red mala no la duplican.
+ * mientras se reintenta, así un doble toque o una red mala no la duplican, y
+ * es también el borrador bajo el que se suben las fotos (comprimidas antes).
  */
 export function NewIncidentForm({ horses }: { horses: { id: string; name: string }[] }) {
   const t = useTranslations("incidents");
@@ -50,6 +53,37 @@ export function NewIncidentForm({ horses }: { horses: { id: string; name: string
   const [severity, setSeverity] = useState<Severity>("LOW");
   const [description, setDescription] = useState("");
   const [mutationId, setMutationId] = useState(() => crypto.randomUUID());
+  const [photos, setPhotos] = useState<{ key: string; preview: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const sign = trpc.incidents.photoUploadUrl.useMutation();
+
+  function clearPhotos() {
+    photos.forEach((p) => URL.revokeObjectURL(p.preview));
+    setPhotos([]);
+  }
+
+  async function addPhotos(files: FileList | null) {
+    if (!files || !horseId) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files).slice(0, MAX_PHOTOS - photos.length)) {
+        const blob = await compressImage(file);
+        const { key, uploadUrl } = await sign.mutateAsync({
+          horseId,
+          draftId: mutationId,
+          contentType: blob.type || "image/jpeg",
+          sizeBytes: blob.size,
+        });
+        const put = await fetch(uploadUrl, { method: "PUT", body: blob, headers: { "Content-Type": blob.type || "image/jpeg" } });
+        if (!put.ok) throw new Error("upload");
+        setPhotos((prev) => [...prev, { key, preview: URL.createObjectURL(blob) }]);
+      }
+    } catch {
+      toast.error(t("new.photoError"));
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const create = trpc.incidents.create.useMutation({
     onSuccess: (res) => {
@@ -58,6 +92,7 @@ export function NewIncidentForm({ horses }: { horses: { id: string; name: string
       setCategory("");
       setSeverity("LOW");
       setDescription("");
+      clearPhotos();
       setMutationId(crypto.randomUUID());
       router.refresh();
     },
@@ -68,7 +103,7 @@ export function NewIncidentForm({ horses }: { horses: { id: string; name: string
     return <p className="text-sm text-muted-foreground">{t("new.noHorses")}</p>;
   }
 
-  const ready = horseId && category && !create.isPending;
+  const ready = horseId && category && !create.isPending && !uploading;
 
   function pick(c: Category) {
     setCategory(c);
@@ -83,6 +118,7 @@ export function NewIncidentForm({ horses }: { horses: { id: string; name: string
       category,
       severity,
       description: description.trim() || t(`category.${category}`),
+      photoKeys: photos.map((p) => p.key),
       clientMutationId: mutationId,
     });
   }
@@ -101,7 +137,11 @@ export function NewIncidentForm({ horses }: { horses: { id: string; name: string
               className="h-11"
               value={horseId}
               required
-              onChange={(e) => setHorseId(e.target.value)}
+              onChange={(e) => {
+                // Las fotos se guardan bajo la carpeta del caballo: cambiarlo las descarta.
+                clearPhotos();
+                setHorseId(e.target.value);
+              }}
             >
               <option value="" disabled>
                 {t("new.horsePlaceholder")}
@@ -146,6 +186,57 @@ export function NewIncidentForm({ horses }: { horses: { id: string; name: string
               placeholder={t("new.descriptionPlaceholder")}
               onChange={(e) => setDescription(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-2">
+            {photos.length > 0 && (
+              <ul className="flex flex-wrap gap-2" aria-label={t("new.photosCount", { count: photos.length })}>
+                {photos.map((p, n) => (
+                  <li key={p.key} className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- vista previa local (blob:) */}
+                    <img src={p.preview} alt="" className="h-20 w-20 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      aria-label={t("new.removePhoto", { n: n + 1 })}
+                      onClick={() => {
+                        URL.revokeObjectURL(p.preview);
+                        setPhotos((prev) => prev.filter((x) => x.key !== p.key));
+                      }}
+                      className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background"
+                    >
+                      <X aria-hidden className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {photos.length < MAX_PHOTOS && (
+              <label
+                className={cn(
+                  "flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed px-3 text-sm font-medium",
+                  (!horseId || uploading) && "pointer-events-none opacity-50",
+                )}
+              >
+                {uploading ? (
+                  <CircleNotch weight="bold" aria-hidden className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Camera aria-hidden className="h-4 w-4" />
+                )}
+                {uploading ? t("new.uploading") : horseId ? t("new.addPhoto") : t("new.photoNeedsHorse")}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  multiple
+                  className="sr-only"
+                  disabled={!horseId || uploading}
+                  onChange={(e) => {
+                    void addPhotos(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           <Button type="submit" className="h-11 w-full" disabled={!ready}>

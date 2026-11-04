@@ -58,6 +58,28 @@ export default async function PortalIncidentPage({ params }: PageProps) {
 
       <p className="rounded-2xl border bg-card p-4 text-foreground">{incident.description}</p>
 
+      {incident.photos.length > 0 && (
+        <section aria-labelledby="incident-photos" className="space-y-2">
+          <h2 id="incident-photos" className="font-semibold text-foreground">
+            {t("detail.photos")}
+          </h2>
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {incident.photos.map((p, n) => (
+              <li key={n}>
+                <a href={p.url} target="_blank" rel="noreferrer" className="block min-h-11">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- URL firmada que caduca: no pasa por el optimizador */}
+                  <img
+                    src={p.url}
+                    alt={t("detail.photoAlt", { n: n + 1 })}
+                    className="aspect-square w-full rounded-xl object-cover"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {incident.updates.length > 0 && (
         <section aria-labelledby="incident-updates" className="space-y-2">
           <h2 id="incident-updates" className="font-semibold text-foreground">

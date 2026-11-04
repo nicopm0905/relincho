@@ -1433,7 +1433,13 @@
       "saved": "Incident sent to the owner",
       "savedCallOwner": "Incident saved. This horse has no owner with an account: call them.",
       "error": "Could not send the incident",
-      "noHorses": "There are no horses in the yard."
+      "noHorses": "There are no horses in the yard.",
+      "addPhoto": "Add photo",
+      "photoError": "Could not upload the photo",
+      "photosCount": "{count, plural, one {# photo} other {# photos}}",
+      "removePhoto": "Remove photo {n}",
+      "uploading": "Uploading photo…",
+      "photoNeedsHorse": "Choose the horse first to add photos"
     },
     "list": {
       "title": "Open and recent",
@@ -1445,7 +1451,12 @@
       "resolveNote": "How it was resolved",
       "resolveSubmit": "Close incident",
       "resolved": "Incident closed",
-      "resolveError": "Could not close it"
+      "resolveError": "Could not close it",
+      "followUp": "It happened again",
+      "followUpPlaceholder": "What happened again",
+      "followUpSubmit": "Open again",
+      "followedUp": "Incident opened again and owner notified",
+      "followUpError": "Could not open it"
     },
     "detail": {
       "back": "Back to home",
@@ -1455,7 +1466,9 @@
       "acknowledging": "Confirming…",
       "acknowledged": "Confirmed {when}",
       "ackError": "Could not confirm",
-      "resolvedNote": "Closed by the yard: {note}"
+      "resolvedNote": "Closed by the yard: {note}",
+      "photos": "Photos",
+      "photoAlt": "Incident photo {n}"
     },
     "status": {
       "OPEN": "Not confirmed",
