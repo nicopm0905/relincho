@@ -135,3 +135,39 @@ test("un día sin registros dice \"Sin actividad registrada\" y no inventa nada"
   // El alumno no tiene caballo: ni siete días vacíos de "su caballo".
   assert.deepEqual(portalHome(base({ horses: [] })).activity, []);
 });
+
+test("la actividad reciente incluye lo que registra el centro, con su caballo, y no las entradas internas", () => {
+  const home = portalHome(
+    base({
+      activities: [
+        { id: "a-paddock", horseId: lucero.id, kind: "PADDOCK", at: day(0), durationMin: 60, note: null, authorMembershipId: "m-mozo", visibleToOwner: true },
+        { id: "a-interna", horseId: lucero.id, kind: "NOTE", at: day(0), durationMin: null, note: "Mirar la mano", authorMembershipId: "m-mozo", visibleToOwner: false },
+      ],
+    }),
+  );
+  const items = home.activity.flatMap((d) => d.items);
+  assert.deepEqual(
+    items.map((i) => [i.source, i.kind, i.horseName, i.durationMin]),
+    [["activity", "PADDOCK", "Lucero", 60]],
+  );
+});
+
+test("un herraje registrado hoy cuenta en el último herraje y en la actividad de hoy aunque aún no sea mediodía", () => {
+  // El formulario del profesional guarda la visita a mediodía (un día de
+  // calendario). A las 10:00 de Madrid, la visita de esta mañana ya está hecha.
+  const visitaDeHoy = new Date("2026-12-10T11:00:00Z"); // 12:00 en Madrid; `now` son las 10:00
+  const home = portalHome(
+    base({
+      health: [
+        { id: "herraje-hoy", type: "FARRIER", name: "Herraje", date: visitaDeHoy, nextDueDate: day(42), horse: lucero },
+        { id: "vacuna-manana", type: "VACCINE", name: "Gripe", date: day(1), nextDueDate: null, horse: lucero },
+      ],
+    }),
+  );
+
+  assert.deepEqual(home.lastFarrier, [{ horseId: lucero.id, horseName: "Lucero", date: visitaDeHoy }]);
+  assert.equal(home.activity[0]?.day, "2026-12-10");
+  assert.deepEqual(home.activity[0]?.items.map((i) => i.id), ["herraje-hoy"]);
+  // Lo de mañana sigue sin contar como hecho.
+  assert.ok(home.activity.every((d) => d.items.every((i) => i.id !== "vacuna-manana")));
+});

@@ -74,3 +74,8 @@ test("un vencimiento no repite el tipo cuando el nombre del acto ya lo dice", ()
   assert.equal(healthDueDetail("Lucero", " desparasitacion ", "Desparasitación", "25 oct 2026"), "Lucero · 25 oct 2026");
   assert.equal(healthDueDetail("Lucero", "Gripe equina", "Vacuna", "25 oct 2026"), "Lucero · Vacuna · 25 oct 2026");
 });
+
+test("la pantalla de avisos del portal marca su pestaña en la navegación", () => {
+  assert.equal(portalSection("/hipica-sur/portal/avisos", "hipica-sur"), "notifications");
+  assert.equal(portalSection("/otra/portal/avisos", "hipica-sur"), null);
+});

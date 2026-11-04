@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Files, House, Receipt, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { Bell, Files, House, Receipt, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { portalSection, type PortalSection } from "@/lib/portal-view";
 
@@ -11,6 +11,7 @@ const ITEMS: { key: PortalSection; path: string; icon: PhosphorIcon }[] = [
   { key: "home", path: "", icon: House },
   { key: "invoices", path: "/facturas", icon: Receipt },
   { key: "documents", path: "/documentos", icon: Files },
+  { key: "notifications", path: "/avisos", icon: Bell },
 ];
 
 /**
@@ -25,6 +26,7 @@ export function PortalNav({ tenantSlug, variant }: { tenantSlug: string; variant
     home: t("home"),
     invoices: t("invoices"),
     documents: t("documents"),
+    notifications: t("notifications"),
   };
 
   if (variant === "top") {
@@ -53,7 +55,7 @@ export function PortalNav({ tenantSlug, variant }: { tenantSlug: string; variant
       aria-label={t("navigation")}
       className="safe-area-bottom fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur md:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-3">
+      <ul className="mx-auto grid max-w-md grid-cols-4">
         {ITEMS.map(({ key, path, icon: Icon }) => (
           <li key={key}>
             <Link

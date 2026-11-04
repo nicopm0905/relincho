@@ -148,6 +148,7 @@ model Tenant {
   farmCaretakers   FarmCaretaker[]
   notifications    Notification[]
   incidents        Incident[]
+  horseActivities  HorseActivity[]
 }
 
 model User {
@@ -162,6 +163,8 @@ model User {
   sessions    Session[]
   notifications Notification[]
   uploadedDocuments Document[] @relation("DocumentUploadedBy")
+  pushSubscriptions PushSubscription[]
+  notificationPreferences NotificationPreference[]
 }
 
 model Account {
@@ -214,6 +217,7 @@ model Membership {
   incidentsCreated Incident[]        @relation("IncidentCreatedBy")
   incidentReceipts IncidentReceipt[]
   incidentUpdates  IncidentUpdate[]
+  activities       HorseActivity[]
 
   @@unique([userId, tenantId])
   @@index([tenantId])
@@ -283,6 +287,7 @@ model Horse {
   reproProfile     MareReproProfile?
   semenBatches     SemenBatch[]        @relation("SemenStallion")
   incidents        Incident[]
+  activities       HorseActivity[]
   createdAt        DateTime            @default(now())
 
   @@index([tenantId])
@@ -1450,4 +1455,76 @@ model IncidentUpdate {
   author             Membership? @relation(fields: [authorMembershipId], references: [id], onDelete: SetNull)
 
   @@index([incidentId, createdAt])
+}
+
+// ─── Feed de actividad del caballo (E6) ─────────────────────────────────────
+
+enum ActivityKind {
+  PADDOCK
+  RIDDEN
+  LUNGED
+  WALKER
+  GROOMED
+  FARRIER
+  VET
+  PHYSIO
+  NOTE
+}
+
+/// Lo que se hace con un caballo en el día: paddock, montado, cuerda… (E6).
+/// Entrenamientos, actos sanitarios e incidencias no se copian aquí: el
+/// motor `src/lib/horse-feed.ts` los fusiona al leer.
+model HorseActivity {
+  id                 String       @id @default(uuid())
+  tenantId           String
+  horseId            String
+  kind               ActivityKind
+  at                 DateTime
+  durationMin        Int?
+  /// Nota interna: el propietario no la ve.
+  note               String?
+  /// Clave privada de R2, nunca una URL pública.
+  photoKey           String?
+  authorMembershipId String?
+  visibleToOwner     Boolean      @default(true)
+  /// Idempotencia offline (D3): reenviar el mismo registro no lo duplica.
+  clientMutationId   String?      @unique
+  createdAt          DateTime     @default(now())
+  tenant             Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  horse              Horse        @relation(fields: [horseId], references: [id], onDelete: Cascade)
+  author             Membership?  @relation(fields: [authorMembershipId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, horseId, at])
+}
+
+// ─── Notificaciones Web Push y preferencias (E4) ───────────────────────────
+
+/// Un navegador o PWA instalada que recibe push (E4). El endpoint es único:
+/// si otro usuario inicia sesión en el mismo navegador, la suscripción pasa a él.
+model PushSubscription {
+  id            String    @id @default(uuid())
+  userId        String
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+  lastSuccessAt DateTime?
+  failedCount   Int       @default(0)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Canales que el usuario quiere para un tipo de aviso. Sin fila, los dos
+/// encendidos (`DEFAULT_PREFERENCE` de src/lib/notify-channels.ts).
+model NotificationPreference {
+  id     String           @id @default(uuid())
+  userId String
+  kind   NotificationKind
+  push   Boolean          @default(true)
+  email  Boolean          @default(true)
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind])
 }
