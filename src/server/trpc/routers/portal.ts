@@ -227,7 +227,7 @@ export const portalRouter = createTRPCRouter({
         orderBy: { name: "asc" },
       });
       const horseIds = horses.map((h) => h.id);
-      const [health, invoices, trainings, incidents] = await inSequence([
+      const [health, invoices, trainings, incidents, activities] = await inSequence([
         () =>
           horseIds.length
             ? tx.healthEvent.findMany({
@@ -278,13 +278,27 @@ export const portalRouter = createTRPCRouter({
                 },
               })
             : Promise.resolve([]),
+        () =>
+          horseIds.length
+            ? tx.horseActivity.findMany({
+                where: {
+                  tenantId: ctx.tenantId,
+                  horseId: { in: horseIds },
+                  visibleToOwner: true,
+                  at: { gte: new Date(now.getTime() - 8 * DAY_MS), lte: now },
+                },
+                select: { id: true, horseId: true, kind: true, at: true, durationMin: true, authorMembershipId: true, visibleToOwner: true },
+              })
+            : Promise.resolve([]),
       ]);
-      return { horses, health, invoices, trainings, incidents };
+      return { horses, health, invoices, trainings, incidents, activities };
     });
 
     return portalHome({
       now,
       trainings: data.trainings.map((t) => ({ ...t, notes: null })),
+      // Las notas de la actividad son internas: ni se leen.
+      activities: data.activities.map((a) => ({ ...a, note: null })),
       horses: data.horses,
       incidents: data.incidents.map(({ receipts, ...i }) => ({
         ...i,

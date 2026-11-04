@@ -18,6 +18,9 @@ import { membersRouter } from "./routers/members";
 import { portalRouter } from "./routers/portal";
 import { professionalRouter } from "./routers/professional";
 import { incidentsRouter } from "./routers/incidents";
+import { activityRouter } from "./routers/activity";
+import { feedRouter } from "./routers/feed";
+import { notificationsRouter } from "./routers/notifications";
 import { documentsRouter } from "./routers/documents";
 import { calendarRouter } from "./routers/calendar";
 import { eventsRouter } from "./routers/events";
@@ -44,6 +47,9 @@ export const appRouter = createTRPCRouter({
   portal: portalRouter,
   professional: professionalRouter,
   incidents: incidentsRouter,
+  activity: activityRouter,
+  feed: feedRouter,
+  notifications: notificationsRouter,
   documents: documentsRouter,
   calendar: calendarRouter,
   events: eventsRouter,

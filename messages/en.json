@@ -570,6 +570,17 @@
       "annual": "Annual (pay 10, use 12)",
       "founderNote": "Founder price applied: 40% off for life while you stay subscribed.",
       "seePlans": "See all plans"
+    },
+    "reminders": {
+      "title": "Due-date reminders",
+      "description": "Shoeing, vaccines, deworming and dentist send an email to the yard, the horse's owner and their professional.",
+      "label": "Days in advance",
+      "help": "{days, plural, =0 {Reminders go out on the due date only.} one {Reminders go out # day before and on the due date.} other {Reminders go out # days before and on the due date.}}",
+      "invalid": "Enter a whole number from {min} to {max} days.",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Reminder lead time updated",
+      "error": "Could not save the lead time"
     }
   },
   "auth": {
@@ -1295,6 +1306,7 @@
       "home": "Home",
       "invoices": "Invoices",
       "documents": "Documents",
+      "notifications": "Notifications",
       "signOut": "Sign out"
     },
     "home": {
@@ -1368,6 +1380,42 @@
       }
     }
   },
+  "pushSettings": {
+    "metaTitle": "Notifications",
+    "title": "Notifications",
+    "intro": "Choose how you want to hear about your horses.",
+    "device": {
+      "title": "Notifications on this device",
+      "enable": "Turn on notifications on this device",
+      "disable": "Turn off on this device",
+      "enabled": "This device receives notifications.",
+      "enabledToast": "Notifications turned on for this device",
+      "disabledToast": "Notifications turned off for this device",
+      "error": "Could not turn on notifications",
+      "working": "One moment…",
+      "iosInstall": "On iPhone, notifications only arrive with Relincho on the home screen: tap Share, then “Add to Home Screen”, and open the app from there.",
+      "denied": "You have blocked notifications in this browser. You can allow them in the site settings (the padlock next to the address).",
+      "unsupported": "This browser does not support notifications. You will get them by email.",
+      "notConfigured": "Phone notifications are not active yet. You will get them by email."
+    },
+    "prefs": {
+      "title": "What we notify you about and how",
+      "intro": "If a notification cannot reach your phone, it goes by email (unless you turn it off). Urgent ones go both ways.",
+      "push": "Phone",
+      "email": "Email",
+      "saved": "Preference saved",
+      "error": "Could not save",
+      "kinds": {
+        "HEALTH_DUE": "Health due dates",
+        "INCIDENT": "Incidents",
+        "INCIDENT_ESCALATION": "Unconfirmed incidents",
+        "ANNOUNCEMENT": "Announcements",
+        "VISIT": "Professional visits",
+        "INVOICE": "Invoices"
+      }
+    },
+    "nav": "Notifications"
+  },
   "incidents": {
     "metaTitle": "Incidents",
     "title": "Incidents",
@@ -1440,6 +1488,50 @@
       "EQUIPMENT": "Broken equipment",
       "BEHAVIOR": "Behaviour",
       "OTHER": "Other"
+    }
+  },
+  "activityLog": {
+    "metaTitle": "Log activity",
+    "title": "Log activity",
+    "intro": "Choose the horses and what they did. It is saved with the current time.",
+    "back": "Back to kiosk",
+    "openFromKiosk": "Activity",
+    "horses": "Horses",
+    "all": "All",
+    "none": "None",
+    "kind": "What they did",
+    "submit": "{count, plural, =0 {Choose horses} one {Log for # horse} other {Log for # horses}}",
+    "saving": "Saving…",
+    "saved": "{kind}: logged for {count, plural, one {# horse} other {# horses}}",
+    "error": "Could not log it",
+    "noHorses": "There are no active horses in the yard.",
+    "kinds": {
+      "PADDOCK": "Paddock",
+      "RIDDEN": "Ridden",
+      "LUNGED": "Lunged",
+      "WALKER": "Horse walker",
+      "GROOMED": "Groomed"
+    }
+  },
+  "horseFeed": {
+    "title": "Activity",
+    "empty": "No activity logged in the last {days} days.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "minutes": "{minutes} min",
+    "by": "by {name}",
+    "internal": "Internal",
+    "kinds": {
+      "PADDOCK": "Paddock",
+      "RIDDEN": "Ridden",
+      "LUNGED": "Lunged",
+      "WALKER": "Horse walker",
+      "GROOMED": "Groomed",
+      "FARRIER": "Farrier",
+      "VET": "Vet",
+      "PHYSIO": "Physio",
+      "NOTE": "Note",
+      "HEALTH": "Health"
     }
   }
 }

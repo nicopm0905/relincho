@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createServerCaller } from "@/lib/trpc/server";
+import { FEED_DAYS, HorseActivityFeed } from "@/components/horses/horse-activity-feed";
 import { formatDate } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,6 +72,9 @@ export default async function PortalHorsePage({ params }: PageProps) {
     notFound();
   }
 
+  // Lo que se ha hecho con su caballo (E6): sin lo interno ni las notas.
+  const feed = await caller.feed.forHorse({ horseId: id, days: FEED_DAYS });
+
   const { upcoming: upcomingHealth, past: pastHealth } = splitHealthByDue(
     horse.healthEvents,
   );
@@ -138,6 +142,8 @@ export default async function PortalHorsePage({ params }: PageProps) {
           </dl>
         </div>
       </div>
+
+      <HorseActivityFeed items={feed.items} />
 
       {/* Próxima sanidad / herraje */}
       <section className="space-y-3">

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { CaretLeft } from "@phosphor-icons/react/dist/ssr";
 import { createServerCaller } from "@/lib/trpc/server";
+import { FEED_DAYS, HorseActivityFeed } from "@/components/horses/horse-activity-feed";
 import { gestation, mareState } from "@/lib/reproduction";
 import { withdrawalStatus } from "@/lib/treatments";
 import { pendingHealthDue } from "@/lib/health-due";
@@ -67,6 +68,9 @@ export default async function CaballoDetailPage({ params, searchParams }: PagePr
   } catch {
     notFound();
   }
+
+  // El feed (E6) no lo ve el veterinario externo antiguo: sin permiso, no se enseña.
+  const feed = await caller.feed.forHorse({ horseId: id, days: FEED_DAYS }).catch(() => null);
 
   // Los documentos viven en su propio router porque la ficha grande no trae
   // las URLs firmadas: aqui se piden ya con enlace temporal resuelto.
@@ -175,6 +179,8 @@ export default async function CaballoDetailPage({ params, searchParams }: PagePr
               <Field label={t("summary.owner")} value={horse.owner?.name ?? t("summary.theFarm")} />
             </dl>
           </section>
+
+          {feed && <HorseActivityFeed items={feed.items} />}
 
           {bodyCondition && (
             <BodyConditionCard
