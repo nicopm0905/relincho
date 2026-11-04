@@ -60,14 +60,23 @@ export async function runIncidentEscalation({
       const pending = row.receipts.filter((r) => !r.acknowledgedAt).map((r) => r.membershipId);
       const owners = await db.membership.findMany({ where: { id: { in: pending } }, select: { userId: true } });
       const managers = await centerManagers(db, row.tenantId);
-      summary.notified += await notify(db, {
+      const base = {
         tenantId: row.tenantId,
-        userIds: [...managers, ...owners].map((m) => m.userId),
-        kind: "INCIDENT_ESCALATION",
+        kind: "INCIDENT_ESCALATION" as const,
         title: `Sin confirmar: ${INCIDENT_CATEGORY_LABEL[row.category].toLowerCase()} de ${row.horse.name}`,
         body: row.description,
-        url: `/${c.tenant.slug}`,
         dedupeKey: `incident-escalation:${row.id}`,
+      };
+      // Cada uno a su pantalla: el centro a su listado, el propietario a la incidencia.
+      summary.notified += await notify(db, {
+        ...base,
+        userIds: managers.map((m) => m.userId),
+        url: `/${c.tenant.slug}/incidencias`,
+      });
+      summary.notified += await notify(db, {
+        ...base,
+        userIds: owners.map((m) => m.userId),
+        url: `/${c.tenant.slug}/portal/incidencias/${row.id}`,
       });
       const mail = await deliverIncidentEmails(db, {
         tenantId: row.tenantId,

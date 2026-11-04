@@ -673,6 +673,7 @@
       "invoicing": "Invoicing",
       "contacts": "Contacts",
       "documents": "Documents",
+      "incidents": "Incidents",
       "settings": "Settings",
       "breedingStats": "Statistics"
     },
@@ -1414,6 +1415,67 @@
       }
     },
     "nav": "Notifications"
+  },
+  "incidents": {
+    "metaTitle": "Incidents",
+    "title": "Incidents",
+    "intro": "Something happens to a horse, its owner confirms it and the yard closes it.",
+    "new": {
+      "title": "New incident",
+      "horse": "Horse",
+      "horsePlaceholder": "Choose the horse",
+      "category": "What happened",
+      "severity": "Severity",
+      "description": "Details",
+      "descriptionPlaceholder": "What you saw and what you did",
+      "submit": "Notify the owner",
+      "saving": "Sending…",
+      "saved": "Incident sent to the owner",
+      "savedCallOwner": "Incident saved. This horse has no owner with an account: call them.",
+      "error": "Could not send the incident",
+      "noHorses": "There are no horses in the yard."
+    },
+    "list": {
+      "title": "Open and recent",
+      "empty": "No incidents.",
+      "confirmedBy": "{done} of {total} owners confirmed",
+      "noOwners": "No owner with an account: call",
+      "escalated": "Escalated",
+      "resolve": "Close",
+      "resolveNote": "How it was resolved",
+      "resolveSubmit": "Close incident",
+      "resolved": "Incident closed",
+      "resolveError": "Could not close it"
+    },
+    "detail": {
+      "back": "Back to home",
+      "reported": "Reported {when}",
+      "updates": "Updates",
+      "acknowledge": "I confirm I have read it",
+      "acknowledging": "Confirming…",
+      "acknowledged": "Confirmed {when}",
+      "ackError": "Could not confirm",
+      "resolvedNote": "Closed by the yard: {note}"
+    },
+    "status": {
+      "OPEN": "Not confirmed",
+      "ACKNOWLEDGED": "Confirmed",
+      "RESOLVED": "Closed"
+    },
+    "severity": {
+      "LOW": "Minor",
+      "MEDIUM": "Moderate",
+      "HIGH": "Serious"
+    },
+    "category": {
+      "INJURY": "Injury",
+      "LAMENESS": "Lameness",
+      "NOT_EATING": "Not eating",
+      "COLIC_SIGNS": "Colic signs",
+      "EQUIPMENT": "Broken equipment",
+      "BEHAVIOR": "Behaviour",
+      "OTHER": "Other"
+    }
   },
   "activityLog": {
     "metaTitle": "Log activity",

@@ -79,6 +79,33 @@ test("portal.home responde FORBIDDEN a quien no es cliente: OWNER, GROOM o PROFE
   }
 });
 
+test("portal.home muestra primero la incidencia sin confirmar del propietario y la quita al confirmarla", async () => {
+  const t = await makeTenant();
+  const mozo = await makeMember(t, "GROOM");
+  const propietaria = await makeMember(t, "OWNER_EXTERNAL");
+  const otroCliente = await makeMember(t, "OWNER_EXTERNAL");
+  const suyo = await makeHorse(t, { name: "Suyo" });
+  const ajeno = await makeHorse(t, { name: "Ajeno" });
+  await grantAccess(propietaria, suyo);
+  await grantAccess(otroCliente, ajeno);
+
+  const staff = callerAs(createCaller, mozo);
+  const mine = await staff.incidents.create({ horseId: suyo.id, category: "LAMENESS", severity: "HIGH", description: "Cojea" });
+  await staff.incidents.create({ horseId: ajeno.id, category: "INJURY", severity: "HIGH", description: "Herida" });
+
+  const owner = callerAs(createCaller, propietaria);
+  const before = await owner.portal.home();
+  assert.deepEqual(
+    before.items.filter((i) => i.kind === "INCIDENT").map((i) => i.id),
+    [mine.id],
+  );
+  assert.equal(before.items[0].kind, "INCIDENT");
+
+  await owner.incidents.acknowledge({ id: mine.id });
+  const after = await owner.portal.home();
+  assert.deepEqual(after.items.filter((i) => i.kind === "INCIDENT"), []);
+});
+
 test("portal.home enseña la salida al paddock que registra el centro y no la nota interna", async () => {
   const t = await makeTenant();
   const mozo = await makeMember(t, "GROOM");

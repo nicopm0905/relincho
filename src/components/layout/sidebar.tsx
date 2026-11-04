@@ -22,6 +22,7 @@ import {
   SignOut,
   CalendarDots,
   ChartBar,
+  Warning,
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ type NavKey =
   | "invoicing"
   | "contacts"
   | "documents"
+  | "incidents"
   | "settings";
 
 type NavItem = { key: NavKey; href: string; icon: PhosphorIcon };
@@ -57,6 +59,7 @@ const home = item("home", "inicio", House);
 const horses = item("horses", "caballos", Horse);
 const tasks = item("tasks", "tareas", CheckSquare);
 const health = item("health", "sanidad", Heartbeat);
+const incidents = item("incidents", "incidencias", Warning);
 const calendar = item("calendar", "calendario", CalendarDots);
 const performance = item("performance", "rendimiento", Gauge);
 const reproduction = item("reproduction", "reproduccion", Baby);
@@ -75,7 +78,7 @@ const settings = item("settings", "ajustes", Gear);
  */
 const desktopGroups: { groupKey?: GroupKey; items: NavItem[] }[] = [
   { items: [home, horses] },
-  { groupKey: "daily", items: [tasks, health, calendar, performance] },
+  { groupKey: "daily", items: [tasks, incidents, health, calendar, performance] },
   { groupKey: "breeding", items: [reproduction, breedingStats] },
   {
     groupKey: "management",
@@ -88,7 +91,7 @@ const mobileTabs: NavItem[] = [home, horses, reproduction, tasks];
 
 /** The rest, in the same groups as the desktop rail. */
 const mobileSheetGroups: { groupKey: GroupKey; items: NavItem[] }[] = [
-  { groupKey: "daily", items: [health, calendar, performance] },
+  { groupKey: "daily", items: [incidents, health, calendar, performance] },
   { groupKey: "breeding", items: [breedingStats] },
   {
     groupKey: "management",

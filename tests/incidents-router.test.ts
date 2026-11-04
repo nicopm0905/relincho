@@ -48,3 +48,7 @@ test("incidents.list y addUpdate rechazan a PROFESSIONAL, VET_EXTERNAL, RIDER e 
   await forbidden(outsiders, (c) => c.incidents.list({}));
   await forbidden(outsiders, (c) => c.incidents.addUpdate({ id: ID, text: "Corrección" }));
 });
+
+test("incidents.get rechaza a PROFESSIONAL, VET_EXTERNAL, RIDER e INSTRUCTOR", async () => {
+  await forbidden(["PROFESSIONAL", "VET_EXTERNAL", "RIDER", "INSTRUCTOR"], (c) => c.incidents.get({ id: ID }));
+});
