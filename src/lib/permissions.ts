@@ -187,6 +187,28 @@ export function canRecordHealthEvent(member: Member, type: HealthEventType): boo
   return can(member, "health.write") && healthTypesOf(member).includes(type);
 }
 
+/** Relación de una persona con un caballo (enum `HorseRelation` del schema). */
+export type HorseRelationKind = "OWNER" | "CO_OWNER" | "HALF_LEASE" | "RIDER" | "PROFESSIONAL";
+
+/**
+ * La relación con el caballo que se deduce del rol al darle acceso (E1a 2/2).
+ * CO_OWNER y HALF_LEASE no salen del rol: se eligen a mano. El personal del
+ * centro ve todos los caballos y no lleva relación.
+ */
+export function horseRelationFor(role: PermissionRole): HorseRelationKind | null {
+  switch (role) {
+    case "OWNER_EXTERNAL":
+      return "OWNER";
+    case "PROFESSIONAL":
+    case "VET_EXTERNAL":
+      return "PROFESSIONAL";
+    case "RIDER":
+      return "RIDER";
+    default:
+      return null;
+  }
+}
+
 /**
  * Qué especialidad se guarda en la membresía al invitar o cambiar de rol. Un
  * PROFESSIONAL la necesita; cualquier otro rol se queda sin ella, así que
