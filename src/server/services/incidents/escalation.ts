@@ -4,6 +4,7 @@ import type { PrismaClient } from "@prisma/client";
 import { ESCALATE_AFTER_MS, escalationDue } from "@/lib/incidents";
 import { reportError } from "@/lib/observability";
 import { prisma } from "@/server/db/prisma";
+import { deliverIncidentEmails, type IncidentSend } from "./deliver";
 import { centerManagers, findIncident, INCIDENT_CATEGORY_LABEL, notify, toMotor } from "./store";
 
 export interface EscalationSummary {
@@ -11,6 +12,10 @@ export interface EscalationSummary {
   escalated: number;
   /** Avisos nuevos en la bandeja. */
   notified: number;
+  /** Emails enviados, fallidos y omitidos (sin email configurado). */
+  sent: number;
+  failed: number;
+  skipped: number;
   /** Incidencias que fallaron (el resto sigue). */
   errors: number;
 }
@@ -28,8 +33,9 @@ export async function runIncidentEscalation({
   now = new Date(),
   db = prisma,
   tenantId,
-}: { now?: Date; db?: PrismaClient; tenantId?: string } = {}): Promise<EscalationSummary> {
-  const summary: EscalationSummary = { escalated: 0, notified: 0, errors: 0 };
+  send,
+}: { now?: Date; db?: PrismaClient; tenantId?: string; send?: IncidentSend } = {}): Promise<EscalationSummary> {
+  const summary: EscalationSummary = { escalated: 0, notified: 0, sent: 0, failed: 0, skipped: 0, errors: 0 };
   const severities = (Object.keys(ESCALATE_AFTER_MS) as (keyof typeof ESCALATE_AFTER_MS)[]).filter(
     (s) => ESCALATE_AFTER_MS[s] !== null,
   );
@@ -63,6 +69,14 @@ export async function runIncidentEscalation({
         url: `/${c.tenant.slug}`,
         dedupeKey: `incident-escalation:${row.id}`,
       });
+      const mail = await deliverIncidentEmails(db, {
+        tenantId: row.tenantId,
+        dedupeKey: `incident-escalation:${row.id}`,
+        ...(send ? { send } : {}),
+      });
+      summary.sent += mail.sent;
+      summary.failed += mail.failed;
+      summary.skipped += mail.skipped;
     } catch (error) {
       summary.errors++;
       await reportError(error, { scope: "cron-incidents", tenantId: c.tenantId, incidentId: c.id });
