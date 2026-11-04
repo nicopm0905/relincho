@@ -28,7 +28,6 @@ const ROLE_OPTIONS = [
   "OWNER",
   "MANAGER",
   "GROOM",
-  "VET_EXTERNAL",
   "OWNER_EXTERNAL",
   "PROFESSIONAL",
 ] as const satisfies readonly Role[];
