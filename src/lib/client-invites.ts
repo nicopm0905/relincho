@@ -12,6 +12,13 @@
  * portal vacío: NO_HORSES); un veterinario o herrador, como PROFESSIONAL con
  * esa especialidad, y los caballos se los asigna luego el centro; un
  * proveedor no se invita.
+ *
+ * Se decide por email, con todas sus fichas a la vez (arreglos de la #55): el
+ * resultado no depende del orden de las fichas, y una persona recibe como
+ * mucho una invitación, porque solo puede tener un rol por centro. Si el mismo
+ * email es a la vez veterinario o herrador y propietario, gana PROFESSIONAL y
+ * sus caballos van en la invitación con relación OWNER, como el propietario
+ * que da clases del roadmap (E1a).
  */
 import type { PermissionRole, ProfessionalSpecialty } from "@/lib/permissions";
 
@@ -50,18 +57,27 @@ export interface ClientInvitation {
   horseIds: string[];
 }
 
-/** Ya es miembro: solo se añaden los HorseAccess que le faltan, sin reenviar nada. */
+/**
+ * Ya es miembro: solo se añaden los HorseAccess que le faltan, sin reenviar
+ * nada. La relación sale del rol del miembro; para un PROFESSIONAL son sus
+ * propios caballos, así que va con relación OWNER.
+ */
 export interface AccessGrant {
   membershipId: string;
   email: string;
   horseIds: string[];
 }
 
-/** Nueva cuenta PROFESSIONAL con su especialidad. Sin caballos: los asigna el centro. */
+/**
+ * Nueva cuenta PROFESSIONAL con su especialidad. Los caballos en los que
+ * trabaja los asigna luego el centro; `horseIds` son solo los suyos, de los
+ * que es propietario (HorseAccess con relación OWNER).
+ */
 export interface ProfessionalInvitation {
   email: string;
   contactIds: string[];
   specialty: ProfessionalSpecialty;
+  horseIds: string[];
 }
 
 export type SkipReason = "NO_EMAIL" | "STAFF" | "NO_HORSES" | "NOT_INVITABLE" | "ALREADY_MEMBER";
@@ -92,72 +108,79 @@ export function planClientInvites(
   members: ExistingMember[],
 ): ClientInvitePlan {
   const memberByEmail = new Map(members.map((m) => [normalizeEmail(m.email), m]));
-  const invitations = new Map<string, ClientInvitation>();
-  const professionals = new Map<string, ProfessionalInvitation>();
-  const grants = new Map<string, AccessGrant>();
+  const invitations: ClientInvitation[] = [];
+  const professionalInvitations: ProfessionalInvitation[] = [];
+  const grants: AccessGrant[] = [];
   const skipped: SkippedContact[] = [];
+  const skip = (c: InviteContact, reason: SkipReason) =>
+    skipped.push({ contactId: c.id, name: c.name, reason });
 
+  // 1. Fichas invitables, agrupadas por email normalizado.
+  const groups = new Map<string, InviteContact[]>();
   for (const c of contacts) {
     if (NOT_INVITABLE_KINDS.has(c.kind)) {
-      skipped.push({ contactId: c.id, name: c.name, reason: "NOT_INVITABLE" });
+      skip(c, "NOT_INVITABLE");
       continue;
     }
     const email = normalizeEmail(c.email);
     if (!email) {
-      skipped.push({ contactId: c.id, name: c.name, reason: "NO_EMAIL" });
+      skip(c, "NO_EMAIL");
       continue;
     }
-
-    const member = memberByEmail.get(email);
-    if (member && STAFF_ROLES.has(member.role)) {
-      skipped.push({ contactId: c.id, name: c.name, reason: "STAFF" });
-      continue;
-    }
-
-    const specialty = PROFESSIONAL_KINDS[c.kind];
-    if (specialty) {
-      if (member) {
-        skipped.push({ contactId: c.id, name: c.name, reason: "ALREADY_MEMBER" });
-        continue;
-      }
-      const prev = professionals.get(email);
-      professionals.set(email, {
-        email,
-        contactIds: [...(prev?.contactIds ?? []), c.id],
-        specialty: prev?.specialty ?? specialty,
-      });
-      continue;
-    }
-
-    if (c.horseIds.length === 0 && !invitations.has(email)) {
-      skipped.push({ contactId: c.id, name: c.name, reason: "NO_HORSES" });
-      continue;
-    }
-
-    if (member) {
-      const missing = c.horseIds.filter((id) => !member.horseIds.includes(id));
-      const prev = grants.get(member.membershipId);
-      grants.set(member.membershipId, {
-        membershipId: member.membershipId,
-        email,
-        horseIds: union(prev?.horseIds ?? [], missing),
-      });
-      continue;
-    }
-
-    const prev = invitations.get(email);
-    invitations.set(email, {
-      email,
-      contactIds: [...(prev?.contactIds ?? []), c.id],
-      horseIds: union(prev?.horseIds ?? [], c.horseIds),
-    });
+    groups.set(email, [...(groups.get(email) ?? []), c]);
   }
 
-  return {
-    invitations: [...invitations.values()],
-    professionalInvitations: [...professionals.values()],
-    // Un miembro que ya tiene todos sus caballos no necesita nada.
-    grants: [...grants.values()].filter((g) => g.horseIds.length > 0),
-    skipped,
-  };
+  // 2. Una decisión por email, mirando todas sus fichas.
+  for (const [email, group] of groups) {
+    const member = memberByEmail.get(email);
+    if (member && STAFF_ROLES.has(member.role)) {
+      for (const c of group) skip(c, "STAFF");
+      continue;
+    }
+
+    const horseIds = group.reduce<string[]>((acc, c) => union(acc, c.horseIds), []);
+    const professionals = group.filter((c) => PROFESSIONAL_KINDS[c.kind]);
+    const others = group.filter((c) => !PROFESSIONAL_KINDS[c.kind]);
+
+    if (member) {
+      for (const c of professionals) skip(c, "ALREADY_MEMBER");
+      if (others.length === 0) continue;
+      if (horseIds.length === 0) {
+        for (const c of others) skip(c, "NO_HORSES");
+        continue;
+      }
+      const missing = horseIds.filter((id) => !member.horseIds.includes(id));
+      // Un miembro que ya tiene todos sus caballos no necesita nada.
+      if (missing.length > 0) grants.push({ membershipId: member.membershipId, email, horseIds: missing });
+      continue;
+    }
+
+    const specialty = specialtyOf(professionals);
+    if (specialty) {
+      professionalInvitations.push({ email, contactIds: group.map((c) => c.id), specialty, horseIds });
+      continue;
+    }
+    if (horseIds.length === 0) {
+      for (const c of group) skip(c, "NO_HORSES");
+      continue;
+    }
+    invitations.push({ email, contactIds: group.map((c) => c.id), horseIds });
+  }
+
+  // Los saltados, en el orden en que llegaron las fichas.
+  const order = new Map(contacts.map((c, i) => [c.id, i]));
+  skipped.sort((a, b) => (order.get(a.contactId) ?? 0) - (order.get(b.contactId) ?? 0));
+
+  return { invitations, professionalInvitations, grants, skipped };
+}
+
+/**
+ * La especialidad con la que se invita si hay varias fichas profesionales con
+ * el mismo email. Sigue el orden de PROFESSIONAL_KINDS, no el de las fichas.
+ */
+function specialtyOf(professionals: InviteContact[]): ProfessionalSpecialty | null {
+  for (const [kind, specialty] of Object.entries(PROFESSIONAL_KINDS)) {
+    if (professionals.some((c) => c.kind === kind)) return specialty ?? null;
+  }
+  return null;
 }
