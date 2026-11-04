@@ -1,6 +1,6 @@
 /**
- * Datos fiscales del centro en la página de ajustes: razón social, NIF,
- * dirección, IBAN de cobro… Solo los recibe quien puede editarlos
+ * Datos fiscales del centro en la página de ajustes (razón social, NIF,
+ * dirección, IBAN de cobro…) y la antelación de los avisos. Solo los recibe quien puede editarlos
  * (`settings.manage`, como `tenant.update`). La página es un componente de
  * servidor: lo que se le pasa al formulario viaja al navegador aunque el rol
  * no deba verlo, así que se filtra aquí y no en la interfaz.
@@ -21,6 +21,8 @@ export interface TenantSettings {
   iban: string | null;
   paymentTerms: string | null;
   regaCode: string | null;
+  /** Días antes del vencimiento en que avisa el cron (E3). */
+  reminderLeadDays: number;
 }
 
 /** Los campos del formulario para ese rol, o `null` si no puede gestionarlos. */
@@ -41,5 +43,6 @@ export function tenantSettingsFor(
     iban: tenant.iban,
     paymentTerms: tenant.paymentTerms,
     regaCode: tenant.regaCode,
+    reminderLeadDays: tenant.reminderLeadDays,
   };
 }

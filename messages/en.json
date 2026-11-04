@@ -570,6 +570,17 @@
       "annual": "Annual (pay 10, use 12)",
       "founderNote": "Founder price applied: 40% off for life while you stay subscribed.",
       "seePlans": "See all plans"
+    },
+    "reminders": {
+      "title": "Due-date reminders",
+      "description": "Shoeing, vaccines, deworming and dentist send an email to the yard, the horse's owner and their professional.",
+      "label": "Days in advance",
+      "help": "{days, plural, =0 {Reminders go out on the due date only.} one {Reminders go out # day before and on the due date.} other {Reminders go out # days before and on the due date.}}",
+      "invalid": "Enter a whole number from {min} to {max} days.",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Reminder lead time updated",
+      "error": "Could not save the lead time"
     }
   },
   "auth": {
