@@ -95,3 +95,23 @@ test("feed.forHorse mezcla actividad, entrenamiento y acto sanitario para el per
   assert.deepEqual(feed.items.map((i) => i.source), ["activity", "training", "health"]);
   assert.equal(feed.items[0].note, "Revisar la mano");
 });
+
+test("feed.forHorse da el nombre de quien registró cada entrada y nada para las que no tienen autor", async () => {
+  const t = await makeTenant();
+  const mozo = await makeMember(t, "GROOM");
+  await prisma.user.update({ where: { id: mozo.userId }, data: { name: "Pepe Mozo" } });
+  const lucero = await makeHorse(t);
+  await prisma.trainingSession.create({
+    data: { tenantId: t.id, horseId: lucero.id, date: new Date(Date.now() - 2 * HOUR), minutes: 30, type: "Doma" },
+  });
+  await callerAs(createCaller, mozo).activity.logBatch({ horseIds: [lucero.id], kind: "PADDOCK" });
+
+  const feed = await callerAs(createCaller, mozo).feed.forHorse({ horseId: lucero.id });
+  assert.deepEqual(
+    feed.items.map((i) => [i.source, i.authorName]),
+    [
+      ["activity", "Pepe Mozo"],
+      ["training", null],
+    ],
+  );
+});
