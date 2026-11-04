@@ -570,6 +570,17 @@
       "annual": "Annual (pay 10, use 12)",
       "founderNote": "Founder price applied: 40% off for life while you stay subscribed.",
       "seePlans": "See all plans"
+    },
+    "reminders": {
+      "title": "Due-date reminders",
+      "description": "Shoeing, vaccines, deworming and dentist send an email to the yard, the horse's owner and their professional.",
+      "label": "Days in advance",
+      "help": "{days, plural, =0 {Reminders go out on the due date only.} one {Reminders go out # day before and on the due date.} other {Reminders go out # days before and on the due date.}}",
+      "invalid": "Enter a whole number from {min} to {max} days.",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Reminder lead time updated",
+      "error": "Could not save the lead time"
     }
   },
   "auth": {
@@ -662,6 +673,7 @@
       "invoicing": "Invoicing",
       "contacts": "Contacts",
       "documents": "Documents",
+      "incidents": "Incidents",
       "settings": "Settings",
       "breedingStats": "Statistics"
     },
@@ -1294,6 +1306,7 @@
       "home": "Home",
       "invoices": "Invoices",
       "documents": "Documents",
+      "notifications": "Notifications",
       "signOut": "Sign out"
     },
     "home": {
@@ -1365,6 +1378,116 @@
         "goInvoices": "See my invoices",
         "goDocuments": "See documents"
       }
+    }
+  },
+  "pushSettings": {
+    "metaTitle": "Notifications",
+    "title": "Notifications",
+    "intro": "Choose how you want to hear about your horses.",
+    "device": {
+      "title": "Notifications on this device",
+      "enable": "Turn on notifications on this device",
+      "disable": "Turn off on this device",
+      "enabled": "This device receives notifications.",
+      "enabledToast": "Notifications turned on for this device",
+      "disabledToast": "Notifications turned off for this device",
+      "error": "Could not turn on notifications",
+      "working": "One moment…",
+      "iosInstall": "On iPhone, notifications only arrive with Relincho on the home screen: tap Share, then “Add to Home Screen”, and open the app from there.",
+      "denied": "You have blocked notifications in this browser. You can allow them in the site settings (the padlock next to the address).",
+      "unsupported": "This browser does not support notifications. You will get them by email.",
+      "notConfigured": "Phone notifications are not active yet. You will get them by email."
+    },
+    "prefs": {
+      "title": "What we notify you about and how",
+      "intro": "If a notification cannot reach your phone, it goes by email (unless you turn it off). Urgent ones go both ways.",
+      "push": "Phone",
+      "email": "Email",
+      "saved": "Preference saved",
+      "error": "Could not save",
+      "kinds": {
+        "HEALTH_DUE": "Health due dates",
+        "INCIDENT": "Incidents",
+        "INCIDENT_ESCALATION": "Unconfirmed incidents",
+        "ANNOUNCEMENT": "Announcements",
+        "VISIT": "Professional visits",
+        "INVOICE": "Invoices"
+      }
+    },
+    "nav": "Notifications"
+  },
+  "incidents": {
+    "metaTitle": "Incidents",
+    "title": "Incidents",
+    "intro": "Something happens to a horse, its owner confirms it and the yard closes it.",
+    "new": {
+      "title": "New incident",
+      "horse": "Horse",
+      "horsePlaceholder": "Choose the horse",
+      "category": "What happened",
+      "severity": "Severity",
+      "description": "Details",
+      "descriptionPlaceholder": "What you saw and what you did",
+      "submit": "Notify the owner",
+      "saving": "Sending…",
+      "saved": "Incident sent to the owner",
+      "savedCallOwner": "Incident saved. This horse has no owner with an account: call them.",
+      "error": "Could not send the incident",
+      "noHorses": "There are no horses in the yard.",
+      "addPhoto": "Add photo",
+      "photoError": "Could not upload the photo",
+      "photosCount": "{count, plural, one {# photo} other {# photos}}",
+      "removePhoto": "Remove photo {n}",
+      "uploading": "Uploading photo…",
+      "photoNeedsHorse": "Choose the horse first to add photos"
+    },
+    "list": {
+      "title": "Open and recent",
+      "empty": "No incidents.",
+      "confirmedBy": "{done} of {total} owners confirmed",
+      "noOwners": "No owner with an account: call",
+      "escalated": "Escalated",
+      "resolve": "Close",
+      "resolveNote": "How it was resolved",
+      "resolveSubmit": "Close incident",
+      "resolved": "Incident closed",
+      "resolveError": "Could not close it",
+      "followUp": "It happened again",
+      "followUpPlaceholder": "What happened again",
+      "followUpSubmit": "Open again",
+      "followedUp": "Incident opened again and owner notified",
+      "followUpError": "Could not open it"
+    },
+    "detail": {
+      "back": "Back to home",
+      "reported": "Reported {when}",
+      "updates": "Updates",
+      "acknowledge": "I confirm I have read it",
+      "acknowledging": "Confirming…",
+      "acknowledged": "Confirmed {when}",
+      "ackError": "Could not confirm",
+      "resolvedNote": "Closed by the yard: {note}",
+      "photos": "Photos",
+      "photoAlt": "Incident photo {n}"
+    },
+    "status": {
+      "OPEN": "Not confirmed",
+      "ACKNOWLEDGED": "Confirmed",
+      "RESOLVED": "Closed"
+    },
+    "severity": {
+      "LOW": "Minor",
+      "MEDIUM": "Moderate",
+      "HIGH": "Serious"
+    },
+    "category": {
+      "INJURY": "Injury",
+      "LAMENESS": "Lameness",
+      "NOT_EATING": "Not eating",
+      "COLIC_SIGNS": "Colic signs",
+      "EQUIPMENT": "Broken equipment",
+      "BEHAVIOR": "Behaviour",
+      "OTHER": "Other"
     }
   },
   "activityLog": {

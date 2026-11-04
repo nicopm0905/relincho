@@ -176,7 +176,7 @@ export default async function PortalHomePage({ params }: PageProps) {
               item.kind === "INCIDENT" ? (
                 <Row
                   key={`i-${item.id}`}
-                  href={`${base}/caballos/${item.horseId}`}
+                  href={`${base}/incidencias/${item.id}`}
                   icon={<Warning weight="fill" />}
                   tone={item.severity === "HIGH" ? "danger" : "alert"}
                   title={t("incident", { horse: horseName.get(item.horseId) ?? "" })}

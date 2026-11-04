@@ -163,6 +163,8 @@ model User {
   sessions    Session[]
   notifications Notification[]
   uploadedDocuments Document[] @relation("DocumentUploadedBy")
+  pushSubscriptions PushSubscription[]
+  notificationPreferences NotificationPreference[]
 }
 
 model Account {
@@ -1493,4 +1495,36 @@ model HorseActivity {
   author             Membership?  @relation(fields: [authorMembershipId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, horseId, at])
+}
+
+// ─── Notificaciones Web Push y preferencias (E4) ───────────────────────────
+
+/// Un navegador o PWA instalada que recibe push (E4). El endpoint es único:
+/// si otro usuario inicia sesión en el mismo navegador, la suscripción pasa a él.
+model PushSubscription {
+  id            String    @id @default(uuid())
+  userId        String
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+  lastSuccessAt DateTime?
+  failedCount   Int       @default(0)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Canales que el usuario quiere para un tipo de aviso. Sin fila, los dos
+/// encendidos (`DEFAULT_PREFERENCE` de src/lib/notify-channels.ts).
+model NotificationPreference {
+  id     String           @id @default(uuid())
+  userId String
+  kind   NotificationKind
+  push   Boolean          @default(true)
+  email  Boolean          @default(true)
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind])
 }

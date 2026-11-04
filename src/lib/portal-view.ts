@@ -3,7 +3,7 @@
  * next-intl, para que la navegación y las etiquetas se puedan probar solas.
  */
 
-export type PortalSection = "home" | "invoices" | "documents";
+export type PortalSection = "home" | "invoices" | "documents" | "notifications";
 
 /**
  * Sección de la navegación que corresponde a una ruta. La ficha de un caballo
@@ -15,6 +15,7 @@ export function portalSection(pathname: string, tenantSlug: string): PortalSecti
   if (path === base || path.startsWith(`${base}/caballos/`)) return "home";
   if (path === `${base}/facturas` || path.startsWith(`${base}/facturas/`)) return "invoices";
   if (path === `${base}/documentos` || path.startsWith(`${base}/documentos/`)) return "documents";
+  if (path === `${base}/avisos`) return "notifications";
   return null;
 }
 

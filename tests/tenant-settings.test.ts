@@ -16,6 +16,7 @@ const tenant = {
   iban: "ES9121000418450200051332",
   paymentTerms: "30 días",
   regaCode: "ES410000000000",
+  reminderLeadDays: 3,
   plan: "cuadra",
   stripeCustomerId: "cus_inventado",
 };
@@ -25,7 +26,7 @@ test("solo quien gestiona la configuración recibe los datos fiscales del centro
   assert.deepEqual(withData, ["OWNER", "MANAGER"]);
 });
 
-test("los datos fiscales llevan solo los campos del formulario de ajustes", () => {
+test("los ajustes llevan solo los campos del formulario: datos fiscales y antelación de avisos", () => {
   assert.deepEqual(tenantSettingsFor("OWNER", tenant), {
     id: "t-1",
     name: "Centro Hípico Inventado",
@@ -38,5 +39,6 @@ test("los datos fiscales llevan solo los campos del formulario de ajustes", () =
     iban: "ES9121000418450200051332",
     paymentTerms: "30 días",
     regaCode: "ES410000000000",
+    reminderLeadDays: 3,
   });
 });

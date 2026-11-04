@@ -15,9 +15,12 @@ import { UPLOAD_RULES } from "@/lib/uploads";
  * publico de ficheros arbitrarios.
  */
 
-/** Clave firmada: <tenantId>/<carpeta>/<uuid>.<ext>. Nada mas entra. */
+/**
+ * Clave firmada: <tenantId>/<carpeta>/<uuid>.<ext>, o la de una foto de
+ * incidencia, <tenantId>/incidents/<caballo>/<borrador>/<uuid>.<ext>. Nada mas entra.
+ */
 const KEY_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(horses|documents)\/[A-Za-z0-9_-]{1,64}\.[A-Za-z0-9]{1,7}$/;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(?:(?:horses|documents)|incidents\/[A-Za-z0-9_-]{1,64}\/[A-Za-z0-9_-]{1,64})\/[A-Za-z0-9_-]{1,64}\.[A-Za-z0-9]{1,7}$/;
 
 export async function PUT(req: NextRequest) {
   if (process.env.NODE_ENV === "production") {
@@ -34,8 +37,14 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Clave inválida" }, { status: 400 });
   }
 
-  const [tenantId] = key.split("/");
-  const access = await requireTenantAccess(session.user.id, tenantId);
+  const [tenantId, folder] = key.split("/");
+  // Las fotos de incidencia las sube el mozo (incidents.photoUploadUrl ya
+  // comprobó el caballo); el resto, quien gestiona el centro.
+  const access = await requireTenantAccess(
+    session.user.id,
+    tenantId,
+    folder === "incidents" ? ["OWNER", "MANAGER", "GROOM"] : undefined,
+  );
   if (!access) {
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }

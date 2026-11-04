@@ -570,6 +570,17 @@
       "annual": "Anual (paga 10, usa 12)",
       "founderNote": "Precio de fundador aplicado: −40 % de por vida mientras sigas suscrito.",
       "seePlans": "Ver todos los planes"
+    },
+    "reminders": {
+      "title": "Avisos de vencimientos",
+      "description": "Herraje, vacunas, desparasitación y dentista avisan por email al centro, al propietario del caballo y a su profesional.",
+      "label": "Días de antelación",
+      "help": "{days, plural, =0 {Se avisa solo el día del vencimiento.} one {Se avisa # día antes y el mismo día.} other {Se avisa # días antes y el mismo día.}}",
+      "invalid": "Escribe un número entero de {min} a {max} días.",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "saved": "Antelación de los avisos actualizada",
+      "error": "No se pudo guardar la antelación"
     }
   },
   "auth": {
@@ -662,6 +673,7 @@
       "invoicing": "Facturación",
       "contacts": "Contactos",
       "documents": "Documentos",
+      "incidents": "Incidencias",
       "settings": "Ajustes",
       "breedingStats": "Estadísticas"
     },
@@ -1294,6 +1306,7 @@
       "home": "Inicio",
       "invoices": "Facturas",
       "documents": "Documentos",
+      "notifications": "Avisos",
       "signOut": "Cerrar sesión"
     },
     "home": {
@@ -1365,6 +1378,116 @@
         "goInvoices": "Ver mis facturas",
         "goDocuments": "Ver documentos"
       }
+    }
+  },
+  "pushSettings": {
+    "metaTitle": "Avisos",
+    "title": "Avisos",
+    "intro": "Elige cómo quieres enterarte de lo que pasa con tus caballos.",
+    "device": {
+      "title": "Avisos en este dispositivo",
+      "enable": "Activar avisos en este dispositivo",
+      "disable": "Desactivar en este dispositivo",
+      "enabled": "Este dispositivo recibe avisos.",
+      "enabledToast": "Avisos activados en este dispositivo",
+      "disabledToast": "Avisos desactivados en este dispositivo",
+      "error": "No se pudieron activar los avisos",
+      "working": "Un momento…",
+      "iosInstall": "En el iPhone, los avisos solo llegan con Relincho en la pantalla de inicio: toca Compartir y luego «Añadir a pantalla de inicio», y abre la app desde allí.",
+      "denied": "Has bloqueado los avisos en este navegador. Puedes permitirlos en los ajustes del sitio (el candado junto a la dirección).",
+      "unsupported": "Este navegador no admite avisos. Te llegarán por email.",
+      "notConfigured": "Los avisos en el móvil todavía no están activos. Te llegarán por email."
+    },
+    "prefs": {
+      "title": "Qué te avisamos y por dónde",
+      "intro": "Si un aviso no puede llegar al móvil, te llega por email (salvo que lo apagues). Lo urgente llega por los dos.",
+      "push": "Móvil",
+      "email": "Email",
+      "saved": "Preferencia guardada",
+      "error": "No se pudo guardar",
+      "kinds": {
+        "HEALTH_DUE": "Vencimientos sanitarios",
+        "INCIDENT": "Incidencias",
+        "INCIDENT_ESCALATION": "Incidencias sin confirmar",
+        "ANNOUNCEMENT": "Comunicados",
+        "VISIT": "Visitas del profesional",
+        "INVOICE": "Facturas"
+      }
+    },
+    "nav": "Avisos"
+  },
+  "incidents": {
+    "metaTitle": "Incidencias",
+    "title": "Incidencias",
+    "intro": "Lo que pasa con un caballo, su propietario lo confirma y el centro lo cierra.",
+    "new": {
+      "title": "Nueva incidencia",
+      "horse": "Caballo",
+      "horsePlaceholder": "Elige el caballo",
+      "category": "Qué pasa",
+      "severity": "Gravedad",
+      "description": "Detalle",
+      "descriptionPlaceholder": "Qué has visto y qué has hecho",
+      "submit": "Avisar al propietario",
+      "saving": "Enviando…",
+      "saved": "Incidencia enviada al propietario",
+      "savedCallOwner": "Incidencia guardada. Este caballo no tiene propietario con cuenta: hay que llamarle.",
+      "error": "No se pudo enviar la incidencia",
+      "noHorses": "No hay caballos en el centro.",
+      "addPhoto": "Añadir foto",
+      "photoError": "No se pudo subir la foto",
+      "photosCount": "{count, plural, one {# foto} other {# fotos}}",
+      "removePhoto": "Quitar foto {n}",
+      "uploading": "Subiendo foto…",
+      "photoNeedsHorse": "Elige primero el caballo para añadir fotos"
+    },
+    "list": {
+      "title": "Abiertas y recientes",
+      "empty": "No hay incidencias.",
+      "confirmedBy": "{done} de {total} propietarios la han confirmado",
+      "noOwners": "Sin propietario con cuenta: llamar",
+      "escalated": "Escalada",
+      "resolve": "Cerrar",
+      "resolveNote": "Cómo se ha resuelto",
+      "resolveSubmit": "Cerrar incidencia",
+      "resolved": "Incidencia cerrada",
+      "resolveError": "No se pudo cerrar",
+      "followUp": "Ha vuelto a pasar",
+      "followUpPlaceholder": "Qué ha vuelto a pasar",
+      "followUpSubmit": "Abrir de nuevo",
+      "followedUp": "Incidencia abierta de nuevo y propietario avisado",
+      "followUpError": "No se pudo abrir"
+    },
+    "detail": {
+      "back": "Volver al inicio",
+      "reported": "Avisada {when}",
+      "updates": "Actualizaciones",
+      "acknowledge": "Confirmo que lo he leído",
+      "acknowledging": "Confirmando…",
+      "acknowledged": "Confirmada {when}",
+      "ackError": "No se pudo confirmar",
+      "resolvedNote": "Cerrada por el centro: {note}",
+      "photos": "Fotos",
+      "photoAlt": "Foto {n} de la incidencia"
+    },
+    "status": {
+      "OPEN": "Sin confirmar",
+      "ACKNOWLEDGED": "Confirmada",
+      "RESOLVED": "Cerrada"
+    },
+    "severity": {
+      "LOW": "Leve",
+      "MEDIUM": "Moderada",
+      "HIGH": "Grave"
+    },
+    "category": {
+      "INJURY": "Herida",
+      "LAMENESS": "Cojera",
+      "NOT_EATING": "No ha comido",
+      "COLIC_SIGNS": "Signos de cólico",
+      "EQUIPMENT": "Material roto",
+      "BEHAVIOR": "Comportamiento",
+      "OTHER": "Otra"
     }
   },
   "activityLog": {

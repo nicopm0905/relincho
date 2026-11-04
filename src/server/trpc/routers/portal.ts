@@ -213,7 +213,8 @@ export const portalRouter = createTRPCRouter({
   /**
    * Portada de la app del cliente (E8a): lo que le pide acción y lo que le
    * interesa de sus caballos, ya ordenado por `portalHome`. Solo sus caballos
-   * (`HorseAccess`) y sus facturas. Las incidencias llegan con E5-2.
+   * (`HorseAccess`) y sus facturas, y las incidencias abiertas en las que es
+   * destinatario (E5).
    * Entrenamientos de ±8 días para la actividad de la semana y los programados;
    * las notas del entrenador ni se leen.
    */
@@ -226,7 +227,7 @@ export const portalRouter = createTRPCRouter({
         orderBy: { name: "asc" },
       });
       const horseIds = horses.map((h) => h.id);
-      const [health, invoices, trainings, activities] = await inSequence([
+      const [health, invoices, trainings, incidents, activities] = await inSequence([
         () =>
           horseIds.length
             ? tx.healthEvent.findMany({
@@ -260,6 +261,25 @@ export const portalRouter = createTRPCRouter({
             : Promise.resolve([]),
         () =>
           horseIds.length
+            ? tx.incident.findMany({
+                where: {
+                  tenantId: ctx.tenantId,
+                  horseId: { in: horseIds },
+                  status: { not: "RESOLVED" },
+                  receipts: { some: { membershipId: ctx.membershipId } },
+                },
+                select: {
+                  id: true,
+                  horseId: true,
+                  category: true,
+                  severity: true,
+                  occurredAt: true,
+                  receipts: { where: { membershipId: ctx.membershipId }, select: { acknowledgedAt: true } },
+                },
+              })
+            : Promise.resolve([]),
+        () =>
+          horseIds.length
             ? tx.horseActivity.findMany({
                 where: {
                   tenantId: ctx.tenantId,
@@ -271,7 +291,7 @@ export const portalRouter = createTRPCRouter({
               })
             : Promise.resolve([]),
       ]);
-      return { horses, health, invoices, trainings, activities };
+      return { horses, health, invoices, trainings, incidents, activities };
     });
 
     return portalHome({
@@ -280,7 +300,10 @@ export const portalRouter = createTRPCRouter({
       // Las notas de la actividad son internas: ni se leen.
       activities: data.activities.map((a) => ({ ...a, note: null })),
       horses: data.horses,
-      incidents: [],
+      incidents: data.incidents.map(({ receipts, ...i }) => ({
+        ...i,
+        acknowledgedByMe: receipts.some((r) => r.acknowledgedAt !== null),
+      })),
       health: data.health,
       invoices: data.invoices
         .filter((inv) => !inv.rectifiesId)

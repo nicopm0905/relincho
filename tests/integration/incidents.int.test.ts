@@ -216,3 +216,25 @@ test("el cron de escalado reenvía una sola vez las graves sin confirmar", async
     [gerente.userId, propietaria.userId].sort(),
   );
 });
+
+test("incidents.get da al propietario su incidencia con las actualizaciones y NOT_FOUND la de un caballo ajeno", async () => {
+  const t = await makeTenant();
+  const mozo = await makeMember(t, "GROOM");
+  const propietaria = await makeMember(t, "OWNER_EXTERNAL");
+  const lucero = await makeHorse(t, { name: "Lucero" });
+  const tormenta = await makeHorse(t, { name: "Tormenta" });
+  await grantAccess(propietaria, lucero);
+  const staff = callerAs(createCaller, mozo);
+
+  const mine = await staff.incidents.create({ horseId: lucero.id, category: "INJURY", severity: "MEDIUM", description: "Rozadura" });
+  const other = await staff.incidents.create({ horseId: tormenta.id, category: "INJURY", severity: "MEDIUM", description: "Herida" });
+  await staff.incidents.addUpdate({ id: mine.id, text: "Era en la mano izquierda" });
+
+  const owner = callerAs(createCaller, propietaria);
+  const got = await owner.incidents.get({ id: mine.id });
+  assert.equal(got.horseName, "Lucero");
+  assert.equal(got.description, "Rozadura");
+  assert.deepEqual(got.updates.map((u) => u.text), ["Era en la mano izquierda"]);
+  assert.equal(got.myReceipt?.acknowledgedAt, null);
+  await rejectsWith(owner.incidents.get({ id: other.id }), "NOT_FOUND");
+});

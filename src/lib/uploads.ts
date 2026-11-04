@@ -105,7 +105,8 @@ export function incidentPhotoKey(o: {
   return `${seg(o.tenantId)}/incidents/${seg(o.horseId)}/${seg(o.incidentId)}/${seg(o.photoId)}.${seg(o.ext)}`;
 }
 
-const INCIDENT_PHOTO_EXT = /^(jpe?g|png|webp|heic)$/i;
+/** Las mismas extensiones que admite una subida de imagen. */
+const INCIDENT_PHOTO_EXT = new Set(Object.values(UPLOAD_RULES.image.mimes));
 
 /**
  * ¿Es `key` una foto de incidencia de ese centro y ese caballo? El cliente
@@ -125,6 +126,6 @@ export function isIncidentPhotoKeyFor(own: { tenantId: string; horseId: string }
     horse === own.horseId &&
     clean(incident) &&
     clean(photo) &&
-    INCIDENT_PHOTO_EXT.test(ext)
+    INCIDENT_PHOTO_EXT.has(ext)
   );
 }

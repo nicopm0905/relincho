@@ -151,3 +151,23 @@ test("la actividad reciente incluye lo que registra el centro, con su caballo, y
     [["activity", "PADDOCK", "Lucero", 60]],
   );
 });
+
+test("un herraje registrado hoy cuenta en el último herraje y en la actividad de hoy aunque aún no sea mediodía", () => {
+  // El formulario del profesional guarda la visita a mediodía (un día de
+  // calendario). A las 10:00 de Madrid, la visita de esta mañana ya está hecha.
+  const visitaDeHoy = new Date("2026-12-10T11:00:00Z"); // 12:00 en Madrid; `now` son las 10:00
+  const home = portalHome(
+    base({
+      health: [
+        { id: "herraje-hoy", type: "FARRIER", name: "Herraje", date: visitaDeHoy, nextDueDate: day(42), horse: lucero },
+        { id: "vacuna-manana", type: "VACCINE", name: "Gripe", date: day(1), nextDueDate: null, horse: lucero },
+      ],
+    }),
+  );
+
+  assert.deepEqual(home.lastFarrier, [{ horseId: lucero.id, horseName: "Lucero", date: visitaDeHoy }]);
+  assert.equal(home.activity[0]?.day, "2026-12-10");
+  assert.deepEqual(home.activity[0]?.items.map((i) => i.id), ["herraje-hoy"]);
+  // Lo de mañana sigue sin contar como hecho.
+  assert.ok(home.activity.every((d) => d.items.every((i) => i.id !== "vacuna-manana")));
+});
