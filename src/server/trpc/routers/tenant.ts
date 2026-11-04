@@ -4,6 +4,7 @@ import { prisma } from "@/server/db/prisma";
 import { isValidNif, normalizeNif } from "@/lib/nif";
 import { isValidRega, normalizeCode } from "@/lib/identifiers";
 import { isValidIban, normalizeIban } from "@/lib/iban";
+import { isValidLeadDays, REMINDER_LEAD_DAYS } from "@/lib/reminder-recipients";
 
 const managerProcedure = roleProcedure("OWNER", "MANAGER");
 
@@ -59,6 +60,12 @@ export const tenantRouter = createTRPCRouter({
           .transform((value) => (value === undefined ? undefined : value ? normalizeCode(value) : null))
           .refine((value) => !value || isValidRega(value), {
             message: "El código REGA es ES seguido de 12 dígitos",
+          }),
+        reminderLeadDays: z
+          .number()
+          .optional()
+          .refine((value) => value === undefined || isValidLeadDays(value), {
+            message: `La antelación de los avisos va de ${REMINDER_LEAD_DAYS.min} a ${REMINDER_LEAD_DAYS.max} días`,
           }),
       }),
     )
