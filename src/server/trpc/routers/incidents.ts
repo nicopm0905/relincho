@@ -15,6 +15,7 @@ import {
   type Incident,
 } from "@/lib/incidents";
 import { isIncidentPhotoKeyFor } from "@/lib/uploads";
+import { deliverIncidentEmails } from "@/server/services/incidents/deliver";
 import {
   centerManagers,
   findIncident,
@@ -111,8 +112,9 @@ export const incidentsRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_PHOTO" });
       }
 
+      let created: { id: string; callOwner: boolean };
       try {
-        return await withTenant(ctx.tenantId, async (tx) => {
+        created = await withTenant(ctx.tenantId, async (tx) => {
           const horse = await tx.horse.findFirst({
             where: { id: input.horseId, tenantId: ctx.tenantId },
             select: { name: true, tenant: { select: { slug: true } } },
@@ -171,6 +173,9 @@ export const incidentsRouter = createTRPCRouter({
         }
         throw error;
       }
+      // Después de guardar: un email caído no deshace la incidencia, queda FAILED.
+      await deliverIncidentEmails(prisma, { tenantId: ctx.tenantId, dedupeKey: `incident:${created.id}` });
+      return created;
     }),
 
   /** Incidencias del centro (personal) o de sus caballos (propietario), de la más reciente a la más antigua. */

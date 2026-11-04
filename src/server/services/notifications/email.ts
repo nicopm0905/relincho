@@ -111,6 +111,42 @@ export async function sendHealthReminder(opts: {
   });
 }
 
+/**
+ * Aviso de incidencia (E5): el texto sale de la `Notification` ya guardada,
+ * así la bandeja y el email dicen lo mismo. `url` es una ruta de la app.
+ */
+export async function sendIncidentAlert(opts: {
+  to: string;
+  name: string;
+  title: string;
+  body: string;
+  url: string;
+  tenantName: string;
+  escalation?: boolean;
+}): Promise<SendResult> {
+  return sendEmail({
+    to: opts.to,
+    subject: opts.escalation ? `Urgente: ${opts.title}` : opts.title,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #171717;">${opts.escalation ? "Incidencia sin confirmar" : "Incidencia"} — ${esc(opts.tenantName)}</h2>
+        <p>Hola ${esc(opts.name)},</p>
+        <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0;">
+          <strong>${esc(opts.title)}</strong><br>
+          ${esc(opts.body)}
+        </div>
+        <p>
+          <a href="${getBaseUrl()}${encodeURI(opts.url)}"
+             style="background:#171717;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
+            Ver en Relincho
+          </a>
+        </p>
+        <p style="color:#888;font-size:12px;">Relincho · Gestión equina profesional</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendTeamInvite(opts: {
   to: string;
   tenantName: string;
@@ -346,6 +382,39 @@ export async function sendWeeklyDigest(opts: {
           Relincho · Gestión equina profesional<br>
           Recibes este resumen por ser responsable de ${esc(digest.tenantName)}.
         </p>
+      </div>
+    `,
+  });
+}
+
+/**
+ * Email de respaldo de una notificación (E4): repite el título y el texto de
+ * la `Notification`, así la bandeja, el push y el email dicen lo mismo.
+ */
+export async function sendNotificationEmail(opts: {
+  to: string;
+  name: string;
+  title: string;
+  body: string;
+  url: string;
+}): Promise<SendResult> {
+  return sendEmail({
+    to: opts.to,
+    subject: opts.title,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <p>Hola ${esc(opts.name)},</p>
+        <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0;">
+          <strong>${esc(opts.title)}</strong><br>
+          ${esc(opts.body)}
+        </div>
+        <p>
+          <a href="${getBaseUrl()}${encodeURI(opts.url)}"
+             style="background:#171717;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
+            Ver en Relincho
+          </a>
+        </p>
+        <p style="color:#888;font-size:12px;">Relincho · Gestión equina profesional</p>
       </div>
     `,
   });
