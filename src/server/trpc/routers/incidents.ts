@@ -160,7 +160,7 @@ export const incidentsRouter = createTRPCRouter({
             kind: "INCIDENT",
             title: callOwner ? `${what}: llama al propietario` : what,
             body: incident.description,
-            url: callOwner ? `/${slug}` : `/${slug}/portal`,
+            url: callOwner ? `/${slug}/incidencias` : `/${slug}/portal/incidencias/${incident.id}`,
             dedupeKey: `incident:${incident.id}`,
           });
           return { id: incident.id, callOwner };
@@ -221,6 +221,37 @@ export const incidentsRouter = createTRPCRouter({
         receipts: receipts.map(({ membership, ...rc }) => ({ ...rc, name: membership.user.name })),
       }));
     }),
+
+  /** Una incidencia con sus actualizaciones. El propietario solo ve su propio acuse. */
+  get: viewerProcedure.input(byId).query(async ({ ctx, input }) => {
+    const row = await visible(ctx, input.id);
+    const authors = await prisma.membership.findMany({
+      where: { id: { in: row.updates.flatMap((u) => (u.authorMembershipId ? [u.authorMembershipId] : [])) } },
+      select: { id: true, user: { select: { name: true } } },
+    });
+    const nameOf = new Map(authors.map((a) => [a.id, a.user.name]));
+    const isOwner = ctx.role === "OWNER_EXTERNAL";
+    const mine = row.receipts.find((r) => r.membershipId === ctx.membershipId);
+    return {
+      id: row.id,
+      horseId: row.horseId,
+      horseName: row.horse.name,
+      category: row.category,
+      severity: row.severity,
+      status: row.status,
+      description: row.description,
+      occurredAt: row.occurredAt,
+      resolvedAt: row.resolvedAt,
+      resolutionNote: row.resolutionNote,
+      updates: row.updates.map((u) => ({
+        text: u.text,
+        at: u.createdAt,
+        author: u.authorMembershipId ? (nameOf.get(u.authorMembershipId) ?? null) : null,
+      })),
+      myReceipt: mine ? { readAt: mine.readAt, acknowledgedAt: mine.acknowledgedAt } : null,
+      receipts: isOwner ? [] : row.receipts.map((r) => ({ readAt: r.readAt, acknowledgedAt: r.acknowledgedAt })),
+    };
+  }),
 
   /** Abrirla la marca leída para ese propietario. Al personal no le deja acuse. */
   markRead: viewerProcedure.input(byId).mutation(({ ctx, input }) =>
