@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { getUploadUrlAction } from "@/server/actions/storage";
+import { compressToInline } from "@/lib/inline-photo-client";
 import { trpc } from "@/lib/trpc/react";
 import { CircleNotch, UploadSimple, Horse } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -127,6 +128,17 @@ export function HorseForm({ tenantSlug, tenantId, defaultValues }: HorseFormProp
         kind: "image",
         folder: "horses",
       });
+      // Sin bucket de R2 en producción, la foto se guarda dentro de la base de datos.
+      if ("code" in result && result.code === "STORAGE_NOT_CONFIGURED") {
+        const inline = await compressToInline(file);
+        if (!inline) {
+          toast.error("No se ha podido preparar la foto. Prueba con un JPG o PNG.");
+          return;
+        }
+        setPhotoUrl(inline);
+        toast.success("Foto subida correctamente");
+        return;
+      }
       if (result.error || !result.uploadUrl) {
         toast.error(result.error ?? "Error al obtener URL de subida");
         return;

@@ -12,10 +12,10 @@ export function fitWithin(width: number, height: number, max = MAX_PHOTO_SIDE): 
   return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
 
-export async function compressImage(file: File, quality = 0.8): Promise<Blob> {
+export async function compressImage(file: File, quality = 0.8, maxSide = MAX_PHOTO_SIDE): Promise<Blob> {
   try {
     const bitmap = await createImageBitmap(file);
-    const { width, height } = fitWithin(bitmap.width, bitmap.height);
+    const { width, height } = fitWithin(bitmap.width, bitmap.height, maxSide);
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
