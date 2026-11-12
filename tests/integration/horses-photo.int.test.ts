@@ -25,6 +25,9 @@ test("un gerente guarda la foto de un caballo dentro de la base de datos (foto e
   const other = "data:image/jpeg;base64," + "B".repeat(1500);
   await callerAs(createCaller, gerente).horses.update({ id: horse.id, photoUrl: other });
   assert.equal((await prisma.horse.findUniqueOrThrow({ where: { id: horse.id } })).photoUrl, other);
+  // Un texto vacío sigue valiendo para quitar la foto, como antes.
+  await callerAs(createCaller, gerente).horses.update({ id: horse.id, photoUrl: "" });
+  assert.equal((await prisma.horse.findUniqueOrThrow({ where: { id: horse.id } })).photoUrl, "");
 });
 
 test("una foto en línea que no es un JPEG pequeño se rechaza y no se guarda el caballo", async () => {

@@ -46,15 +46,22 @@ export async function getUploadUrlAction(input: z.infer<typeof schema>) {
   }
 
   if (!isStorageConfigured()) {
-    await reportError("Almacenamiento no configurado", {
-      scope: "storage.uploadUrl",
-      tenantId,
-      folder,
-    });
+    // Las fotos de caballo tienen alternativa (foto en línea, src/lib/inline-photo.ts):
+    // no es un error que avisar en cada subida.
+    if (!(kind === "image" && folder === "horses")) {
+      await reportError("Almacenamiento no configurado", {
+        scope: "storage.uploadUrl",
+        tenantId,
+        folder,
+      });
+    }
     // Sin bucket no hay forma de guardar nada en produccion: decirlo claro en
     // vez de devolver una URL que fallara al subir.
     if (process.env.NODE_ENV === "production") {
-      return { error: "El almacenamiento de archivos no está configurado" };
+      return {
+        error: "El almacenamiento de archivos no está configurado",
+        code: "STORAGE_NOT_CONFIGURED" as const,
+      };
     }
   }
 

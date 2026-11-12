@@ -1,3 +1,4 @@
+import { isValidStoredPhotoUrl } from "@/lib/inline-photo";
 import { z } from "zod";
 import { createTRPCRouter, tenantProcedure, roleProcedure } from "../init";
 import { allowedHorseIds, assertHorseAccess } from "../access";
@@ -28,7 +29,11 @@ const horseInput = z.object({
   microchip: identifier(isValidMicrochip, "El microchip tiene 15 dígitos"),
   hierro: z.string().optional(),
   boxLocation: z.string().optional(),
-  photoUrl: z.string().optional(),
+  // URL de R2, ruta de la app o foto en línea (src/lib/inline-photo.ts).
+  photoUrl: z
+    .string()
+    .refine((value) => value === "" || isValidStoredPhotoUrl(value), { message: "La foto no es válida o es demasiado grande" })
+    .optional(),
   // `null` quita el padre, la madre o el propietario.
   sireId: z.string().uuid().nullish(),
   damId: z.string().uuid().nullish(),
