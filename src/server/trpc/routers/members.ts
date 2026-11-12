@@ -6,7 +6,7 @@ import { prisma, withTenant } from "@/server/db/prisma";
 import { sendTeamInvite } from "@/server/services/notifications/email";
 import { getBaseUrl } from "@/lib/utils";
 import { reportError } from "@/lib/observability";
-import { memberSpecialty } from "@/lib/permissions";
+import { horseRelationFor, memberSpecialty } from "@/lib/permissions";
 
 /** Toda la gestion de equipo esta restringida al propietario. */
 const ownerProcedure = roleProcedure("OWNER");
@@ -16,6 +16,14 @@ const specialtyInput = {
   specialty: z.nativeEnum(ProfessionalSpecialty).nullish(),
   specialtyNote: z.string().max(100).nullish(),
 };
+
+/**
+ * Rol que se puede asignar. VET_EXTERNAL sigue en el enum sin uso (E1a 2/2):
+ * el veterinario es PROFESSIONAL con especialidad VET.
+ */
+const assignableRole = z
+  .nativeEnum(Role)
+  .refine((role) => role !== Role.VET_EXTERNAL, "El veterinario es un profesional con especialidad VET.");
 
 /** La especialidad que se guarda para ese rol, o BAD_REQUEST si falta. */
 function specialtyFor(
@@ -63,7 +71,7 @@ export const membersRouter = createTRPCRouter({
     .input(
       z.object({
         email: z.string().email(),
-        role: z.nativeEnum(Role),
+        role: assignableRole,
         ...specialtyInput,
       }),
     )
@@ -120,7 +128,7 @@ export const membersRouter = createTRPCRouter({
     .input(
       z.object({
         membershipId: z.string().uuid(),
-        role: z.nativeEnum(Role),
+        role: assignableRole,
         ...specialtyInput,
       }),
     )
@@ -204,6 +212,7 @@ export const membersRouter = createTRPCRouter({
         create: {
           horseId: input.horseId,
           membershipId: input.membershipId,
+          relation: horseRelationFor(membership.role),
         },
         update: {},
       });
