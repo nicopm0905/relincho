@@ -8,6 +8,7 @@ import {
   ROLES,
   can,
   canRecordHealthEvent,
+  horseRelationFor,
   memberSpecialty,
   type Member,
 } from "@/lib/permissions";
@@ -101,5 +102,15 @@ test("cualquier otro rol se queda sin especialidad ni nota", () => {
       { specialty: null, specialtyNote: null },
       role,
     );
+  }
+});
+
+test("la relación con el caballo se deduce del rol: propietario OWNER, profesional PROFESSIONAL y jinete RIDER", () => {
+  assert.equal(horseRelationFor("OWNER_EXTERNAL"), "OWNER");
+  assert.equal(horseRelationFor("PROFESSIONAL"), "PROFESSIONAL");
+  assert.equal(horseRelationFor("VET_EXTERNAL"), "PROFESSIONAL");
+  assert.equal(horseRelationFor("RIDER"), "RIDER");
+  for (const role of ["OWNER", "MANAGER", "GROOM", "INSTRUCTOR"] as const) {
+    assert.equal(horseRelationFor(role), null, role);
   }
 });
