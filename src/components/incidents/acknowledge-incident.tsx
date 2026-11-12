@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -11,6 +11,10 @@ import { trpc } from "@/lib/trpc/react";
 /**
  * Abrir la incidencia la marca leída (una vez) y el botón la confirma. El
  * centro ve las dos horas por separado: leída no es confirmada.
+ *
+ * La confirmación se muestra en cuanto el servidor la acepta, sin esperar al
+ * `router.refresh()`: a veces el router no lo aplica y el propietario seguía
+ * viendo el botón con el acuse ya guardado (#78).
  */
 export function AcknowledgeIncident({
   id,
@@ -28,6 +32,7 @@ export function AcknowledgeIncident({
   const router = useRouter();
   const markRead = trpc.incidents.markRead.useMutation();
   const sent = useRef(false);
+  const [confirmedAt, setConfirmedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     if (read || sent.current) return;
@@ -36,16 +41,20 @@ export function AcknowledgeIncident({
   }, [id, read, markRead]);
 
   const acknowledge = trpc.incidents.acknowledge.useMutation({
-    onSuccess: () => router.refresh(),
+    onSuccess: () => {
+      setConfirmedAt(new Date());
+      router.refresh();
+    },
     onError: (err) => toast.error(err.message || t("ackError")),
   });
 
-  if (acknowledgedAt) {
+  const shownAt = acknowledgedAt ?? confirmedAt;
+  if (shownAt) {
     return (
       <p className="flex items-center gap-2 text-sm font-medium text-state-ok-ink">
         <CheckCircle weight="fill" aria-hidden className="h-5 w-5" />
         {t("acknowledged", {
-          when: format.dateTime(acknowledgedAt, { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Madrid" }),
+          when: format.dateTime(shownAt, { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Madrid" }),
         })}
       </p>
     );
