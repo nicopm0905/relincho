@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Resend from "next-auth/providers/resend";
-import { authConfig, emailAuthEnabled } from "./config";
+import { authConfig, emailAuthEnabled, MAGIC_LINK_MAX_AGE_SECONDS } from "./config";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -20,6 +20,7 @@ const emailProvider = emailAuthEnabled
   ? Resend({
       apiKey: process.env.RESEND_API_KEY || "missing",
       from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
+      maxAge: MAGIC_LINK_MAX_AGE_SECONDS,
       async sendVerificationRequest(params) {
         // En local el enlace se imprime en la consola: no hace falta dominio
         // verificado ni gastar cuota de Resend durante el desarrollo.

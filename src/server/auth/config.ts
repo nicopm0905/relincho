@@ -17,6 +17,14 @@ export const emailAuthEnabled =
   process.env.EMAIL_LOGIN_ENABLED === "true" ||
   (process.env.NODE_ENV !== "production" && !googleAuthEnabled);
 
+/**
+ * Cuánto vale el enlace de acceso que llega por email. Auth.js da 24 horas por
+ * defecto; a quien lo pide desde un correo que no mira a diario (Hotmail,
+ * spam) se le caducaba. Sigue siendo de un solo uso y solo llega al correo de
+ * quien lo pide.
+ */
+export const MAGIC_LINK_MAX_AGE_SECONDS = 3 * 24 * 60 * 60;
+
 /** Si no hay ninguna via, la pantalla de acceso lo dice en vez de fallar. */
 export const hasAnyAuthProvider = googleAuthEnabled || emailAuthEnabled;
 
