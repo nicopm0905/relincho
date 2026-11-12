@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createTenantAction } from "@/server/actions/tenant";
 import { CircleNotch } from "@phosphor-icons/react";
+import { slugFollowingName } from "@/lib/slug";
 
 export function OnboardingForm() {
   const t = useTranslations("onboarding");
@@ -27,16 +28,6 @@ export function OnboardingForm() {
     province: "",
     nif: "",
   });
-
-  function generateSlug(value: string) {
-    return value
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 40);
-  }
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -78,10 +69,13 @@ export function OnboardingForm() {
               placeholder={t("form.namePlaceholder")}
               value={form.name}
               onChange={(e) => {
-                set("name", e.target.value);
-                if (!form.slug) {
-                  set("slug", generateSlug(e.target.value));
-                }
+                const name = e.target.value;
+                // El identificador sigue al nombre hasta que se edita a mano.
+                setForm((prev) => ({
+                  ...prev,
+                  name,
+                  slug: slugFollowingName({ previousName: prev.name, name, slug: prev.slug }),
+                }));
               }}
               required
             />
