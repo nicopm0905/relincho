@@ -50,3 +50,36 @@ test("el mozo crea una incidencia, el propietario la confirma desde el móvil y 
   await expect(item).toContainText("Confirmada");
   await expect(item).toContainText("1 de 1 propietarios la han confirmado");
 });
+
+test("si el refresco de la página se pierde tras confirmar, la propietaria ve igualmente la incidencia confirmada", async ({
+  page,
+  context,
+}) => {
+  const c = await seedPilotCenter();
+  const incident = await db.incident.create({
+    data: {
+      tenantId: c.tenant.id,
+      horseId: c.lucero.id,
+      category: "LAMENESS",
+      severity: "MEDIUM",
+      description: "Cojea de la mano izquierda",
+      occurredAt: new Date(),
+      receipts: { create: { membershipId: c.propietaria.membershipId, notifiedAt: new Date() } },
+    },
+  });
+
+  await loginAs(context, c.propietaria);
+  await page.goto(`/${c.tenant.slug}/portal/incidencias/${incident.id}`);
+  await expect(page.getByRole("heading", { name: "Cojera · Lucero", level: 1 })).toBeVisible();
+
+  // A veces el router de Next no aplica el `router.refresh()` posterior a la
+  // mutación (#78). Aquí se fuerza: el refresco de la página se queda colgado.
+  // Abortarlo no sirve: Next recarga la página entera y trae el dato bueno.
+  await page.route("**/portal/incidencias/**", (route) =>
+    route.request().headers()["rsc"] ? new Promise<void>(() => {}) : route.continue(),
+  );
+  await page.getByRole("button", { name: "Confirmo que lo he leído" }).click();
+  await expect(page.getByText(/^Confirmada /)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirmo que lo he leído" })).toHaveCount(0);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
