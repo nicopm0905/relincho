@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { imageRemotePatterns } from "./src/lib/image-hosts";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -11,12 +12,8 @@ const nextConfig: NextConfig = {
   // No quitar mientras el locale salga de una cookie en el layout raiz.
   htmlLimitedBots: /.*/,
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "*.r2.cloudflarestorage.com",
-      },
-    ],
+    // Incluye el dominio de R2_PUBLIC_URL: de ahí salen las fotos de caballo.
+    remotePatterns: imageRemotePatterns(process.env.R2_PUBLIC_URL),
   },
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react", "framer-motion"],
