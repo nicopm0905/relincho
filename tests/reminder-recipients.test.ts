@@ -95,6 +95,22 @@ test("un acto superado por otro posterior del mismo tipo no genera aviso", () =>
   assert.deepEqual(dueReminders(events, { now }).map((d) => d.event.id), ["herraje"]);
 });
 
+test("una vacuna de otro nombre no tapa el aviso de la que vence", () => {
+  const events = [
+    { id: "nilo", horseId: HORSE, type: "VACCINE", name: "Nilo", date: inDays(-358), nextDueDate: inDays(7) },
+    { id: "gripe", horseId: HORSE, type: "VACCINE", name: "Gripe y tétanos", date: inDays(-1), nextDueDate: inDays(364) },
+  ];
+  assert.deepEqual(dueReminders(events, { now }).map((d) => d.event.id), ["nilo"]);
+});
+
+test("una revacunación del mismo nombre cubre el aviso de la anterior aunque cambie la grafía", () => {
+  const events = [
+    { id: "antigua", horseId: HORSE, type: "VACCINE", name: "Gripe y tétanos", date: inDays(-358), nextDueDate: inDays(7) },
+    { id: "repetida", horseId: HORSE, type: "VACCINE", name: "gripe y TETANOS ", date: inDays(-1), nextDueDate: inDays(364) },
+  ];
+  assert.deepEqual(dueReminders(events, { now }), []);
+});
+
 // --- Regla única con permissions.ts (#50): quien puede registrar el acto recibe su aviso ---
 
 test("un veterinario especialista recibe el aviso de vacuna como el veterinario general", () => {

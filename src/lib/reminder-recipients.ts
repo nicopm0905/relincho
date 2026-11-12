@@ -1,4 +1,5 @@
 import { calendarDayOffset } from "@/lib/day-window";
+import { supersedeKey } from "@/lib/health-due";
 import {
   HEALTH_EVENT_TYPES,
   ROLES,
@@ -46,6 +47,8 @@ export interface DueEventInput {
   id: string;
   horseId: string;
   type: string;
+  /** Nombre del acto: distingue vacunas distintas (`supersedeKey`). */
+  name?: string | null;
   date: Date;
   nextDueDate: Date | null;
 }
@@ -105,8 +108,9 @@ export function reminderOffsets(leadDays = 7): number[] {
 }
 
 /**
- * Actos que avisan hoy. Para cada caballo y tipo manda el último registrado:
- * si la vacuna se repitió, el vencimiento antiguo está cubierto y no avisa.
+ * Actos que avisan hoy. Para cada caballo y acto (`supersedeKey`, la misma
+ * regla que la lista de pendientes) manda el último registrado: si la vacuna
+ * se repitió, el vencimiento antiguo está cubierto y no avisa.
  */
 export function dueReminders<T extends DueEventInput>(
   events: T[],
@@ -114,14 +118,14 @@ export function dueReminders<T extends DueEventInput>(
 ): { event: T; daysUntil: number }[] {
   const latest = new Map<string, T>();
   for (const e of events) {
-    const key = `${e.horseId}:${e.type}`;
+    const key = supersedeKey(e);
     const current = latest.get(key);
     if (!current || e.date > current.date) latest.set(key, e);
   }
   const offsets = reminderOffsets(leadDays);
   const out: { event: T; daysUntil: number }[] = [];
   for (const e of events) {
-    if (latest.get(`${e.horseId}:${e.type}`) !== e || !e.nextDueDate) continue;
+    if (latest.get(supersedeKey(e)) !== e || !e.nextDueDate) continue;
     const daysUntil = calendarDayOffset(e.nextDueDate, now);
     if (offsets.includes(daysUntil)) out.push({ event: e, daysUntil });
   }
